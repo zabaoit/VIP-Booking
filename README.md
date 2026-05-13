@@ -3,7 +3,7 @@
 ## Tech Stack
 
 - Frontend: React 19/Vite, TypeScript
-- Backend: Express, TypeScript
+- Backend: Express, JavaScript
 - Database: MySQL
 
 ## Note
