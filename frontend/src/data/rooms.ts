@@ -1,0 +1,85 @@
+import { images } from './images'
+import type { Room } from '../types'
+
+export const rooms: Room[] = [
+  {
+    id: 'ocean-view-grand-suite',
+    name: 'Ocean View Grand Suite',
+    category: 'Signature Suite',
+    location: 'North Tower, Level 18',
+    price: 450,
+    rating: 4.9,
+    reviews: 218,
+    size: '72 m2',
+    guests: '2 adults',
+    bed: 'King bed',
+    image: images.suite,
+    gallery: [images.suite, images.ocean, images.dining],
+    description:
+      'A calm private suite facing the water, built for long stays, executive travel, and celebration weekends with personal arrival service.',
+    amenities: [
+      'Ocean-facing balcony',
+      'Private lounge access',
+      'Smart climate control',
+      'Premium minibar',
+      'Marble bathroom',
+      'Late checkout',
+    ],
+    highlights: ['Free cancellation', 'Breakfast included', 'Airport priority'],
+    availability: [4, 5, 10, 11, 12, 18, 19, 23, 24],
+  },
+  {
+    id: 'executive-sky-room',
+    name: 'Executive Sky Room',
+    category: 'Business Class',
+    location: 'West Wing, Level 12',
+    price: 320,
+    rating: 4.8,
+    reviews: 164,
+    size: '48 m2',
+    guests: '2 guests',
+    bed: 'Queen bed',
+    image: images.ocean,
+    gallery: [images.ocean, images.meeting, images.spa],
+    description:
+      'A polished room for business travel with fast check-in, ergonomic workspace, skyline views, and quiet evening service.',
+    amenities: [
+      'Executive desk',
+      'Soundproof windows',
+      'High speed Wi-Fi',
+      'Coffee bar',
+      'Pressing service',
+      'Meeting lounge',
+    ],
+    highlights: ['Express check-in', 'Workspace ready', 'Flexible hold'],
+    availability: [2, 3, 8, 9, 15, 16, 21, 22, 28],
+  },
+  {
+    id: 'garden-residence',
+    name: 'Garden Residence',
+    category: 'Family Residence',
+    location: 'Garden Court, Level 3',
+    price: 560,
+    rating: 4.95,
+    reviews: 132,
+    size: '94 m2',
+    guests: '4 guests',
+    bed: 'Two bedrooms',
+    image: images.penthouse,
+    gallery: [images.penthouse, images.pool, images.lobby],
+    description:
+      'A generous residence with a separate living room, garden terrace, and curated family amenities for slower luxury stays.',
+    amenities: [
+      'Private terrace',
+      'Two bathrooms',
+      'Kitchenette',
+      'Kids amenity set',
+      'Laundry pickup',
+      'Evening turndown',
+    ],
+    highlights: ['Family ready', 'Daily breakfast', 'Private terrace'],
+    availability: [1, 6, 7, 13, 14, 20, 25, 26, 27],
+  },
+]
+
+export const featuredRoom = rooms[0]

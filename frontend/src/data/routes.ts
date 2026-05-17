@@ -1,0 +1,56 @@
+import type { RouteKey } from '../types'
+
+export const routePaths: Record<RouteKey, string> = {
+  home: 'home',
+  rooms: 'rooms',
+  roomDetail: 'rooms/ocean-view-grand-suite',
+  booking: 'booking-information',
+  confirm: 'confirm-booking',
+  payment: 'secure-payment',
+  success: 'payment-success',
+  failed: 'payment-failed',
+  contact: 'contact',
+  about: 'about',
+  login: 'login',
+  register: 'register',
+  forgot: 'forgot-password',
+  reset: 'reset-password',
+  otp: 'otp',
+  admin: 'admin',
+  adminRooms: 'admin/room-types',
+  adminServices: 'admin/services',
+  notFound: '404',
+}
+
+export const routeTitles: Record<RouteKey, string> = {
+  home: 'Home Page - VIP Booking',
+  rooms: 'Room Listing - VIP Booking',
+  roomDetail: 'Room Detail - VIP Booking',
+  booking: 'Booking Information - VIP Booking',
+  confirm: 'Confirm Your Booking - VIP Booking',
+  payment: 'Secure Payment - VIP Booking',
+  success: 'Payment Success - VIP Booking',
+  failed: 'Payment Failed - VIP Booking',
+  contact: 'Contact - VIP Booking',
+  about: 'About - VIP Booking',
+  login: 'Login - VIP Booking',
+  register: 'Register - VIP Booking',
+  forgot: 'Forgot Password - VIP Booking',
+  reset: 'Reset Password - VIP Booking',
+  otp: 'OTP - VIP Booking',
+  admin: 'Admin Dashboard - VIP Booking',
+  adminRooms: 'Room Types Management - VIP Booking',
+  adminServices: 'Service Management - VIP Booking',
+  notFound: '404 - VIP Booking',
+}
+
+export const routeByPath = Object.entries(routePaths).reduce<Record<string, RouteKey>>(
+  (acc, [key, value]) => {
+    acc[value] = key as RouteKey
+    return acc
+  },
+  {},
+)
+
+export const authRouteKeys: RouteKey[] = ['login', 'register', 'forgot', 'reset', 'otp']
+export const privateRouteKeys: RouteKey[] = ['admin', 'adminRooms', 'adminServices']

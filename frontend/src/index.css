@@ -1,15 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,500..800&family=Manrope:wght@500;600;700;800&display=swap');
 @import 'tailwindcss';
 
 :root {
   color-scheme: dark;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
+  font-family: var(--font-body);
+  --font-body:
+    'Be Vietnam Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     sans-serif;
+  --font-display: 'Fraunces', 'Be Vietnam Pro', ui-serif, Georgia, serif;
+  --font-ui: 'Manrope', 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
   --bg: #070b11;
   --bg-soft: #0b111b;
   --panel: #111a28;
@@ -41,6 +40,9 @@ body {
   min-width: 320px;
   background: linear-gradient(180deg, rgba(8, 13, 22, 0.9), rgba(7, 11, 17, 1) 34%), var(--bg);
   color: var(--text);
+  font-family: var(--font-body);
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
 }
 
 button,
@@ -48,6 +50,7 @@ input,
 select,
 textarea {
   font: inherit;
+  font-family: var(--font-ui);
 }
 
 button {
@@ -105,6 +108,7 @@ img {
   align-items: center;
   gap: 10px;
   color: var(--text);
+  font-family: var(--font-ui);
   font-weight: 800;
   letter-spacing: 0;
 }
@@ -143,7 +147,9 @@ img {
   padding: 9px 14px;
   border: 1px solid transparent;
   border-radius: 8px;
+  font-family: var(--font-ui);
   font-size: 0.92rem;
+  font-weight: 700;
 }
 
 .main-nav a:hover,
@@ -172,6 +178,7 @@ img {
   min-height: 42px;
   border: 1px solid transparent;
   border-radius: 8px;
+  font-family: var(--font-ui);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0;
@@ -250,7 +257,8 @@ img {
   position: relative;
   display: grid;
   min-height: calc(100vh - 130px);
-  align-content: end;
+  align-content: center;
+  justify-items: center;
   gap: 28px;
   padding: 78px clamp(20px, 5vw, 72px) 34px;
   overflow: hidden;
@@ -262,22 +270,27 @@ img {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(4, 7, 12, 0.9), rgba(4, 7, 12, 0.44) 52%, rgba(4, 7, 12, 0.72)),
+    linear-gradient(90deg, rgba(4, 7, 12, 0.82), rgba(4, 7, 12, 0.5) 52%, rgba(4, 7, 12, 0.82)),
     linear-gradient(180deg, rgba(4, 7, 12, 0.08), rgba(4, 7, 12, 0.82));
 }
 
 .hero-content {
   position: relative;
   z-index: 1;
-  max-width: 760px;
+  display: grid;
+  max-width: 980px;
+  justify-items: center;
+  margin-inline: auto;
+  text-align: center;
 }
 
 .eyebrow {
   margin: 0 0 10px;
   color: var(--gold);
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -287,26 +300,32 @@ img {
 .not-found h1 {
   margin: 0;
   color: white;
+  font-family: var(--font-display);
+  font-weight: 650;
   font-size: clamp(2.6rem, 7vw, 6.3rem);
-  line-height: 0.95;
+  line-height: 1.03;
   letter-spacing: 0;
 }
 
 .hero-content h1 {
-  font-size: clamp(2.5rem, 6vw, 4.85rem);
+  max-width: 1120px;
+  font-size: clamp(3rem, 6.5vw, 6.15rem);
+  text-wrap: balance;
 }
 
 .hero-content p {
-  max-width: 620px;
-  margin: 22px 0 0;
+  max-width: 760px;
+  margin: 22px auto 0;
   color: #d5deee;
-  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-size: clamp(1.02rem, 1.4vw, 1.22rem);
   line-height: 1.7;
+  text-wrap: pretty;
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   margin-top: 30px;
 }
@@ -318,6 +337,8 @@ img {
   grid-template-columns: 1.25fr repeat(3, 1fr) auto;
   gap: 12px;
   width: min(1180px, 100%);
+  justify-self: center;
+  margin-inline: auto;
   padding: 14px;
   border: 1px solid rgba(210, 225, 255, 0.22);
   border-radius: 8px;
@@ -329,6 +350,7 @@ img {
 label,
 .filter-group h3 {
   color: var(--muted-strong);
+  font-family: var(--font-ui);
   font-size: 0.84rem;
   font-weight: 700;
 }
@@ -420,6 +442,8 @@ textarea:focus {
 .admin-topbar h1 {
   margin: 0;
   color: white;
+  font-family: var(--font-display);
+  font-weight: 650;
   font-size: clamp(1.55rem, 3vw, 2.35rem);
   line-height: 1.1;
   letter-spacing: 0;
@@ -511,6 +535,7 @@ textarea:focus {
 .admin-room-card h3 {
   margin: 0;
   color: white;
+  font-family: var(--font-ui);
   font-size: 1rem;
   line-height: 1.25;
 }
@@ -1450,6 +1475,7 @@ td {
 
 th {
   color: var(--muted);
+  font-family: var(--font-ui);
   font-size: 0.76rem;
   text-transform: uppercase;
 }
