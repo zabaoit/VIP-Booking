@@ -11,7 +11,7 @@ export const rooms: Room[] = [
     rating: 4.9,
     reviews: 218,
     size: '72 m2',
-    guests: '2 adults',
+    guests: '2 guests',
     bed: 'King bed',
     image: images.suite,
     gallery: [images.suite, images.ocean, images.dining],

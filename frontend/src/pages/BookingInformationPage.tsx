@@ -1,18 +1,18 @@
 import { BookingSummary } from '../components/booking/BookingSummary'
 import { PageIntro } from '../components/ui/PageIntro'
-import { featuredRoom } from '../data/rooms'
 import type { Navigate } from '../types'
+import { getSelectedRoom } from '../utils/bookingSelections'
 import { handleRouteSubmit } from '../utils/forms'
 
 export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
-  const room = featuredRoom
+  const room = getSelectedRoom()
 
   return (
     <main className="page-shell">
       <PageIntro
-        eyebrow="Complete your booking"
-        title="Booking Information"
-        copy="Guest details, stay preferences, and booking summary are shown together for review."
+        eyebrow="Booking information"
+        title="Tell Us About Your Stay"
+        copy="Add guest details, arrival preferences, and contact information before reviewing your booking."
       />
 
       <form
@@ -20,7 +20,7 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
         onSubmit={(event) => handleRouteSubmit(event, 'confirm', navigate)}
       >
         <section className="form-panel">
-          <h2>Guest Information</h2>
+          <h2>Guest Details</h2>
           <div className="form-grid">
             <label>
               First name
@@ -30,21 +30,30 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
               Last name
               <input defaultValue="Nguyen" />
             </label>
-            <label>
-              Email
-              <input defaultValue="anh.nguyen@example.com" type="email" />
+            <label className="span-2">
+              Email address
+              <input defaultValue="guest@vipbooking.vn" type="email" />
             </label>
             <label>
-              Phone
+              Phone number
               <input defaultValue="+84 901 123 456" />
             </label>
+            <label>
+              Arrival time
+              <input defaultValue="15:00" type="time" />
+            </label>
           </div>
-          <h2>Special Requests</h2>
+
+          <h2>Stay Preferences</h2>
           <textarea defaultValue="High floor, quiet room, and champagne on arrival." rows={5} />
           <label className="check-row consent-row">
             <input type="checkbox" />
             <span>I require accessible room assistance.</span>
           </label>
+
+          <button className="primary-button full-width" type="submit">
+            Continue to Review
+          </button>
         </section>
 
         <BookingSummary room={room} buttonLabel="Continue to Review" />

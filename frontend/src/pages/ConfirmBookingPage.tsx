@@ -1,14 +1,25 @@
+import { useState } from 'react'
 import { BookingSummary } from '../components/booking/BookingSummary'
 import { PriceDetails } from '../components/booking/PriceDetails'
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
-import { featuredRoom } from '../data/rooms'
 import { services } from '../data/services'
 import type { Navigate } from '../types'
+import { getSelectedRoom } from '../utils/bookingSelections'
 import { formatCurrency } from '../utils/currency'
 
+function parseServicePrice(price: string) {
+  return Number(price.replace(/[^0-9.]/g, '')) || 0
+}
+
 export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
-  const room = featuredRoom
+  const room = getSelectedRoom()
+  const availableServices = services.slice(0, 3)
+  const [selectedServices, setSelectedServices] = useState<string[]>([])
+  const addOnTotal = selectedServices.reduce((total, serviceName) => {
+    const service = services.find((item) => item.name === serviceName)
+    return total + (service ? parseServicePrice(service.price) : 0)
+  }, 0)
 
   return (
     <main className="page-shell">
@@ -30,26 +41,40 @@ export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
             <div>
               <p>{room.location}</p>
               <span>Oct 10 - Oct 13, 2026</span>
-              <span>2 adults, 3 nights</span>
+              <span>{room.guests}, 3 nights</span>
             </div>
           </div>
 
-          <h2>Included Services</h2>
+          <h2>Additional Services</h2>
           <div className="add-on-grid">
-            {services.slice(0, 3).map((service) => (
-              <label className="add-on-card" key={service.name}>
-                <input defaultChecked type="checkbox" />
+            {availableServices.map((service) => {
+              const isSelected = selectedServices.includes(service.name)
+
+              return (
+              <label className={`add-on-card ${isSelected ? 'selected' : ''}`} key={service.name}>
+                <input
+                  checked={isSelected}
+                  type="checkbox"
+                  onChange={(event) => {
+                    setSelectedServices((current) =>
+                      event.target.checked
+                        ? [...current, service.name]
+                        : current.filter((item) => item !== service.name),
+                    )
+                  }}
+                />
                 <span className="icon-tile">
                   <Icon name={service.icon} />
                 </span>
                 <strong>{service.name}</strong>
                 <small>{service.price}</small>
               </label>
-            ))}
+              )
+            })}
           </div>
 
           <h2>Price Details</h2>
-          <PriceDetails room={room} />
+          <PriceDetails room={room} addOnTotal={addOnTotal} />
           <button
             className="primary-button full-width"
             type="button"
@@ -61,6 +86,7 @@ export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
         <BookingSummary
           room={room}
           buttonLabel="Proceed to Payment"
+          addOnTotal={addOnTotal}
           onButtonClick={() => navigate('payment')}
         />
       </div>

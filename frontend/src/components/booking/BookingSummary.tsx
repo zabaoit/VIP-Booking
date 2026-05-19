@@ -5,10 +5,12 @@ export function BookingSummary({
   room,
   buttonLabel,
   onButtonClick,
+  addOnTotal = 0,
 }: {
   room: Room
   buttonLabel: string
   onButtonClick?: () => void
+  addOnTotal?: number
 }) {
   return (
     <aside className="summary-panel">
@@ -21,7 +23,7 @@ export function BookingSummary({
           <span>2 guests</span>
           <span>Oct 2026</span>
         </div>
-        <PriceDetails room={room} />
+        <PriceDetails room={room} addOnTotal={addOnTotal} />
         <button className="primary-button full-width" type="submit" onClick={onButtonClick}>
           {buttonLabel}
         </button>

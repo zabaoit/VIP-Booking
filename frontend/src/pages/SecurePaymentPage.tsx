@@ -1,12 +1,38 @@
+import { useState } from 'react'
 import { BookingSummary } from '../components/booking/BookingSummary'
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
-import { featuredRoom } from '../data/rooms'
 import type { Navigate } from '../types'
+import { getSelectedRoom } from '../utils/bookingSelections'
 import { handleRouteSubmit } from '../utils/forms'
 
+const paymentMethods = [
+  {
+    id: 'vietqr',
+    label: 'VietQR',
+    icon: 'card' as const,
+    title: 'Scan VietQR to complete bank transfer',
+    detail: 'Account: VIP Booking JSC - 9704 36 123456789',
+  },
+  {
+    id: 'zalopay',
+    label: 'ZaloPay',
+    icon: 'shield' as const,
+    title: 'Pay with ZaloPay wallet',
+    detail: 'Use the ZaloPay app to approve this secure booking payment.',
+  },
+  {
+    id: 'momo',
+    label: 'MoMo',
+    icon: 'lock' as const,
+    title: 'Pay with MoMo wallet',
+    detail: 'Use the MoMo app to confirm and return to VIP Booking.',
+  },
+]
+
 export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
-  const room = featuredRoom
+  const room = getSelectedRoom()
+  const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0])
 
   return (
     <main className="page-shell">
@@ -23,54 +49,38 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
         <section className="form-panel">
           <h2>Payment Method</h2>
           <div className="payment-tabs">
-            <button className="active" type="button">
-              <Icon name="card" />
-              Credit Card
-            </button>
-            <button type="button">
-              <Icon name="shield" />
-              Bank Transfer
-            </button>
-            <button type="button">
-              <Icon name="lock" />
-              Wallet
-            </button>
+            {paymentMethods.map((method) => (
+              <button
+                className={paymentMethod.id === method.id ? 'active' : ''}
+                key={method.id}
+                type="button"
+                onClick={() => setPaymentMethod(method)}
+              >
+                <Icon name={method.icon} />
+                {method.label}
+              </button>
+            ))}
           </div>
-          <div className="form-grid">
-            <label className="span-2">
-              Card number
-              <input defaultValue="4242 4242 4242 4242" inputMode="numeric" />
-            </label>
-            <label>
-              Expiry date
-              <input defaultValue="10/28" />
-            </label>
-            <label>
-              CVC
-              <input defaultValue="123" inputMode="numeric" />
-            </label>
-            <label className="span-2">
-              Cardholder name
-              <input defaultValue="ANH NGUYEN" />
-            </label>
+          <div className="wallet-panel">
+            <div className="qr-box">
+              <span>QR</span>
+            </div>
+            <div>
+              <h3>{paymentMethod.title}</h3>
+              <p>{paymentMethod.detail}</p>
+              <small>Payment status will come from the payment gateway when backend APIs are connected.</small>
+            </div>
           </div>
           <label className="check-row consent-row">
             <input defaultChecked type="checkbox" />
-            <span>Save payment method for future VIP bookings.</span>
+            <span>I have completed the payment in {paymentMethod.label}.</span>
           </label>
           <button className="primary-button full-width" type="submit">
             <Icon name="lock" />
-            Pay Securely
-          </button>
-          <button
-            className="ghost-button full-width"
-            type="button"
-            onClick={() => navigate('failed')}
-          >
-            Simulate Failed Payment
+            Confirm Payment
           </button>
         </section>
-        <BookingSummary room={room} buttonLabel="Pay Securely" />
+        <BookingSummary room={room} buttonLabel="Confirm Payment" />
       </form>
     </main>
   )

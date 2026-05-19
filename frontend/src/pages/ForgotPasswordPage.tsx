@@ -5,7 +5,12 @@ import { handleRouteSubmit } from '../utils/forms'
 export function ForgotPasswordPage({ navigate }: { navigate: Navigate }) {
   return (
     <AuthShell title="Forgot Password" subtitle="Enter your email to receive a verification code.">
-      <form onSubmit={(event) => handleRouteSubmit(event, 'otp', navigate)}>
+      <form
+        onSubmit={(event) => {
+          window.sessionStorage.setItem('vip-booking:otp-flow', 'reset')
+          handleRouteSubmit(event, 'otp', navigate)
+        }}
+      >
         <label>
           Email address
           <input defaultValue="guest@vipbooking.vn" type="email" />

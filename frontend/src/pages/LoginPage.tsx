@@ -8,7 +8,10 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    login()
+    const formData = new FormData(event.currentTarget)
+    const email = String(formData.get('email') ?? '')
+
+    login(email)
     navigate('home')
   }
 
@@ -17,7 +20,7 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
       <form onSubmit={handleSubmit}>
         <label>
           Email address
-          <input defaultValue="guest@vipbooking.vn" type="email" />
+          <input defaultValue="guest@vipbooking.vn" name="email" type="email" />
         </label>
         <label>
           Password

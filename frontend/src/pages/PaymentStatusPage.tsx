@@ -1,8 +1,7 @@
 import { PriceDetails } from '../components/booking/PriceDetails'
 import { Icon } from '../components/icons/Icon'
-import { images } from '../data/images'
-import { featuredRoom } from '../data/rooms'
 import type { Navigate } from '../types'
+import { getSelectedRoom } from '../utils/bookingSelections'
 
 export function PaymentStatusPage({
   variant,
@@ -12,6 +11,7 @@ export function PaymentStatusPage({
   navigate: Navigate
 }) {
   const isSuccess = variant === 'success'
+  const room = getSelectedRoom()
 
   return (
     <main className="status-page">
@@ -26,8 +26,8 @@ export function PaymentStatusPage({
             : 'The payment could not be authorized. Review the details or try another payment method.'}
         </p>
         <div className="receipt-card">
-          <img src={images.exterior} alt="VIP Booking hotel exterior" />
-          <PriceDetails room={featuredRoom} />
+          <img src={room.image} alt={room.name} />
+          <PriceDetails room={room} />
         </div>
         <div className="status-actions">
           <button

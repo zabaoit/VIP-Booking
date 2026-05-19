@@ -76,7 +76,11 @@ export type Service = {
   status: 'Active' | 'Paused'
 }
 
-export type Navigate = (route: RouteKey) => void
+export type NavigateOptions = {
+  path?: string
+}
+
+export type Navigate = (route: RouteKey, options?: NavigateOptions) => void
 
 export type AppRoute = {
   key: RouteKey

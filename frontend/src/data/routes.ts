@@ -53,4 +53,6 @@ export const routeByPath = Object.entries(routePaths).reduce<Record<string, Rout
 )
 
 export const authRouteKeys: RouteKey[] = ['login', 'register', 'forgot', 'reset', 'otp']
-export const privateRouteKeys: RouteKey[] = ['admin', 'adminRooms', 'adminServices']
+export const protectedRouteKeys: RouteKey[] = ['booking', 'confirm', 'payment', 'success', 'failed']
+export const adminRouteKeys: RouteKey[] = ['admin', 'adminRooms', 'adminServices']
+export const privateRouteKeys: RouteKey[] = [...protectedRouteKeys, ...adminRouteKeys]

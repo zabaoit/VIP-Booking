@@ -1,12 +1,14 @@
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
-import { featuredRoom } from '../data/rooms'
+import { featuredRoom, rooms } from '../data/rooms'
 import type { Navigate } from '../types'
+import { saveSelectedRoom } from '../utils/bookingSelections'
 import { formatCurrency } from '../utils/currency'
+import { getCurrentRoomSlug } from '../utils/router'
 
 export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
   const calendarDays = Array.from({ length: 31 }, (_, index) => index + 1)
-  const room = featuredRoom
+  const room = rooms.find((item) => item.id === getCurrentRoomSlug()) ?? featuredRoom
 
   return (
     <main className="page-shell room-detail-page">
@@ -105,8 +107,8 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
             </label>
             <label>
               Guests
-              <select defaultValue="2 adults">
-                <option>2 adults</option>
+              <select defaultValue={room.guests}>
+                <option>2 guests</option>
                 <option>3 guests</option>
                 <option>4 guests</option>
               </select>
@@ -123,7 +125,10 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
           <button
             className="primary-button full-width"
             type="button"
-            onClick={() => navigate('booking')}
+            onClick={() => {
+              saveSelectedRoom(room.id)
+              navigate('booking')
+            }}
           >
             Reserve Room
           </button>

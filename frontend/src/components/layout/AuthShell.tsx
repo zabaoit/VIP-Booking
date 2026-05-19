@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { images } from '../../data/images'
-import { routePaths } from '../../data/routes'
+import { getRouteHref } from '../../utils/router'
 import { Icon } from '../icons/Icon'
 
 export function AuthShell({
@@ -14,7 +14,7 @@ export function AuthShell({
 }) {
   return (
     <main className="auth-page" style={{ backgroundImage: `url(${images.lobby})` }}>
-      <a className="brand auth-brand" href={`#/${routePaths.home}`}>
+      <a className="brand auth-brand" href={getRouteHref('home')}>
         <span className="brand-mark">VIP</span>
         <span>VIP Booking</span>
       </a>

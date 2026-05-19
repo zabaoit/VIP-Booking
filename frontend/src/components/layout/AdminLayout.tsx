@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import { adminNavItems } from '../../data/navigation'
-import { routePaths, routeTitles } from '../../data/routes'
+import { routeTitles } from '../../data/routes'
 import type { RouteKey } from '../../types'
+import { getRouteHref } from '../../utils/router'
 import { Icon } from '../icons/Icon'
 
 export function AdminLayout({
@@ -14,7 +15,7 @@ export function AdminLayout({
   return (
     <main className="admin-layout">
       <aside className="admin-sidebar">
-        <a className="brand" href={`#/${routePaths.home}`}>
+        <a className="brand" href={getRouteHref('home')}>
           <span className="brand-mark">VIP</span>
           <span>VIP Booking</span>
         </a>
@@ -22,7 +23,7 @@ export function AdminLayout({
           {adminNavItems.map((item) => (
             <a
               className={currentRoute === item.route ? 'active' : ''}
-              href={`#/${routePaths[item.route]}`}
+              href={getRouteHref(item.route)}
               key={item.route}
             >
               <Icon name={item.icon} />

@@ -8,7 +8,12 @@ export function RegisterPage({ navigate }: { navigate: Navigate }) {
       title="Create Account"
       subtitle="Join VIP Booking to reserve rooms and services faster."
     >
-      <form onSubmit={(event) => handleRouteSubmit(event, 'otp', navigate)}>
+      <form
+        onSubmit={(event) => {
+          window.sessionStorage.setItem('vip-booking:otp-flow', 'register')
+          handleRouteSubmit(event, 'otp', navigate)
+        }}
+      >
         <label>
           Full name
           <input defaultValue="Anh Nguyen" />

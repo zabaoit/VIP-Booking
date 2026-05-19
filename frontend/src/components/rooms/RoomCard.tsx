@@ -1,4 +1,5 @@
 import type { Navigate, Room } from '../../types'
+import { saveSelectedRoom } from '../../utils/bookingSelections'
 import { formatCurrency } from '../../utils/currency'
 import { Icon } from '../icons/Icon'
 
@@ -44,14 +45,20 @@ export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate })
             <button
               className="ghost-button compact"
               type="button"
-              onClick={() => navigate('roomDetail')}
+              onClick={() => {
+                saveSelectedRoom(room.id)
+                navigate('roomDetail', { path: `rooms/${room.id}` })
+              }}
             >
               Details
             </button>
             <button
               className="primary-button compact"
               type="button"
-              onClick={() => navigate('booking')}
+              onClick={() => {
+                saveSelectedRoom(room.id)
+                navigate('booking')
+              }}
             >
               Book
             </button>

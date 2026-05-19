@@ -22,9 +22,9 @@ export function SearchPanel({ navigate }: { navigate: Navigate }) {
       </label>
       <label>
         <span>Guests</span>
-        <select defaultValue="2 adults">
-          <option>1 adult</option>
-          <option>2 adults</option>
+        <select defaultValue="2 guests">
+          <option>1 guest</option>
+          <option>2 guests</option>
           <option>3 guests</option>
           <option>4 guests</option>
         </select>
