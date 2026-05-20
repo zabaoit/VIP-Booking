@@ -964,13 +964,27 @@ textarea:focus {
   color: rgba(238, 245, 255, 0.4);
 }
 
+.calendar-empty {
+  min-height: 40px;
+}
+
 .calendar-grid button.available {
   color: var(--text);
+}
+
+.calendar-grid button.in-range {
+  border-color: rgba(96, 165, 250, 0.34);
+  background: rgba(59, 130, 246, 0.28);
 }
 
 .calendar-grid button.selected {
   border-color: rgba(96, 165, 250, 0.7);
   background: rgba(59, 130, 246, 0.86);
+}
+
+.calendar-grid button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .booking-panel {
@@ -1006,6 +1020,61 @@ textarea:focus {
 .auth-card label {
   display: grid;
   gap: 8px;
+}
+
+.date-field.active input {
+  border-color: rgba(96, 165, 250, 0.78);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+}
+
+.date-input-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 8px;
+}
+
+.calendar-picker-button {
+  display: grid;
+  min-height: 44px;
+  place-items: center;
+  border: 1px solid rgba(155, 176, 211, 0.18);
+  border-radius: 7px;
+  background: #0a111d;
+  color: var(--muted-strong);
+}
+
+.calendar-picker-button:hover {
+  border-color: rgba(96, 165, 250, 0.72);
+  color: var(--text);
+}
+
+.native-date-picker {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 44px;
+  height: 44px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.form-error {
+  margin: 0;
+  color: #fecaca;
+  font-size: 0.9rem;
+}
+
+.form-success {
+  margin: 0;
+  color: #bbf7d0;
+  font-size: 0.9rem;
+}
+
+.stay-length {
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: 0.9rem;
 }
 
 .highlight-list {

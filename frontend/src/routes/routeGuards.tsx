@@ -44,17 +44,17 @@ function AccessDeniedNotice({ navigate }: { navigate: Navigate }) {
           <Icon name="lock" size={28} />
         </span>
         <p className="eyebrow">Admin access</p>
-        <h1>Access denied</h1>
+        <h1>Khong co quyen truy cap</h1>
         <p>
-          Current account is not an admin account. 
-          Please log in with an account that has the admin role to access the admin dashboard.
+          Tai khoan hien tai khong phai tai khoan admin. Vui long dang nhap bang tai khoan
+          co role admin de vao trang quan tri.
         </p>
         <div>
           <button className="primary-button" type="button" onClick={() => navigate('login')}>
-           Admin Login
+            Dang nhap admin
           </button>
           <button className="ghost-button" type="button" onClick={() => navigate('home')}>
-            Back to Home Page
+            Ve trang chu
           </button>
         </div>
       </section>

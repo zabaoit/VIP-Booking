@@ -76,6 +76,23 @@ export type Service = {
   status: 'Active' | 'Paused'
 }
 
+export type RegisteredUser = {
+  email: string
+  password: string
+  role: 'guest' | 'admin'
+}
+
+export type BookingRecord = {
+  id: string
+  guest: string
+  email: string
+  room: string
+  checkIn: string
+  checkOut: string
+  amount: string
+  status: 'Confirmed' | 'Pending' | 'Cancelled'
+}
+
 export type NavigateOptions = {
   path?: string
 }

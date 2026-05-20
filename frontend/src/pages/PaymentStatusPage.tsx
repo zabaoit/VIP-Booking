@@ -1,7 +1,7 @@
 import { PriceDetails } from '../components/booking/PriceDetails'
 import { Icon } from '../components/icons/Icon'
 import type { Navigate } from '../types'
-import { getSelectedRoom } from '../utils/bookingSelections'
+import { getSelectedRoom, getSelectedStay, getStayNights } from '../utils/bookingSelections'
 
 export function PaymentStatusPage({
   variant,
@@ -12,6 +12,7 @@ export function PaymentStatusPage({
 }) {
   const isSuccess = variant === 'success'
   const room = getSelectedRoom()
+  const nights = getStayNights(getSelectedStay())
 
   return (
     <main className="status-page">
@@ -27,7 +28,7 @@ export function PaymentStatusPage({
         </p>
         <div className="receipt-card">
           <img src={room.image} alt={room.name} />
-          <PriceDetails room={room} />
+          <PriceDetails room={room} nights={nights} />
         </div>
         <div className="status-actions">
           <button

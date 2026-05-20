@@ -3,10 +3,15 @@ import { BookingSummary } from '../components/booking/BookingSummary'
 import { PriceDetails } from '../components/booking/PriceDetails'
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
-import { services } from '../data/services'
 import type { Navigate } from '../types'
-import { getSelectedRoom } from '../utils/bookingSelections'
+import {
+  formatStayRange,
+  getSelectedRoom,
+  getSelectedStay,
+  getStayNights,
+} from '../utils/bookingSelections'
 import { formatCurrency } from '../utils/currency'
+import { readServices } from '../utils/appStorage'
 
 function parseServicePrice(price: string) {
   return Number(price.replace(/[^0-9.]/g, '')) || 0
@@ -14,7 +19,10 @@ function parseServicePrice(price: string) {
 
 export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
   const room = getSelectedRoom()
-  const availableServices = services.slice(0, 3)
+  const stay = getSelectedStay()
+  const nights = getStayNights(stay)
+  const services = readServices()
+  const availableServices = services.filter((service) => service.status === 'Active').slice(0, 3)
   const [selectedServices, setSelectedServices] = useState<string[]>([])
   const addOnTotal = selectedServices.reduce((total, serviceName) => {
     const service = services.find((item) => item.name === serviceName)
@@ -34,14 +42,14 @@ export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
           <h2>Room Summary</h2>
           <div className="summary-row strong">
             <span>{room.name}</span>
-            <strong>{formatCurrency(room.price * 3)}</strong>
+            <strong>{formatCurrency(room.price * nights)}</strong>
           </div>
           <div className="mini-room">
             <img src={room.image} alt={room.name} />
             <div>
               <p>{room.location}</p>
-              <span>Oct 10 - Oct 13, 2026</span>
-              <span>{room.guests}, 3 nights</span>
+              <span>{formatStayRange(stay)}</span>
+              <span>{stay.guests}, {nights} {nights === 1 ? 'night' : 'nights'}</span>
             </div>
           </div>
 
@@ -74,7 +82,7 @@ export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
           </div>
 
           <h2>Price Details</h2>
-          <PriceDetails room={room} addOnTotal={addOnTotal} />
+          <PriceDetails room={room} addOnTotal={addOnTotal} nights={nights} />
           <button
             className="primary-button full-width"
             type="button"

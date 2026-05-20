@@ -4,10 +4,24 @@ import { RoomCard } from '../components/rooms/RoomCard'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { images } from '../data/images'
 import { rooms } from '../data/rooms'
-import { services } from '../data/services'
+import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
+import { readServices } from '../utils/appStorage'
 
 export function HomePage({ navigate }: { navigate: Navigate }) {
+  const { isAuthenticated } = useAuth()
+  const services = readServices()
+
+  const handleStartBooking = () => {
+    if (!isAuthenticated) {
+      window.sessionStorage.setItem('vip-booking:pending-route', 'booking')
+      navigate('login')
+      return
+    }
+
+    navigate('booking')
+  }
+
   return (
     <main>
       <section className="hero-section" style={{ backgroundImage: `url(${images.hero})` }}>
@@ -69,7 +83,7 @@ export function HomePage({ navigate }: { navigate: Navigate }) {
             The interface keeps the guest journey visible: select a room, confirm service add-ons,
             review the invoice, and pay without losing booking context.
           </p>
-          <button className="secondary-button" type="button" onClick={() => navigate('booking')}>
+          <button className="secondary-button" type="button" onClick={handleStartBooking}>
             Start Booking
           </button>
         </div>

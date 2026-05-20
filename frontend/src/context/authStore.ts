@@ -10,7 +10,9 @@ export type AuthUser = {
 export type AuthContextValue = {
   isAuthenticated: boolean
   user: AuthUser | null
-  login: (email: string) => void
+  login: (email: string, password: string) => boolean
+  register: (email: string, password: string) => void
+  changePassword: (currentPassword: string, nextPassword: string) => boolean
   logout: () => void
 }
 

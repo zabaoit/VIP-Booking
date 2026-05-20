@@ -1,11 +1,44 @@
+import type { FormEvent } from 'react'
 import { BookingSummary } from '../components/booking/BookingSummary'
 import { PageIntro } from '../components/ui/PageIntro'
+import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
-import { getSelectedRoom } from '../utils/bookingSelections'
-import { handleRouteSubmit } from '../utils/forms'
+import {
+  formatStayRange,
+  getSelectedRoom,
+  getSelectedStay,
+  getStayNights,
+} from '../utils/bookingSelections'
+import { formatCurrency } from '../utils/currency'
+import { saveBooking } from '../utils/appStorage'
 
 export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
   const room = getSelectedRoom()
+  const stay = getSelectedStay()
+  const nights = getStayNights(stay)
+  const { user } = useAuth()
+
+  const handleBookingSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const firstName = String(formData.get('firstName') ?? '').trim()
+    const lastName = String(formData.get('lastName') ?? '').trim()
+    const email = String(formData.get('email') ?? user?.email ?? '').trim()
+    const guestName = `${firstName} ${lastName}`.trim() || email || 'Guest'
+
+    saveBooking({
+      id: `${Date.now()}`,
+      guest: guestName,
+      email,
+      room: room.name,
+      checkIn: formatStayRange(stay),
+      checkOut: stay.checkOut,
+      amount: formatCurrency(room.price * nights),
+      status: 'Pending',
+    })
+
+    navigate('confirm')
+  }
 
   return (
     <main className="page-shell">
@@ -17,22 +50,22 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
 
       <form
         className="checkout-layout"
-        onSubmit={(event) => handleRouteSubmit(event, 'confirm', navigate)}
+        onSubmit={handleBookingSubmit}
       >
         <section className="form-panel">
           <h2>Guest Details</h2>
           <div className="form-grid">
             <label>
               First name
-              <input defaultValue="Anh" />
+              <input defaultValue="Anh" name="firstName" />
             </label>
             <label>
               Last name
-              <input defaultValue="Nguyen" />
+              <input defaultValue="Nguyen" name="lastName" />
             </label>
             <label className="span-2">
               Email address
-              <input defaultValue="guest@vipbooking.vn" type="email" />
+              <input defaultValue={user?.email ?? 'guest@vipbooking.vn'} name="email" type="email" />
             </label>
             <label>
               Phone number

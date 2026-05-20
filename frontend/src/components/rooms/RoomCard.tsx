@@ -1,9 +1,24 @@
 import type { Navigate, Room } from '../../types'
 import { saveSelectedRoom } from '../../utils/bookingSelections'
 import { formatCurrency } from '../../utils/currency'
+import { useAuth } from '../../hooks/useAuth'
 import { Icon } from '../icons/Icon'
 
 export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate }) {
+  const { isAuthenticated } = useAuth()
+
+  const handleBook = () => {
+    saveSelectedRoom(room.id)
+
+    if (!isAuthenticated) {
+      window.sessionStorage.setItem('vip-booking:pending-route', 'booking')
+      navigate('login')
+      return
+    }
+
+    navigate('booking')
+  }
+
   return (
     <article className="room-card">
       <div className="room-image">
@@ -55,10 +70,7 @@ export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate })
             <button
               className="primary-button compact"
               type="button"
-              onClick={() => {
-                saveSelectedRoom(room.id)
-                navigate('booking')
-              }}
+              onClick={handleBook}
             >
               Book
             </button>

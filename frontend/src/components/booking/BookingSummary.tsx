@@ -1,4 +1,5 @@
 import type { Room } from '../../types'
+import { formatStayRange, getSelectedStay, getStayNights } from '../../utils/bookingSelections'
 import { PriceDetails } from './PriceDetails'
 
 export function BookingSummary({
@@ -12,6 +13,9 @@ export function BookingSummary({
   onButtonClick?: () => void
   addOnTotal?: number
 }) {
+  const stay = getSelectedStay()
+  const nights = getStayNights(stay)
+
   return (
     <aside className="summary-panel">
       <img src={room.image} alt={room.name} />
@@ -19,11 +23,11 @@ export function BookingSummary({
         <h3>{room.name}</h3>
         <p>{room.location}</p>
         <div className="summary-badges">
-          <span>3 nights</span>
-          <span>2 guests</span>
-          <span>Oct 2026</span>
+          <span>{nights} {nights === 1 ? 'night' : 'nights'}</span>
+          <span>{stay.guests}</span>
+          <span>{formatStayRange(stay)}</span>
         </div>
-        <PriceDetails room={room} addOnTotal={addOnTotal} />
+        <PriceDetails room={room} addOnTotal={addOnTotal} nights={nights} />
         <button className="primary-button full-width" type="submit" onClick={onButtonClick}>
           {buttonLabel}
         </button>
