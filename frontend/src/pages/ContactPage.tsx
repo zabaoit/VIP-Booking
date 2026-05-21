@@ -1,8 +1,17 @@
+import { useState, type FormEvent } from 'react'
 import { ContactCard } from '../components/contact/ContactCard'
 import { PageIntro } from '../components/ui/PageIntro'
 import { SectionHeading } from '../components/ui/SectionHeading'
 
 export function ContactPage() {
+  const [messageStatus, setMessageStatus] = useState('')
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setMessageStatus('Message sent successfully. Our concierge will contact you shortly.')
+    event.currentTarget.reset()
+  }
+
   return (
     <main className="page-shell">
       <PageIntro
@@ -18,7 +27,7 @@ export function ContactPage() {
           <ContactCard icon="mapPin" title="Visit Us" copy="Son Tra Coast, Da Nang, Viet Nam" />
         </aside>
 
-        <form className="form-panel contact-form">
+        <form className="form-panel contact-form" onSubmit={handleSubmit}>
           <h2>Send a Message</h2>
           <div className="form-grid">
             <label>
@@ -45,9 +54,10 @@ export function ContactPage() {
               />
             </label>
           </div>
-          <button className="primary-button" type="button">
+          <button className="primary-button" type="submit">
             Send Message
           </button>
+          {messageStatus && <p className="form-success">{messageStatus}</p>}
         </form>
       </section>
 

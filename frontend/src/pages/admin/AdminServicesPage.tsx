@@ -14,6 +14,8 @@ export function AdminServicesPage() {
   const [serviceItems, setServiceItems] = useState<Service[]>(() => readServices())
   const [activeService, setActiveService] = useState<Service | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'All' | Service['status']>('All')
 
   const openAddModal = () => {
     setActiveService(null)
@@ -28,6 +30,16 @@ export function AdminServicesPage() {
   const persistServices = (nextServices: Service[]) => {
     setServiceItems(nextServices)
     saveServices(nextServices)
+  }
+
+  const handleToggleStatus = (serviceName: string) => {
+    const nextServices = serviceItems.map((service) =>
+      service.name === serviceName
+        ? { ...service, status: (service.status === 'Active' ? 'Paused' : 'Active') as Service['status'] }
+        : service,
+    )
+
+    persistServices(nextServices)
   }
 
   const handleServiceSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -61,6 +73,18 @@ export function AdminServicesPage() {
     setActiveService(null)
   }
 
+  const filteredServices = serviceItems.filter((service) => {
+    const statusMatch = statusFilter === 'All' || service.status === statusFilter
+    const searchQuery = search.trim().toLowerCase()
+    const searchMatch =
+      !searchQuery ||
+      service.name.toLowerCase().includes(searchQuery) ||
+      service.note.toLowerCase().includes(searchQuery) ||
+      service.price.toLowerCase().includes(searchQuery)
+
+    return statusMatch && searchMatch
+  })
+
   return (
     <div className="admin-stack">
       <section className="admin-panel">
@@ -72,7 +96,38 @@ export function AdminServicesPage() {
 
           <button className="primary-button compact" type="button" onClick={openAddModal}>
             <Icon name="plus" />
-            Them dich vu
+            Add New Service
+          </button>
+        </div>
+
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <label className="flex-1 min-w-[220px]">
+            <input
+              value={search}
+              placeholder="Search services..."
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+          <button
+            className={`ghost-button compact ${statusFilter === 'All' ? 'border-slate-500 text-white' : ''}`}
+            type="button"
+            onClick={() => setStatusFilter('All')}
+          >
+            All Services
+          </button>
+          <button
+            className={`ghost-button compact ${statusFilter === 'Active' ? 'border-slate-500 text-white' : ''}`}
+            type="button"
+            onClick={() => setStatusFilter('Active')}
+          >
+            Active
+          </button>
+          <button
+            className={`ghost-button compact ${statusFilter === 'Paused' ? 'border-slate-500 text-white' : ''}`}
+            type="button"
+            onClick={() => setStatusFilter('Paused')}
+          >
+            Paused
           </button>
         </div>
 
@@ -81,38 +136,58 @@ export function AdminServicesPage() {
             <thead>
               <tr>
                 <th>Service</th>
+                <th>Category</th>
                 <th>Price</th>
                 <th>Description</th>
-                <th>Status</th>
+                <th>Available</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {serviceItems.map((service) => (
+              {filteredServices.map((service) => (
                 <tr key={service.name}>
                   <td>{service.name}</td>
+                  <td>
+                    <span className="status-chip pending">{service.icon}</span>
+                  </td>
                   <td>{service.price}</td>
                   <td>{service.note}</td>
                   <td>
-                    <span
-                      className={`status-chip ${
-                        service.status === 'Active' ? 'success' : 'pending'
-                      }`}
-                    >
-                      {service.status}
-                    </span>
+                    <label className="check-row">
+                      <input
+                        checked={service.status === 'Active'}
+                        type="checkbox"
+                        onChange={() => handleToggleStatus(service.name)}
+                      />
+                    </label>
                   </td>
                   <td>
-                    <button
-                      className="link-button"
-                      type="button"
-                      onClick={() => openEditModal(service)}
-                    >
-                      Edit
-                    </button>
+                    <div className="row-actions">
+                      <button
+                        className="link-button"
+                        type="button"
+                        onClick={() => openEditModal(service)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="link-button"
+                        type="button"
+                        onClick={() =>
+                          persistServices(serviceItems.filter((item) => item.name !== service.name))
+                        }
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
+              {filteredServices.length === 0 && (
+                <tr>
+                  <td colSpan={6}>No services found for this filter.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -130,7 +205,7 @@ export function AdminServicesPage() {
               <div>
                 <p className="eyebrow">Service catalog</p>
                 <h2 id="service-modal-title">
-                  {activeService ? 'Sua dich vu' : 'Them dich vu'}
+                  {activeService ? 'Edit Service' : 'Add Service'}
                 </h2>
               </div>
 
@@ -146,7 +221,7 @@ export function AdminServicesPage() {
 
             <form className="admin-room-form" onSubmit={handleServiceSubmit}>
               <label>
-                Ten dich vu
+                Service Name
                 <input
                   name="name"
                   placeholder="Private Dinner Setup"
@@ -156,7 +231,7 @@ export function AdminServicesPage() {
               </label>
 
               <label>
-                Gia dich vu
+                Price
                 <input
                   name="price"
                   placeholder="95"
@@ -177,7 +252,7 @@ export function AdminServicesPage() {
               </label>
 
               <label>
-                Trang thai
+                Status
                 <select name="status" defaultValue={activeService?.status ?? 'Active'}>
                   <option>Active</option>
                   <option>Paused</option>
@@ -185,10 +260,10 @@ export function AdminServicesPage() {
               </label>
 
               <label className="span-2">
-                Mo ta
+                Description
                 <textarea
                   name="note"
-                  placeholder="Mo ta ngan ve dich vu..."
+                  placeholder="Short service note..."
                   defaultValue={activeService?.note}
                   required
                   rows={4}
@@ -197,12 +272,12 @@ export function AdminServicesPage() {
 
               <div className="admin-modal-actions span-2">
                 <button className="ghost-button" type="button" onClick={() => setIsModalOpen(false)}>
-                  Huy
+                  Cancel
                 </button>
 
                 <button className="primary-button" type="submit">
                   <Icon name={activeService ? 'edit' : 'plus'} />
-                  {activeService ? 'Luu thay doi' : 'Luu dich vu'}
+                  {activeService ? 'Save Changes' : 'Save Service'}
                 </button>
               </div>
             </form>

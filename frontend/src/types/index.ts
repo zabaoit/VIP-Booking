@@ -11,6 +11,7 @@ export type RouteKey =
   | 'failed'
   | 'contact'
   | 'about'
+  | 'profile'
   | 'login'
   | 'register'
   | 'forgot'
@@ -30,6 +31,8 @@ export type IconName =
   | 'chevron'
   | 'close'
   | 'dashboard'
+  | 'eye'
+  | 'eyeOff'
   | 'edit'
   | 'filter'
   | 'home'
@@ -84,6 +87,7 @@ export type RegisteredUser = {
 
 export type BookingRecord = {
   id: string
+  ownerEmail?: string
   guest: string
   email: string
   room: string

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { AuthShell } from '../components/layout/AuthShell'
 import type { Navigate } from '../types'
 import { handleRouteSubmit } from '../utils/forms'
@@ -5,6 +6,7 @@ import { handleRouteSubmit } from '../utils/forms'
 export function OtpPage({ navigate }: { navigate: Navigate }) {
   const otpFlow = window.sessionStorage.getItem('vip-booking:otp-flow')
   const nextRoute = otpFlow === 'register' ? 'login' : 'reset'
+  const [resendMessage, setResendMessage] = useState('')
 
   return (
     <AuthShell title="Secure Verification" subtitle="Enter the six-digit code sent to your inbox.">
@@ -25,8 +27,15 @@ export function OtpPage({ navigate }: { navigate: Navigate }) {
         </button>
       </form>
       <p className="auth-switch">
-        Did not receive it? <button>Resend code</button>
+        Did not receive it?{' '}
+        <button
+          type="button"
+          onClick={() => setResendMessage('A new verification code has been sent to your email.')}
+        >
+          Resend code
+        </button>
       </p>
+      {resendMessage && <p className="auth-switch">{resendMessage}</p>}
     </AuthShell>
   )
 }

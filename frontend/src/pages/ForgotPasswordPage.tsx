@@ -1,10 +1,16 @@
 import { AuthShell } from '../components/layout/AuthShell'
+import { Icon } from '../components/icons/Icon'
 import type { Navigate } from '../types'
 import { handleRouteSubmit } from '../utils/forms'
 
 export function ForgotPasswordPage({ navigate }: { navigate: Navigate }) {
   return (
-    <AuthShell title="Forgot Password" subtitle="Enter your email to receive a verification code.">
+    <AuthShell
+      title="Reset Your Password"
+      subtitle="Enter your email address below and we'll send you instructions to safely reset your password."
+      iconName="lock"
+      maxWidthClass="w-full max-w-[420px]"
+    >
       <form
         onSubmit={(event) => {
           window.sessionStorage.setItem('vip-booking:otp-flow', 'reset')
@@ -12,15 +18,19 @@ export function ForgotPasswordPage({ navigate }: { navigate: Navigate }) {
         }}
       >
         <label>
-          Email address
-          <input defaultValue="guest@vipbooking.vn" type="email" />
+          Email Address
+          <input defaultValue="" type="email" placeholder="Enter your email address" />
         </label>
         <button className="primary-button full-width" type="submit">
-          Send Reset Code
+          Send Reset Link
+          <Icon name="chevron" size={14} />
         </button>
       </form>
       <p className="auth-switch">
-        Remembered it? <button onClick={() => navigate('login')}>Login here</button>
+        Remembered your password?{' '}
+        <button type="button" onClick={() => navigate('login')}>
+          Log in here
+        </button>
       </p>
     </AuthShell>
   )

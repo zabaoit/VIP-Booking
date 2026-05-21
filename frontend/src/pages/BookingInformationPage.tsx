@@ -10,7 +10,7 @@ import {
   getStayNights,
 } from '../utils/bookingSelections'
 import { formatCurrency } from '../utils/currency'
-import { saveBooking } from '../utils/appStorage'
+import { saveBooking, setActiveBookingId } from '../utils/appStorage'
 
 export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
   const room = getSelectedRoom()
@@ -26,8 +26,10 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
     const email = String(formData.get('email') ?? user?.email ?? '').trim()
     const guestName = `${firstName} ${lastName}`.trim() || email || 'Guest'
 
+    const bookingId = `${Date.now()}`
     saveBooking({
-      id: `${Date.now()}`,
+      id: bookingId,
+      ownerEmail: user?.email ?? email,
       guest: guestName,
       email,
       room: room.name,
@@ -36,6 +38,7 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
       amount: formatCurrency(room.price * nights),
       status: 'Pending',
     })
+    setActiveBookingId(bookingId)
 
     navigate('confirm')
   }

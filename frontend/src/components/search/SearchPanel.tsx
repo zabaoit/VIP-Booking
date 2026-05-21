@@ -1,28 +1,61 @@
+import { useState, type FormEvent } from 'react'
 import type { Navigate } from '../../types'
-import { handleRouteSubmit } from '../../utils/forms'
+import { saveSelectedStay } from '../../utils/bookingSelections'
 import { Icon } from '../icons/Icon'
 
 export function SearchPanel({ navigate }: { navigate: Navigate }) {
+  const [destination, setDestination] = useState('Da Nang Oceanfront')
+  const [checkIn, setCheckIn] = useState('2026-10-10')
+  const [checkOut, setCheckOut] = useState('2026-10-13')
+  const [guests, setGuests] = useState('2 guests')
+  const [error, setError] = useState('')
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!destination.trim()) {
+      setError('Please enter a destination.')
+      return
+    }
+
+    if (!checkIn || !checkOut) {
+      setError('Please select check-in and check-out dates.')
+      return
+    }
+
+    const checkInDate = new Date(`${checkIn}T00:00:00`)
+    const checkOutDate = new Date(`${checkOut}T00:00:00`)
+
+    if (checkOutDate <= checkInDate) {
+      setError('Check-out must be after check-in.')
+      return
+    }
+
+    setError('')
+    saveSelectedStay({ checkIn, checkOut, guests })
+    navigate('rooms')
+  }
+
   return (
     <form
       className="search-panel"
-      onSubmit={(event) => handleRouteSubmit(event, 'rooms', navigate)}
+      onSubmit={handleSubmit}
     >
       <label>
         <span>Destination</span>
-        <input defaultValue="Da Nang Oceanfront" />
+        <input value={destination} onChange={(event) => setDestination(event.target.value)} />
       </label>
       <label>
         <span>Check in</span>
-        <input defaultValue="2026-10-10" type="date" />
+        <input value={checkIn} type="date" onChange={(event) => setCheckIn(event.target.value)} />
       </label>
       <label>
         <span>Check out</span>
-        <input defaultValue="2026-10-13" type="date" />
+        <input value={checkOut} type="date" onChange={(event) => setCheckOut(event.target.value)} />
       </label>
       <label>
         <span>Guests</span>
-        <select defaultValue="2 guests">
+        <select value={guests} onChange={(event) => setGuests(event.target.value)}>
           <option>1 guest</option>
           <option>2 guests</option>
           <option>3 guests</option>
@@ -33,6 +66,7 @@ export function SearchPanel({ navigate }: { navigate: Navigate }) {
         <Icon name="search" />
         Search
       </button>
+      {error && <p className="form-error search-form-error">{error}</p>}
     </form>
   )
 }

@@ -18,6 +18,10 @@ export function AdminRoomTypesPage() {
   const [roomTypes, setRoomTypes] = useState<Room[]>(rooms)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
+  const [search, setSearch] = useState('')
+  const [classFilter, setClassFilter] = useState<'All' | 'Available' | 'Occupied' | 'Maintenance'>(
+    'All',
+  )
   const activeRoom = editingRoom
   const isModalOpen = isAddModalOpen || Boolean(editingRoom)
 
@@ -79,6 +83,21 @@ export function AdminRoomTypesPage() {
     }
   }
 
+  const filteredRooms = roomTypes.filter((room, index) => {
+    const searchTerm = search.trim().toLowerCase()
+    const textMatch =
+      !searchTerm ||
+      room.name.toLowerCase().includes(searchTerm) ||
+      room.id.toLowerCase().includes(searchTerm) ||
+      room.category.toLowerCase().includes(searchTerm) ||
+      room.location.toLowerCase().includes(searchTerm)
+
+    const status = index % 4 === 0 ? 'Available' : index % 4 === 1 ? 'Occupied' : index % 4 === 2 ? 'Maintenance' : 'Available'
+    const statusMatch = classFilter === 'All' || classFilter === status
+
+    return textMatch && statusMatch
+  })
+
   return (
     <div className="admin-stack">
       <section className="admin-panel">
@@ -96,38 +115,85 @@ export function AdminRoomTypesPage() {
             Add Room Type
           </button>
         </div>
-        <div className="room-grid admin-room-grid">
-          {roomTypes.map((room) => (
-            <article className="admin-room-card" key={room.id}>
-              <img src={room.image} alt={room.name} loading="lazy" />
-              <div>
-                <span>{room.category}</span>
-                <h3>{room.name}</h3>
-                <p>
-                  {room.size} - {room.guests} - {room.bed}
-                </p>
-                <strong>{formatCurrency(room.price)}/night</strong>
-              </div>
-              <div className="row-actions">
-                <button
-                  className="icon-button"
-                  type="button"
-                  aria-label={`Edit ${room.name}`}
-                  onClick={() => setEditingRoom(room)}
-                >
-                  <Icon name="edit" />
-                </button>
-                <button
-                  className="icon-button danger"
-                  type="button"
-                  aria-label={`Delete ${room.name}`}
-                  onClick={() => handleDeleteRoomType(room)}
-                >
-                  <Icon name="trash" />
-                </button>
-              </div>
-            </article>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <label className="flex-1 min-w-[240px]">
+            <input
+              value={search}
+              placeholder="Search by room number, type, or guest..."
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+          {(['All', 'Available', 'Occupied', 'Maintenance'] as const).map((filter) => (
+            <button
+              key={filter}
+              className={`ghost-button compact ${classFilter === filter ? 'border-slate-500 text-white' : ''}`}
+              type="button"
+              onClick={() => setClassFilter(filter)}
+            >
+              {filter}
+            </button>
           ))}
+        </div>
+
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Room</th>
+                <th>Type</th>
+                <th>Floor</th>
+                <th>Status</th>
+                <th>Housekeeping</th>
+                <th>Rate</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRooms.map((room, index) => {
+                const status = index % 4 === 0 ? 'Available' : index % 4 === 1 ? 'Occupied' : index % 4 === 2 ? 'Maintenance' : 'Reserved'
+                const statusClass = status === 'Available' ? 'success' : status === 'Maintenance' ? 'failed' : 'pending'
+                const housekeeping = index % 3 === 0 ? 'Clean' : index % 3 === 1 ? 'Dirty' : 'Blocked'
+
+                return (
+                  <tr key={room.id}>
+                    <td>{room.id.slice(0, 3).toUpperCase()}</td>
+                    <td>
+                      <strong>{room.name}</strong>
+                    </td>
+                    <td>{room.location}</td>
+                    <td>
+                      <span className={`status-chip ${statusClass}`}>{status}</span>
+                    </td>
+                    <td>{housekeeping}</td>
+                    <td>{formatCurrency(room.price)}</td>
+                    <td>
+                      <div className="row-actions">
+                        <button
+                          className="link-button"
+                          type="button"
+                          onClick={() => setEditingRoom(room)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="link-button"
+                          type="button"
+                          onClick={() => handleDeleteRoomType(room)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+              {filteredRooms.length === 0 && (
+                <tr>
+                  <td colSpan={7}>No rooms found for this filter.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
 

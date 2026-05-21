@@ -40,9 +40,13 @@ export function formatStayRange(stay: BookingStay = getSelectedStay()) {
   )}`
 }
 
-export function saveSelectedRoom(roomId: string, stay: BookingStay = defaultBookingStay) {
-  window.sessionStorage.setItem(selectedRoomKey, roomId)
+export function saveSelectedStay(stay: BookingStay) {
   window.sessionStorage.setItem(selectedStayKey, JSON.stringify(stay))
+}
+
+export function saveSelectedRoom(roomId: string, stay: BookingStay = getSelectedStay()) {
+  window.sessionStorage.setItem(selectedRoomKey, roomId)
+  saveSelectedStay(stay)
 }
 
 export function getSelectedRoom(): Room {

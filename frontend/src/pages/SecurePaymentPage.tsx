@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { BookingSummary } from '../components/booking/BookingSummary'
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
 import type { Navigate } from '../types'
 import { getSelectedRoom } from '../utils/bookingSelections'
-import { handleRouteSubmit } from '../utils/forms'
+import { updateActiveBookingStatus } from '../utils/appStorage'
 
 const paymentMethods = [
   {
@@ -33,6 +33,22 @@ const paymentMethods = [
 export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
   const room = getSelectedRoom()
   const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0])
+  const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(true)
+  const [error, setError] = useState('')
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!isPaymentConfirmed) {
+      setError('Please confirm that payment is completed before continuing.')
+      return
+    }
+
+    setError('')
+    window.localStorage.setItem('vip-booking:preferred-payment', paymentMethod.id)
+    updateActiveBookingStatus('Confirmed')
+    navigate('success')
+  }
 
   return (
     <main className="page-shell">
@@ -44,7 +60,7 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
 
       <form
         className="checkout-layout"
-        onSubmit={(event) => handleRouteSubmit(event, 'success', navigate)}
+        onSubmit={handleSubmit}
       >
         <section className="form-panel">
           <h2>Payment Method</h2>
@@ -72,9 +88,19 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
             </div>
           </div>
           <label className="check-row consent-row">
-            <input defaultChecked type="checkbox" />
+            <input
+              checked={isPaymentConfirmed}
+              type="checkbox"
+              onChange={(event) => {
+                setIsPaymentConfirmed(event.target.checked)
+                if (event.target.checked) {
+                  setError('')
+                }
+              }}
+            />
             <span>I have completed the payment in {paymentMethod.label}.</span>
           </label>
+          {error && <p className="form-error">{error}</p>}
           <button className="primary-button full-width" type="submit">
             <Icon name="lock" />
             Confirm Payment

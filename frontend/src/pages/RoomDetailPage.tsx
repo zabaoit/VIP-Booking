@@ -4,7 +4,7 @@ import { PageIntro } from '../components/ui/PageIntro'
 import { featuredRoom, rooms } from '../data/rooms'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
-import { defaultBookingStay, saveSelectedRoom } from '../utils/bookingSelections'
+import { defaultBookingStay, getSelectedStay, saveSelectedRoom } from '../utils/bookingSelections'
 import { formatCurrency } from '../utils/currency'
 import { getCurrentRoomSlug } from '../utils/router'
 
@@ -78,15 +78,20 @@ function getMonthCells(monthDate: Date) {
 
 export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
   const room = rooms.find((item) => item.id === getCurrentRoomSlug()) ?? featuredRoom
-  const [checkIn, setCheckIn] = useState(defaultBookingStay.checkIn)
-  const [checkOut, setCheckOut] = useState(defaultBookingStay.checkOut)
-  const [checkInText, setCheckInText] = useState(() => formatDisplayDate(defaultBookingStay.checkIn))
-  const [checkOutText, setCheckOutText] = useState(() =>
-    formatDisplayDate(defaultBookingStay.checkOut),
+  const selectedStay = getSelectedStay()
+  const [checkIn, setCheckIn] = useState(selectedStay.checkIn || defaultBookingStay.checkIn)
+  const [checkOut, setCheckOut] = useState(selectedStay.checkOut || defaultBookingStay.checkOut)
+  const [checkInText, setCheckInText] = useState(() =>
+    formatDisplayDate(selectedStay.checkIn || defaultBookingStay.checkIn),
   )
-  const [guests, setGuests] = useState(room.guests)
+  const [checkOutText, setCheckOutText] = useState(() =>
+    formatDisplayDate(selectedStay.checkOut || defaultBookingStay.checkOut),
+  )
+  const [guests, setGuests] = useState(selectedStay.guests || room.guests)
   const [dateError, setDateError] = useState('')
-  const [visibleMonth, setVisibleMonth] = useState(() => parseInputDate(defaultBookingStay.checkIn))
+  const [visibleMonth, setVisibleMonth] = useState(() =>
+    parseInputDate(selectedStay.checkIn || defaultBookingStay.checkIn),
+  )
   const [activeDateField, setActiveDateField] = useState<'checkIn' | 'checkOut'>('checkIn')
   const checkInPickerRef = useRef<HTMLInputElement>(null)
   const checkOutPickerRef = useRef<HTMLInputElement>(null)

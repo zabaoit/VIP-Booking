@@ -52,7 +52,7 @@ export function HomePage({ navigate }: { navigate: Navigate }) {
           actionLabel="View all"
           onAction={() => navigate('rooms')}
         />
-        <div className="room-grid featured-grid">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {rooms.map((room) => (
             <RoomCard key={room.id} room={room} navigate={navigate} />
           ))}

@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { PriceDetails } from '../components/booking/PriceDetails'
 import { Icon } from '../components/icons/Icon'
 import type { Navigate } from '../types'
 import { getSelectedRoom, getSelectedStay, getStayNights } from '../utils/bookingSelections'
+import { clearActiveBookingId, updateActiveBookingStatus } from '../utils/appStorage'
 
 export function PaymentStatusPage({
   variant,
@@ -13,6 +15,16 @@ export function PaymentStatusPage({
   const isSuccess = variant === 'success'
   const room = getSelectedRoom()
   const nights = getStayNights(getSelectedStay())
+
+  useEffect(() => {
+    if (isSuccess) {
+      updateActiveBookingStatus('Confirmed')
+      clearActiveBookingId()
+      return
+    }
+
+    updateActiveBookingStatus('Pending')
+  }, [isSuccess])
 
   return (
     <main className="status-page">

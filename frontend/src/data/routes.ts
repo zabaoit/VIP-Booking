@@ -11,6 +11,7 @@ export const routePaths: Record<RouteKey, string> = {
   failed: 'payment-failed',
   contact: 'contact',
   about: 'about',
+  profile: 'profile',
   login: 'login',
   register: 'register',
   forgot: 'forgot-password',
@@ -33,6 +34,7 @@ export const routeTitles: Record<RouteKey, string> = {
   failed: 'Payment Failed - VIP Booking',
   contact: 'Contact - VIP Booking',
   about: 'About - VIP Booking',
+  profile: 'Profile - VIP Booking',
   login: 'Login - VIP Booking',
   register: 'Register - VIP Booking',
   forgot: 'Forgot Password - VIP Booking',
@@ -53,6 +55,6 @@ export const routeByPath = Object.entries(routePaths).reduce<Record<string, Rout
 )
 
 export const authRouteKeys: RouteKey[] = ['login', 'register', 'forgot', 'reset', 'otp']
-export const protectedRouteKeys: RouteKey[] = ['booking', 'confirm', 'payment', 'success', 'failed']
+export const protectedRouteKeys: RouteKey[] = ['booking', 'confirm', 'payment', 'success', 'failed', 'profile']
 export const adminRouteKeys: RouteKey[] = ['admin', 'adminRooms', 'adminServices']
 export const privateRouteKeys: RouteKey[] = [...protectedRouteKeys, ...adminRouteKeys]
