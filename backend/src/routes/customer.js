@@ -5,7 +5,6 @@ const Booking = require('../models/Booking');
 const { protect } = require('../middleware/auth');
 const router = express.Router();
 
-// GET /api/customers
 router.get('/', protect, async (req, res) => {
   try {
     const { search } = req.query;
@@ -35,7 +34,6 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-// GET /api/customers/:id
 router.get('/:id', protect, async (req, res) => {
   try {
     const customer = await Customer.findByPk(req.params.id, {
@@ -54,7 +52,6 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// POST /api/customers
 router.post('/', protect, async (req, res) => {
   try {
     const customer = await Customer.create(req.body);
@@ -64,7 +61,6 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// PUT /api/customers/:id
 router.put('/:id', protect, async (req, res) => {
   try {
     const customer = await Customer.findByPk(req.params.id);
@@ -79,7 +75,6 @@ router.put('/:id', protect, async (req, res) => {
   }
 });
 
-// DELETE /api/customers/:id
 router.delete('/:id', protect, async (req, res) => {
   try {
     const customer = await Customer.findByPk(req.params.id);
