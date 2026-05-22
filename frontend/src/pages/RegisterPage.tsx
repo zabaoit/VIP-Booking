@@ -11,10 +11,6 @@ export function RegisterPage({ navigate }: { navigate: Navigate }) {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
-  const strength = Math.min(password.length, 12) / 12
-  const strengthLabel =
-    password.length < 8 ? 'Weak strength' : password.length < 11 ? 'Medium strength' : 'Strong'
-
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
@@ -82,15 +78,6 @@ export function RegisterPage({ navigate }: { navigate: Navigate }) {
             >
               <Icon name={showPassword ? 'eyeOff' : 'eye'} size={16} />
             </button>
-          </div>
-          <div className="mt-2">
-            <div className="h-1.5 rounded bg-slate-800">
-              <div
-                className="h-1.5 rounded bg-amber-400 transition-all"
-                style={{ width: `${Math.max(strength * 100, 8)}%` }}
-              />
-            </div>
-            <p className="mt-1 text-right text-[11px] text-amber-300">{strengthLabel}</p>
           </div>
         </label>
         <label>

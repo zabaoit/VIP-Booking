@@ -1,7 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { Icon } from '../../components/icons/Icon'
-import type { IconName, Service } from '../../types'
-import { readServices, saveServices } from '../../utils/appStorage'
+import type { ContactMessage, IconName, Service, SupportInfo } from '../../types'
+import {
+  readContactMessages,
+  readServices,
+  readSupportInfo,
+  saveServices,
+  saveSupportInfo,
+  updateContactMessageStatus,
+} from '../../utils/appStorage'
 
 const serviceIconOptions: IconName[] = ['spark', 'shield', 'award', 'calendar', 'service']
 
@@ -10,8 +17,33 @@ function formatServicePrice(price: string) {
   return value.startsWith('$') ? value : `$${value}`
 }
 
+function formatMessageDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return 'Recent'
+  }
+
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
+
+function parseBadges(value: string) {
+  return value
+    .split(',')
+    .map((badge) => badge.trim())
+    .filter(Boolean)
+    .slice(0, 6)
+}
+
 export function AdminServicesPage() {
   const [serviceItems, setServiceItems] = useState<Service[]>(() => readServices())
+  const [supportInfo, setSupportInfo] = useState<SupportInfo>(() => readSupportInfo())
+  const [supportSaveMessage, setSupportSaveMessage] = useState('')
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>(() => readContactMessages())
   const [activeService, setActiveService] = useState<Service | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -84,6 +116,38 @@ export function AdminServicesPage() {
 
     return statusMatch && searchMatch
   })
+
+  const handleSaveSupportInfo = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const hotline = String(formData.get('hotline') ?? '').trim()
+    const email = String(formData.get('email') ?? '').trim()
+    const address = String(formData.get('address') ?? '').trim()
+    const badges = parseBadges(String(formData.get('badges') ?? ''))
+
+    if (!hotline || !email || !address) {
+      setSupportSaveMessage('Please complete hotline, email, and address.')
+      return
+    }
+
+    const nextSupportInfo: SupportInfo = {
+      hotline,
+      email,
+      address,
+      badges,
+    }
+
+    setSupportInfo(nextSupportInfo)
+    saveSupportInfo(nextSupportInfo)
+    setSupportSaveMessage('Support information updated successfully.')
+  }
+
+  const handleContactMessageStatus = (messageId: string, status: ContactMessage['status']) => {
+    updateContactMessageStatus(messageId, status)
+    setContactMessages((previous) =>
+      previous.map((message) => (message.id === messageId ? { ...message, status } : message)),
+    )
+  }
 
   return (
     <div className="admin-stack">
@@ -186,6 +250,99 @@ export function AdminServicesPage() {
               {filteredServices.length === 0 && (
                 <tr>
                   <td colSpan={6}>No services found for this filter.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="admin-panel">
+        <div className="admin-panel-header">
+          <div className="panel-title">
+            <Icon name="phone" />
+            <span>Customer Support Information</span>
+          </div>
+        </div>
+
+        <form className="admin-room-form" onSubmit={handleSaveSupportInfo}>
+          <label>
+            Hotline
+            <input name="hotline" defaultValue={supportInfo.hotline} required />
+          </label>
+          <label>
+            Email
+            <input name="email" type="email" defaultValue={supportInfo.email} required />
+          </label>
+          <label className="span-2">
+            Address
+            <input name="address" defaultValue={supportInfo.address} required />
+          </label>
+          <label className="span-2">
+            Trust Badges (comma separated)
+            <input
+              name="badges"
+              defaultValue={supportInfo.badges.join(', ')}
+              placeholder="Luxury Stays, Secure Checkout, Priority Service"
+            />
+          </label>
+          <div className="admin-modal-actions span-2">
+            <button className="primary-button" type="submit">
+              <Icon name="check" />
+              Save Support Info
+            </button>
+          </div>
+          {supportSaveMessage && <p className="form-success span-2">{supportSaveMessage}</p>}
+        </form>
+      </section>
+
+      <section className="admin-panel">
+        <div className="admin-panel-header">
+          <div className="panel-title">
+            <Icon name="mail" />
+            <span>Customer Contact Messages</span>
+          </div>
+        </div>
+
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Guest</th>
+                <th>Contact</th>
+                <th>Subject</th>
+                <th>Message</th>
+                <th>Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {contactMessages.map((message) => (
+                <tr key={message.id}>
+                  <td>{message.name}</td>
+                  <td>{message.email}</td>
+                  <td>{message.subject}</td>
+                  <td>{message.message}</td>
+                  <td>{formatMessageDate(message.createdAt)}</td>
+                  <td>
+                    <select
+                      value={message.status}
+                      onChange={(event) =>
+                        handleContactMessageStatus(
+                          message.id,
+                          event.target.value as ContactMessage['status'],
+                        )
+                      }
+                    >
+                      <option value="New">New</option>
+                      <option value="Handled">Handled</option>
+                    </select>
+                  </td>
+                </tr>
+              ))}
+              {contactMessages.length === 0 && (
+                <tr>
+                  <td colSpan={6}>No contact messages yet.</td>
                 </tr>
               )}
             </tbody>

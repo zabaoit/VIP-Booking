@@ -2,11 +2,14 @@ import { rooms as defaultRooms } from '../data/rooms'
 import { services as defaultServices } from '../data/services'
 import type {
   BookingRecord,
+  ContactMessage,
+  ContactMessageStatus,
   CustomerProfile,
   PricingRule,
   RegisteredUser,
   Room,
   Service,
+  SupportInfo,
 } from '../types'
 
 export const registeredUsersStorageKey = 'vip-booking-registered-users'
@@ -16,6 +19,15 @@ export const pricingRulesStorageKey = 'vip-booking-pricing-rules'
 export const customerProfilesStorageKey = 'vip-booking-customer-profiles'
 export const bookingsStorageKey = 'vip-booking-bookings'
 export const activeBookingIdStorageKey = 'vip-booking-active-booking-id'
+export const supportInfoStorageKey = 'vip-booking-support-info'
+export const contactMessagesStorageKey = 'vip-booking-contact-messages'
+
+const defaultSupportInfo: SupportInfo = {
+  hotline: '+84 901 123 456',
+  email: 'guest@vipbooking.vn',
+  address: '12 Nguyen Hue, Ho Chi Minh City',
+  badges: ['Luxury Stays', 'Secure Checkout', 'Priority Service'],
+}
 
 const defaultPricingRules: PricingRule[] = [
   {
@@ -170,4 +182,62 @@ export function updateActiveBookingStatus(status: BookingRecord['status']) {
   }
 
   updateBookingStatus(activeBookingId, status)
+}
+
+export function readSupportInfo(): SupportInfo {
+  const rawSupportInfo = localStorage.getItem(supportInfoStorageKey)
+  if (!rawSupportInfo) {
+    localStorage.setItem(supportInfoStorageKey, JSON.stringify(defaultSupportInfo))
+    return defaultSupportInfo
+  }
+
+  try {
+    const parsedSupportInfo = JSON.parse(rawSupportInfo) as Partial<SupportInfo>
+    return {
+      ...defaultSupportInfo,
+      ...parsedSupportInfo,
+      badges: Array.isArray(parsedSupportInfo.badges)
+        ? parsedSupportInfo.badges.filter(Boolean).slice(0, 6)
+        : defaultSupportInfo.badges,
+    }
+  } catch {
+    localStorage.setItem(supportInfoStorageKey, JSON.stringify(defaultSupportInfo))
+    return defaultSupportInfo
+  }
+}
+
+export function saveSupportInfo(supportInfo: SupportInfo) {
+  localStorage.setItem(
+    supportInfoStorageKey,
+    JSON.stringify({
+      ...supportInfo,
+      badges: supportInfo.badges.filter(Boolean).slice(0, 6),
+    }),
+  )
+}
+
+export function readContactMessages(): ContactMessage[] {
+  const messages = parseArrayStorage<ContactMessage>(contactMessagesStorageKey)
+  return messages ?? []
+}
+
+export function saveContactMessage(
+  message: Omit<ContactMessage, 'id' | 'createdAt' | 'status'>,
+) {
+  const contactMessages = readContactMessages()
+  const nextMessage: ContactMessage = {
+    ...message,
+    id: `${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    status: 'New',
+  }
+  localStorage.setItem(contactMessagesStorageKey, JSON.stringify([nextMessage, ...contactMessages]))
+}
+
+export function updateContactMessageStatus(messageId: string, status: ContactMessageStatus) {
+  const contactMessages = readContactMessages()
+  const nextMessages = contactMessages.map((message) =>
+    message.id === messageId ? { ...message, status } : message,
+  )
+  localStorage.setItem(contactMessagesStorageKey, JSON.stringify(nextMessages))
 }

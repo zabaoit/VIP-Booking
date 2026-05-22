@@ -3,17 +3,13 @@ import { Icon } from '../components/icons/Icon'
 import { AuthShell } from '../components/layout/AuthShell'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
-import {
-  OAuthConfigError,
-  signInWithAppleAccount,
-  signInWithGoogleAccount,
-} from '../utils/oauthProviders'
+import { OAuthConfigError, signInWithGoogleAccount } from '../utils/oauthProviders'
 
 export function LoginPage({ navigate }: { navigate: Navigate }) {
   const { login, socialLogin } = useAuth()
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
-  const [socialLoading, setSocialLoading] = useState<'google' | 'apple' | null>(null)
+  const [socialLoading, setSocialLoading] = useState<'google' | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [registeredEmail] = useState(() => {
     const email = window.sessionStorage.getItem('vip-booking:register-success') ?? ''
@@ -42,16 +38,15 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
     navigate(pendingRoute === 'booking' ? 'booking' : 'home')
   }
 
-  const handleSocialSignIn = async (provider: 'google' | 'apple') => {
+  const handleSocialSignIn = async () => {
     try {
-      setSocialLoading(provider)
+      setSocialLoading('google')
       setError('')
       setInfo('')
 
-      const account =
-        provider === 'google' ? await signInWithGoogleAccount() : await signInWithAppleAccount()
-      const authUser = socialLogin(provider, account.email)
-      setInfo(`Signed in with ${provider === 'google' ? 'Google' : 'Apple'} as ${authUser.email}.`)
+      const account = await signInWithGoogleAccount()
+      const authUser = socialLogin('google', account.email)
+      setInfo(`Signed in with Google as ${authUser.email}.`)
       const pendingRoute = window.sessionStorage.getItem('vip-booking:pending-route')
       window.sessionStorage.removeItem('vip-booking:pending-route')
       navigate(pendingRoute === 'booking' ? 'booking' : 'home')
@@ -135,17 +130,9 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
             className="ghost-button full-width"
             type="button"
             disabled={socialLoading !== null}
-            onClick={() => handleSocialSignIn('google')}
+            onClick={handleSocialSignIn}
           >
             {socialLoading === 'google' ? 'Connecting Google...' : 'Google'}
-          </button>
-          <button
-            className="ghost-button full-width"
-            type="button"
-            disabled={socialLoading !== null}
-            onClick={() => handleSocialSignIn('apple')}
-          >
-            {socialLoading === 'apple' ? 'Connecting Apple...' : 'Apple'}
           </button>
         </div>
       </form>

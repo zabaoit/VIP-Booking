@@ -112,6 +112,25 @@ export type RegisteredUser = {
   role: 'guest' | 'admin'
 }
 
+export type SupportInfo = {
+  hotline: string
+  email: string
+  address: string
+  badges: string[]
+}
+
+export type ContactMessageStatus = 'New' | 'Handled'
+
+export type ContactMessage = {
+  id: string
+  name: string
+  email: string
+  subject: string
+  message: string
+  createdAt: string
+  status: ContactMessageStatus
+}
+
 export type BookingRecord = {
   id: string
   ownerEmail?: string
