@@ -1,13 +1,43 @@
 {
-  "name": "VIP-Booking",
+  "name": "vip-booking",
   "version": "1.0.0",
   "description": "",
+  "keywords": [
+    "nodejs",
+    "express",
+    "mysql"
+  ],
+  "homepage": "https://github.com/zabaoit/VIP-Booking#readme",
+  "bugs": {
+    "url": "https://github.com/zabaoit/VIP-Booking.git"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zabaoit/VIP-Booking.git"
+  },
+  "license": "ISC",
+  "author": "",
   "type": "module",
   "main": "src/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./src/app.js",
     "dev": "nodemon ./src/app.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.22.3",
+    "prisma": "^5.22.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   },
   "nodemonConfig": {
     "watch": [
@@ -18,30 +48,5 @@
       "node_modules"
     ],
     "exec": "node ./src/app.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/zabaoit/VIP-Booking.git"
-  },
-  "keywords": [
-    "nodejs",
-    "express",
-    "mysql"
-  ],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/zabaoit/VIP-Booking.git"
-  },
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "mysql2": "^3.22.3",
-    "zod": "^4.4.3"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14",
-    "prisma": "^7.8.0"
   }
 }
