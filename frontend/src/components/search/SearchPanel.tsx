@@ -1,10 +1,27 @@
 import { useState, type FormEvent } from 'react'
 import type { Navigate } from '../../types'
-import { saveSelectedStay } from '../../utils/bookingSelections'
+import {
+  type BookingStay,
+  getRoomSearchQuery,
+  saveRoomSearchQuery,
+  saveSelectedStay,
+} from '../../utils/bookingSelections'
 import { Icon } from '../icons/Icon'
 
-export function SearchPanel({ navigate }: { navigate: Navigate }) {
-  const [destination, setDestination] = useState('Da Nang Oceanfront')
+export type SearchPayload = BookingStay & {
+  destination: string
+}
+
+export function SearchPanel({
+  navigate,
+  mode = 'navigate',
+  onSearch,
+}: {
+  navigate: Navigate
+  mode?: 'navigate' | 'inline'
+  onSearch?: (payload: SearchPayload) => void
+}) {
+  const [destination, setDestination] = useState(() => getRoomSearchQuery() || 'Da Nang Oceanfront')
   const [checkIn, setCheckIn] = useState('2026-10-10')
   const [checkOut, setCheckOut] = useState('2026-10-13')
   const [guests, setGuests] = useState('2 guests')
@@ -32,8 +49,18 @@ export function SearchPanel({ navigate }: { navigate: Navigate }) {
     }
 
     setError('')
+    saveRoomSearchQuery(destination)
     saveSelectedStay({ checkIn, checkOut, guests })
-    navigate('rooms')
+    onSearch?.({
+      destination: destination.trim(),
+      checkIn,
+      checkOut,
+      guests,
+    })
+
+    if (mode === 'navigate') {
+      navigate('rooms')
+    }
   }
 
   return (

@@ -5,6 +5,7 @@ import { applyPricingToRooms } from './pricing'
 
 const selectedRoomKey = 'vip-booking:selected-room-id'
 const selectedStayKey = 'vip-booking:selected-stay'
+const roomSearchQueryKey = 'vip-booking:room-search-query'
 
 export type BookingStay = {
   checkIn: string
@@ -49,6 +50,21 @@ export function saveSelectedStay(stay: BookingStay) {
 export function saveSelectedRoom(roomId: string, stay: BookingStay = getSelectedStay()) {
   window.sessionStorage.setItem(selectedRoomKey, roomId)
   saveSelectedStay(stay)
+}
+
+export function saveRoomSearchQuery(query: string) {
+  const trimmedQuery = query.trim()
+
+  if (!trimmedQuery) {
+    window.sessionStorage.removeItem(roomSearchQueryKey)
+    return
+  }
+
+  window.sessionStorage.setItem(roomSearchQueryKey, trimmedQuery)
+}
+
+export function getRoomSearchQuery() {
+  return window.sessionStorage.getItem(roomSearchQueryKey) ?? ''
 }
 
 export function getSelectedRoom(): Room {

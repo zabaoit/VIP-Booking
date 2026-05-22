@@ -1,4 +1,5 @@
-import { SearchPanel } from '../components/search/SearchPanel'
+import { useMemo, useState } from 'react'
+import { SearchPanel, type SearchPayload } from '../components/search/SearchPanel'
 import { Icon } from '../components/icons/Icon'
 import { RoomCard } from '../components/rooms/RoomCard'
 import { SectionHeading } from '../components/ui/SectionHeading'
@@ -12,6 +13,8 @@ export function HomePage({ navigate }: { navigate: Navigate }) {
   const { isAuthenticated } = useAuth()
   const services = readServices().filter((service) => service.status === 'Active')
   const rooms = applyPricingToRooms(readRooms(), readPricingRules())
+  const [homeSearchTerm, setHomeSearchTerm] = useState('')
+  const [hasSearched, setHasSearched] = useState(false)
 
   const handleStartBooking = () => {
     if (!isAuthenticated) {
@@ -22,6 +25,36 @@ export function HomePage({ navigate }: { navigate: Navigate }) {
 
     navigate('booking')
   }
+
+  const handleHomeSearch = (payload: SearchPayload) => {
+    setHomeSearchTerm(payload.destination.trim().toLowerCase())
+    setHasSearched(true)
+  }
+
+  const featuredRooms = useMemo(() => {
+    if (!homeSearchTerm) {
+      return rooms
+    }
+
+    return rooms.filter((room) => {
+      const searchableText = [
+        room.name,
+        room.category,
+        room.location,
+        room.description,
+        ...room.amenities,
+        ...room.highlights,
+      ]
+        .join(' ')
+        .toLowerCase()
+
+      return searchableText.includes(homeSearchTerm)
+    })
+  }, [homeSearchTerm, rooms])
+
+  const featuredTitle = hasSearched ? 'Search results on home' : 'Rooms built for premium travel'
+  const featuredEyebrow = hasSearched ? 'Home search' : 'Featured stays'
+  const featuredActionLabel = hasSearched ? 'View all rooms' : 'View all'
 
   return (
     <main>
@@ -43,21 +76,43 @@ export function HomePage({ navigate }: { navigate: Navigate }) {
             </button>
           </div>
         </div>
-        <SearchPanel navigate={navigate} />
+        <SearchPanel mode="inline" navigate={navigate} onSearch={handleHomeSearch} />
       </section>
 
       <section className="section-shell">
         <SectionHeading
-          eyebrow="Featured stays"
-          title="Rooms built for premium travel"
-          actionLabel="View all"
+          eyebrow={featuredEyebrow}
+          title={featuredTitle}
+          actionLabel={featuredActionLabel}
           onAction={() => navigate('rooms')}
         />
+        {hasSearched && (
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/70 p-3 text-sm">
+            <p className="text-slate-300">
+              Found <strong className="text-white">{featuredRooms.length}</strong> room(s) matching your search.
+            </p>
+            <button
+              className="ghost-button compact"
+              type="button"
+              onClick={() => {
+                setHomeSearchTerm('')
+                setHasSearched(false)
+              }}
+            >
+              Clear search
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {rooms.map((room) => (
+          {featuredRooms.map((room) => (
             <RoomCard key={room.id} room={room} navigate={navigate} />
           ))}
         </div>
+        {hasSearched && featuredRooms.length === 0 && (
+          <p className="mt-4 rounded-lg border border-slate-700 bg-slate-900/70 p-4 text-sm text-slate-300">
+            No rooms matched this destination. Try another keyword or view all rooms.
+          </p>
+        )}
       </section>
 
       <section className="section-shell service-band">

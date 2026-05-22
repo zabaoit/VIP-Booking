@@ -4,6 +4,7 @@ import { FilterGroup } from '../components/rooms/FilterGroup'
 import { RoomCard } from '../components/rooms/RoomCard'
 import { PageIntro } from '../components/ui/PageIntro'
 import type { Navigate } from '../types'
+import { getRoomSearchQuery, saveRoomSearchQuery } from '../utils/bookingSelections'
 import { readPricingRules, readRooms } from '../utils/appStorage'
 import { applyPricingToRooms } from '../utils/pricing'
 
@@ -16,6 +17,7 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
   const [selectedPrices, setSelectedPrices] = useState<string[]>([])
   const [selectedRoomClasses, setSelectedRoomClasses] = useState<string[]>([])
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState(() => getRoomSearchQuery())
   const [sortBy, setSortBy] = useState<'recommended' | 'price-low' | 'rating'>('recommended')
 
   const toggleOption = (
@@ -28,7 +30,22 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
   }
 
   const filteredRooms = useMemo(() => {
+    const normalizedSearchQuery = searchQuery.trim().toLowerCase()
     const result = rooms.filter((room) => {
+      const searchableText = [
+        room.name,
+        room.category,
+        room.location,
+        room.description,
+        ...room.amenities,
+        ...room.highlights,
+      ]
+        .join(' ')
+        .toLowerCase()
+
+      const matchSearchQuery =
+        normalizedSearchQuery.length === 0 || searchableText.includes(normalizedSearchQuery)
+
       const matchPrice =
         selectedPrices.length === 0 ||
         selectedPrices.some((price) => {
@@ -73,7 +90,7 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
           return roomFeatures.includes('airport') || roomFeatures.includes('limousine')
         })
 
-      return matchPrice && matchRoomClass && matchAmenities
+      return matchSearchQuery && matchPrice && matchRoomClass && matchAmenities
     })
 
     if (sortBy === 'price-low') {
@@ -83,7 +100,7 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
       return [...result].sort((a, b) => b.rating - a.rating)
     }
     return result
-  }, [rooms, selectedAmenities, selectedPrices, selectedRoomClasses, sortBy])
+  }, [rooms, searchQuery, selectedAmenities, selectedPrices, selectedRoomClasses, sortBy])
 
   return (
     <main className="mx-auto w-full max-w-[1180px] px-5 py-12">
@@ -124,21 +141,50 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
 
         <section className="grid gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-700 bg-slate-900/75 p-3">
-            <p className="text-slate-300">
+            <div className="grid w-full gap-3 md:grid-cols-[minmax(220px,1fr)_auto] md:items-center">
+              <div className="flex items-center gap-2">
+                <input
+                  className="h-10 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 text-sm text-slate-100 outline-none transition focus:border-blue-400"
+                  value={searchQuery}
+                  placeholder="Search destination, room, or amenity..."
+                  aria-label="Search rooms"
+                  onChange={(event) => {
+                    const nextQuery = event.target.value
+                    setSearchQuery(nextQuery)
+                    saveRoomSearchQuery(nextQuery)
+                  }}
+                />
+                {searchQuery.trim() && (
+                  <button
+                    className="ghost-button compact"
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('')
+                      saveRoomSearchQuery('')
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              <select
+                className="h-10 min-w-[190px] rounded-lg border border-slate-600 bg-slate-950 px-3 text-sm text-slate-100 outline-none transition focus:border-blue-400"
+                value={sortBy}
+                aria-label="Sort rooms"
+                onChange={(event) =>
+                  setSortBy(event.target.value as 'recommended' | 'price-low' | 'rating')
+                }
+              >
+                <option value="recommended">Recommended</option>
+                <option value="price-low">Price: low to high</option>
+                <option value="rating">Highest rating</option>
+              </select>
+            </div>
+
+            <p className="w-full text-slate-300">
               <strong className="text-white">{filteredRooms.length}</strong> curated rooms found
             </p>
-            <select
-              className="h-10 min-w-[190px] rounded-lg border border-slate-600 bg-slate-950 px-3 text-sm text-slate-100 outline-none transition focus:border-blue-400"
-              value={sortBy}
-              aria-label="Sort rooms"
-              onChange={(event) =>
-                setSortBy(event.target.value as 'recommended' | 'price-low' | 'rating')
-              }
-            >
-              <option value="recommended">Recommended</option>
-              <option value="price-low">Price: low to high</option>
-              <option value="rating">Highest rating</option>
-            </select>
           </div>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
