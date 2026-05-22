@@ -4,7 +4,6 @@ const Room = require('../models/Room');
 const { protect, admin } = require('../middleware/auth');
 const router = express.Router();
 
-// GET /api/rooms
 router.get('/', protect, async (req, res) => {
   try {
     const { status, type, floor } = req.query;
@@ -21,7 +20,6 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-// GET /api/rooms/:id
 router.get('/:id', protect, async (req, res) => {
   try {
     const room = await Room.findByPk(req.params.id);
@@ -35,7 +33,6 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// POST /api/rooms
 router.post('/', protect, admin, async (req, res) => {
   try {
     const room = await Room.create(req.body);
@@ -45,7 +42,6 @@ router.post('/', protect, admin, async (req, res) => {
   }
 });
 
-// PUT /api/rooms/:id
 router.put('/:id', protect, admin, async (req, res) => {
   try {
     const room = await Room.findByPk(req.params.id);
@@ -60,7 +56,6 @@ router.put('/:id', protect, admin, async (req, res) => {
   }
 });
 
-// DELETE /api/rooms/:id
 router.delete('/:id', protect, admin, async (req, res) => {
   try {
     const room = await Room.findByPk(req.params.id);
