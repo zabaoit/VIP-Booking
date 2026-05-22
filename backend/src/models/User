@@ -1,48 +1,62 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 const bcrypt = require('bcryptjs');
 
-const userSchema = new mongoose.Schema({
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   fullName: {
-    type: String,
-    required: true,
-    unique: true,
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
   },
   email: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
+    validate: {
+      isEmail: true
+    }
   },
   password: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false
   },
-   phoneNumber: {
-    type: String,
-    required: true,
+  phoneNumber: {
+    type: DataTypes.STRING,
+    allowNull: false
   },
   role: {
-    type: String,
-    enum: ['admin', 'manager', 'receptionist', 'staff'],
-    default: 'staff',
+    type: DataTypes.ENUM('admin', 'manager', 'receptionist', 'staff'),
+    defaultValue: 'staff'
   },
   isActive: {
-    type: Boolean,
-    default: true,
-  },
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  }
 }, {
   timestamps: true,
-});
-
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
-    next();
+  hooks: {
+    beforeCreate: async (user) => {
+      if (user.password) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+      }
+    },
+    beforeUpdate: async (user) => {
+      if (user.changed('password')) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+      }
+    }
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
 });
 
-userSchema.methods.comparePassword = async function(enteredPassword) {
+User.prototype.comparePassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;
