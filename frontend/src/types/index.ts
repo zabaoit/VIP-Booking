@@ -20,10 +20,14 @@ export type RouteKey =
   | 'admin'
   | 'adminRooms'
   | 'adminServices'
+  | 'adminBookings'
+  | 'adminPricing'
+  | 'adminCustomers'
   | 'notFound'
 
 export type IconName =
   | 'award'
+  | 'bell'
   | 'bed'
   | 'calendar'
   | 'card'
@@ -69,6 +73,29 @@ export type Room = {
   amenities: string[]
   highlights: string[]
   availability: number[]
+}
+
+export type PricingRule = {
+  id: string
+  name: string
+  roomType: string
+  trigger: string
+  adjustment: string
+  startDate: string
+  endDate: string
+}
+
+export type CustomerStatus = 'Active' | 'Disabled'
+export type CustomerTier = 'VIP GOLD' | 'Corporate Account' | 'Standard'
+
+export type CustomerProfile = {
+  id: string
+  email: string
+  name: string
+  phone: string
+  address: string
+  status: CustomerStatus
+  tier: CustomerTier
 }
 
 export type Service = {

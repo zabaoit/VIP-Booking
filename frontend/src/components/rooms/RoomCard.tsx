@@ -20,7 +20,7 @@ export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate })
   }
 
   return (
-    <article className="group overflow-hidden rounded-xl border border-slate-700/80 bg-slate-900/80 shadow-[0_22px_48px_rgba(2,8,23,0.45)]">
+    <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-700/80 bg-slate-900/80 shadow-[0_22px_48px_rgba(2,8,23,0.45)]">
       <div className="relative h-56 overflow-hidden">
         <img
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
@@ -32,10 +32,10 @@ export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate })
           {room.category}
         </span>
       </div>
-      <div className="grid gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-white">{room.name}</h3>
+          <div className="min-w-0">
+            <h3 className="max-h-14 overflow-hidden text-lg font-semibold text-white">{room.name}</h3>
             <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-slate-300">
               <Icon name="mapPin" size={14} />
               {room.location}
@@ -51,21 +51,23 @@ export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate })
             <Icon name="users" size={15} />
             {room.guests}
           </span>
-          <span className="inline-flex items-center gap-1.5">
+          <span className="inline-flex min-w-0 items-center gap-1.5">
             <Icon name="bed" size={15} />
-            {room.bed}
+            <span className="truncate">{room.bed}</span>
           </span>
           <span>{room.size}</span>
         </div>
-        <p className="text-[15px] leading-relaxed text-slate-300">{room.description}</p>
-        <div className="mt-1 flex items-end justify-between gap-3">
-          <strong className="inline-flex items-baseline gap-1 text-2xl font-semibold text-white">
+        <p className="max-h-[5.25rem] overflow-hidden text-[15px] leading-relaxed text-slate-300">
+          {room.description}
+        </p>
+        <div className="mt-auto flex items-end justify-between gap-2.5">
+          <strong className="inline-flex items-baseline gap-1 text-xl font-semibold leading-none text-white">
             {formatCurrency(room.price)}
-            <small className="text-xs font-medium text-slate-400">/night</small>
+            <small className="text-[11px] font-medium text-slate-400">/night</small>
           </strong>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <button
-              className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-600 bg-slate-800/70 px-3 text-sm font-semibold text-slate-200 transition hover:border-slate-400 hover:text-white"
+              className="inline-flex h-7 items-center justify-center whitespace-nowrap rounded-md border border-slate-600 bg-slate-800/70 px-2.5 text-xs font-semibold text-slate-200 transition hover:border-slate-400 hover:text-white"
               type="button"
               onClick={() => {
                 saveSelectedRoom(room.id)
@@ -75,7 +77,7 @@ export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate })
               Details
             </button>
             <button
-              className="inline-flex h-9 items-center justify-center rounded-lg bg-gradient-to-b from-blue-400 to-blue-600 px-4 text-sm font-semibold text-white shadow-[0_8px_22px_rgba(37,99,235,0.35)] transition hover:brightness-110"
+              className="inline-flex h-7 items-center justify-center whitespace-nowrap rounded-md bg-gradient-to-b from-blue-400 to-blue-600 px-2.5 text-xs font-semibold text-white shadow-[0_8px_22px_rgba(37,99,235,0.35)] transition hover:brightness-110"
               type="button"
               onClick={handleBook}
             >

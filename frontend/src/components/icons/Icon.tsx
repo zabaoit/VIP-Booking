@@ -21,6 +21,13 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
           <path d="m8.5 12.5-1 7 4.5-2.5 4.5 2.5-1-7" />
         </svg>
       )
+    case 'bell':
+      return (
+        <svg {...common}>
+          <path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7" />
+          <path d="M10 19a2 2 0 0 0 4 0" />
+        </svg>
+      )
     case 'bed':
       return (
         <svg {...common}>

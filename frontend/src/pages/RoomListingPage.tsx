@@ -3,14 +3,16 @@ import { Icon } from '../components/icons/Icon'
 import { FilterGroup } from '../components/rooms/FilterGroup'
 import { RoomCard } from '../components/rooms/RoomCard'
 import { PageIntro } from '../components/ui/PageIntro'
-import { rooms } from '../data/rooms'
 import type { Navigate } from '../types'
+import { readPricingRules, readRooms } from '../utils/appStorage'
+import { applyPricingToRooms } from '../utils/pricing'
 
 const priceOptions = ['$250 - $350', '$350 - $500', '$500+'] as const
 const roomClassOptions = ['Suite', 'Business', 'Family', 'Residence'] as const
 const amenityOptions = ['Breakfast', 'Balcony', 'Spa access', 'Airport pickup'] as const
 
 export function RoomListingPage({ navigate }: { navigate: Navigate }) {
+  const rooms = applyPricingToRooms(readRooms(), readPricingRules())
   const [selectedPrices, setSelectedPrices] = useState<string[]>([])
   const [selectedRoomClasses, setSelectedRoomClasses] = useState<string[]>([])
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
@@ -81,7 +83,7 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
       return [...result].sort((a, b) => b.rating - a.rating)
     }
     return result
-  }, [selectedAmenities, selectedPrices, selectedRoomClasses, sortBy])
+  }, [rooms, selectedAmenities, selectedPrices, selectedRoomClasses, sortBy])
 
   return (
     <main className="mx-auto w-full max-w-[1180px] px-5 py-12">

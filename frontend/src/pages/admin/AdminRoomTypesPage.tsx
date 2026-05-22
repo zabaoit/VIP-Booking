@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Icon } from '../../components/icons/Icon'
-import { rooms } from '../../data/rooms'
+import { rooms as defaultRooms } from '../../data/rooms'
 import type { Room } from '../../types'
+import { readRooms, saveRooms } from '../../utils/appStorage'
 import { formatCurrency } from '../../utils/currency'
 
 function createRoomId(name: string) {
@@ -15,7 +16,7 @@ function createRoomId(name: string) {
 }
 
 export function AdminRoomTypesPage() {
-  const [roomTypes, setRoomTypes] = useState<Room[]>(rooms)
+  const [roomTypes, setRoomTypes] = useState<Room[]>(() => readRooms())
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
   const [search, setSearch] = useState('')
@@ -24,6 +25,11 @@ export function AdminRoomTypesPage() {
   )
   const activeRoom = editingRoom
   const isModalOpen = isAddModalOpen || Boolean(editingRoom)
+
+  const persistRoomTypes = (nextRoomTypes: Room[]) => {
+    setRoomTypes(nextRoomTypes)
+    saveRooms(nextRoomTypes)
+  }
 
   const closeRoomModal = () => {
     setIsAddModalOpen(false)
@@ -42,7 +48,8 @@ export function AdminRoomTypesPage() {
       return
     }
 
-    const image = String(formData.get('image') ?? '').trim() || activeRoom?.image || rooms[0].image
+    const image =
+      String(formData.get('image') ?? '').trim() || activeRoom?.image || defaultRooms[0].image
     const nextRoom: Room = {
       id: activeRoom?.id ?? createRoomId(name),
       name,
@@ -56,21 +63,20 @@ export function AdminRoomTypesPage() {
       guests: String(formData.get('guests') ?? '').trim() || activeRoom?.guests || '2 guests',
       bed: String(formData.get('bed') ?? '').trim() || activeRoom?.bed || 'King bed',
       image,
-      gallery: activeRoom?.gallery ?? [image, rooms[1].image, rooms[2].image],
+      gallery: activeRoom?.gallery ?? [image, defaultRooms[1]?.image ?? image, defaultRooms[2]?.image ?? image],
       description:
         String(formData.get('description') ?? '').trim() ||
         activeRoom?.description ||
         'A newly added room type ready for booking setup and detailed service configuration.',
       amenities: activeRoom?.amenities ?? ['Smart climate control', 'Premium minibar', 'High speed Wi-Fi'],
       highlights: activeRoom?.highlights ?? ['Flexible hold', 'Guest ready', 'Admin managed'],
-      availability: activeRoom?.availability ?? [4, 5, 10, 11, 12, 18, 19, 23, 24],
+      availability: activeRoom?.availability ?? defaultRooms[0].availability,
     }
 
-    setRoomTypes((current) =>
-      activeRoom
-        ? current.map((room) => (room.id === activeRoom.id ? nextRoom : room))
-        : [nextRoom, ...current],
-    )
+    const nextRoomTypes = activeRoom
+      ? roomTypes.map((room) => (room.id === activeRoom.id ? nextRoom : room))
+      : [nextRoom, ...roomTypes]
+    persistRoomTypes(nextRoomTypes)
     closeRoomModal()
     event.currentTarget.reset()
   }
@@ -79,7 +85,7 @@ export function AdminRoomTypesPage() {
     const shouldDelete = window.confirm(`Delete room type "${room.name}"?`)
 
     if (shouldDelete) {
-      setRoomTypes((current) => current.filter((item) => item.id !== room.id))
+      persistRoomTypes(roomTypes.filter((item) => item.id !== room.id))
     }
   }
 

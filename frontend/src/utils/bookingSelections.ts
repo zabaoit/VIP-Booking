@@ -1,5 +1,7 @@
-import { featuredRoom, rooms } from '../data/rooms'
+import { rooms as defaultRooms } from '../data/rooms'
 import type { Room } from '../types'
+import { readPricingRules, readRooms } from './appStorage'
+import { applyPricingToRooms } from './pricing'
 
 const selectedRoomKey = 'vip-booking:selected-room-id'
 const selectedStayKey = 'vip-booking:selected-stay'
@@ -50,8 +52,9 @@ export function saveSelectedRoom(roomId: string, stay: BookingStay = getSelected
 }
 
 export function getSelectedRoom(): Room {
+  const rooms = applyPricingToRooms(readRooms(), readPricingRules())
   const selectedRoomId = window.sessionStorage.getItem(selectedRoomKey)
-  return rooms.find((room) => room.id === selectedRoomId) ?? featuredRoom
+  return rooms.find((room) => room.id === selectedRoomId) ?? defaultRooms[0]
 }
 
 export function getSelectedStay(): BookingStay {

@@ -3,11 +3,17 @@ import { Icon } from '../components/icons/Icon'
 import { AuthShell } from '../components/layout/AuthShell'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
+import {
+  OAuthConfigError,
+  signInWithAppleAccount,
+  signInWithGoogleAccount,
+} from '../utils/oauthProviders'
 
 export function LoginPage({ navigate }: { navigate: Navigate }) {
-  const { login } = useAuth()
+  const { login, socialLogin } = useAuth()
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
+  const [socialLoading, setSocialLoading] = useState<'google' | 'apple' | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [registeredEmail] = useState(() => {
     const email = window.sessionStorage.getItem('vip-booking:register-success') ?? ''
@@ -34,6 +40,32 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
     const pendingRoute = window.sessionStorage.getItem('vip-booking:pending-route')
     window.sessionStorage.removeItem('vip-booking:pending-route')
     navigate(pendingRoute === 'booking' ? 'booking' : 'home')
+  }
+
+  const handleSocialSignIn = async (provider: 'google' | 'apple') => {
+    try {
+      setSocialLoading(provider)
+      setError('')
+      setInfo('')
+
+      const account =
+        provider === 'google' ? await signInWithGoogleAccount() : await signInWithAppleAccount()
+      const authUser = socialLogin(provider, account.email)
+      setInfo(`Signed in with ${provider === 'google' ? 'Google' : 'Apple'} as ${authUser.email}.`)
+      const pendingRoute = window.sessionStorage.getItem('vip-booking:pending-route')
+      window.sessionStorage.removeItem('vip-booking:pending-route')
+      navigate(pendingRoute === 'booking' ? 'booking' : 'home')
+    } catch (socialError) {
+      const message =
+        socialError instanceof OAuthConfigError
+          ? socialError.message
+          : socialError instanceof Error
+            ? socialError.message
+            : 'Social sign-in failed.'
+      setError(message)
+    } finally {
+      setSocialLoading(null)
+    }
   }
 
   return (
@@ -102,16 +134,18 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
           <button
             className="ghost-button full-width"
             type="button"
-            onClick={() => setInfo('Google sign-in will be enabled after backend OAuth integration.')}
+            disabled={socialLoading !== null}
+            onClick={() => handleSocialSignIn('google')}
           >
-            Google
+            {socialLoading === 'google' ? 'Connecting Google...' : 'Google'}
           </button>
           <button
             className="ghost-button full-width"
             type="button"
-            onClick={() => setInfo('Apple sign-in will be enabled after backend OAuth integration.')}
+            disabled={socialLoading !== null}
+            onClick={() => handleSocialSignIn('apple')}
           >
-            Apple
+            {socialLoading === 'apple' ? 'Connecting Apple...' : 'Apple'}
           </button>
         </div>
       </form>

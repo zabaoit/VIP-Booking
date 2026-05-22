@@ -11,7 +11,7 @@ const authStorageKey = 'vip-booking-auth-user'
 const defaultRegisteredUsers: RegisteredUser[] = [
   {
     email: 'admin@vipbooking.vn',
-    password: 'admin123',
+    password: 'vipbooking',
     role: 'admin',
   },
   {
@@ -20,6 +20,16 @@ const defaultRegisteredUsers: RegisteredUser[] = [
     role: 'guest',
   },
 ]
+const socialLoginProfiles: Record<'google' | 'apple', { email: string; password: string }> = {
+  google: {
+    email: 'google.guest@vipbooking.vn',
+    password: 'oauth-google',
+  },
+  apple: {
+    email: 'apple.guest@vipbooking.vn',
+    password: 'oauth-apple',
+  },
+}
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase()
@@ -71,19 +81,34 @@ function readRegisteredUsers(): RegisteredUser[] {
 
     const usersWithDefaults = [...users]
     let hasMissingDefaultUser = false
+    let hasPatchedAdminPassword = false
 
     defaultRegisteredUsers.forEach((defaultUser) => {
-      const exists = usersWithDefaults.some(
+      const existingUserIndex = usersWithDefaults.findIndex(
         (user) => normalizeEmail(user.email) === normalizeEmail(defaultUser.email),
       )
+      const exists = existingUserIndex >= 0
 
       if (!exists) {
         usersWithDefaults.push(defaultUser)
         hasMissingDefaultUser = true
+        return
+      }
+
+      if (normalizeEmail(defaultUser.email) === normalizeEmail('admin@vipbooking.vn')) {
+        const existingUser = usersWithDefaults[existingUserIndex]
+        if (existingUser.password !== defaultUser.password || existingUser.role !== 'admin') {
+          usersWithDefaults[existingUserIndex] = {
+            ...existingUser,
+            password: defaultUser.password,
+            role: 'admin',
+          }
+          hasPatchedAdminPassword = true
+        }
       }
     })
 
-    if (hasMissingDefaultUser) {
+    if (hasMissingDefaultUser || hasPatchedAdminPassword) {
       saveRegisteredUsers(usersWithDefaults)
     }
 
@@ -110,7 +135,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       login: (email, password) => {
         const normalizedEmail = normalizeEmail(email)
-        const registeredUser = registeredUsers.find(
+        const users = readRegisteredUsers()
+        setRegisteredUsers(users)
+        const registeredUser = users.find(
           (item) => normalizeEmail(item.email) === normalizedEmail,
         )
 
@@ -126,6 +153,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(authStorageKey, JSON.stringify(nextUser))
         setUser(nextUser)
         return true
+      },
+      socialLogin: (provider, emailOverride) => {
+        const profile = socialLoginProfiles[provider]
+        const resolvedEmail = emailOverride?.trim() || profile.email
+        const users = readRegisteredUsers()
+        const normalizedEmail = normalizeEmail(resolvedEmail)
+        const existingUser = users.find(
+          (item) => normalizeEmail(item.email) === normalizedEmail,
+        )
+
+        if (!existingUser) {
+          users.push({
+            email: resolvedEmail,
+            password: profile.password,
+            role: getUserRole(resolvedEmail),
+          })
+          saveRegisteredUsers(users)
+        }
+
+        setRegisteredUsers(users)
+        const nextUser: AuthUser = {
+          email: resolvedEmail,
+          role: getUserRole(resolvedEmail),
+        }
+        localStorage.setItem(authStorageKey, JSON.stringify(nextUser))
+        setUser(nextUser)
+        return nextUser
       },
       register: (email, password) => {
         const normalizedEmail = normalizeEmail(email)

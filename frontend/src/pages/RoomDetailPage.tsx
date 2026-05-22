@@ -1,11 +1,13 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
-import { featuredRoom, rooms } from '../data/rooms'
+import { rooms as defaultRooms } from '../data/rooms'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
+import { readPricingRules, readRooms } from '../utils/appStorage'
 import { defaultBookingStay, getSelectedStay, saveSelectedRoom } from '../utils/bookingSelections'
 import { formatCurrency } from '../utils/currency'
+import { applyPricingToRooms } from '../utils/pricing'
 import { getCurrentRoomSlug } from '../utils/router'
 
 const minBookingDate = '2026-05-20'
@@ -77,7 +79,8 @@ function getMonthCells(monthDate: Date) {
 }
 
 export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
-  const room = rooms.find((item) => item.id === getCurrentRoomSlug()) ?? featuredRoom
+  const rooms = applyPricingToRooms(readRooms(), readPricingRules())
+  const room = rooms.find((item) => item.id === getCurrentRoomSlug()) ?? defaultRooms[0]
   const selectedStay = getSelectedStay()
   const [checkIn, setCheckIn] = useState(selectedStay.checkIn || defaultBookingStay.checkIn)
   const [checkOut, setCheckOut] = useState(selectedStay.checkOut || defaultBookingStay.checkOut)

@@ -3,14 +3,15 @@ import { Icon } from '../components/icons/Icon'
 import { RoomCard } from '../components/rooms/RoomCard'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { images } from '../data/images'
-import { rooms } from '../data/rooms'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
-import { readServices } from '../utils/appStorage'
+import { readPricingRules, readRooms, readServices } from '../utils/appStorage'
+import { applyPricingToRooms } from '../utils/pricing'
 
 export function HomePage({ navigate }: { navigate: Navigate }) {
   const { isAuthenticated } = useAuth()
-  const services = readServices()
+  const services = readServices().filter((service) => service.status === 'Active')
+  const rooms = applyPricingToRooms(readRooms(), readPricingRules())
 
   const handleStartBooking = () => {
     if (!isAuthenticated) {

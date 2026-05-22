@@ -11,6 +11,7 @@ export type AuthContextValue = {
   isAuthenticated: boolean
   user: AuthUser | null
   login: (email: string, password: string) => boolean
+  socialLogin: (provider: 'google' | 'apple', email?: string) => AuthUser
   register: (email: string, password: string) => void
   changePassword: (currentPassword: string, nextPassword: string) => boolean
   logout: () => void
