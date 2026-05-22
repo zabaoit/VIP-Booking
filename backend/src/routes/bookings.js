@@ -5,8 +5,6 @@ const Room = require('../models/Room');
 const Customer = require('../models/Customer');
 const { protect } = require('../middleware/auth');
 const router = express.Router();
-
-// GET /api/bookings
 router.get('/', protect, async (req, res) => {
   try {
     const { status, startDate, endDate, customerId } = req.query;
@@ -33,7 +31,6 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-// GET /api/bookings/:id
 router.get('/:id', protect, async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id, {
@@ -53,7 +50,6 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// POST /api/bookings
 router.post('/', protect, async (req, res) => {
   try {
     const { customerId, roomId, checkIn, checkOut, guests } = req.body;
@@ -88,7 +84,6 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// PUT /api/bookings/:id
 router.put('/:id', protect, async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
@@ -109,7 +104,6 @@ router.put('/:id', protect, async (req, res) => {
   }
 });
 
-// DELETE /api/bookings/:id
 router.delete('/:id', protect, async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
@@ -126,7 +120,6 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
-// PATCH /api/bookings/:id/check-in
 router.patch('/:id/check-in', protect, async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
@@ -143,7 +136,6 @@ router.patch('/:id/check-in', protect, async (req, res) => {
   }
 });
 
-// PATCH /api/bookings/:id/check-out
 router.patch('/:id/check-out', protect, async (req, res) => {
   try {
     const booking = await Booking.findByPk(req.params.id);
