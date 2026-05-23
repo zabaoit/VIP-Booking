@@ -1,12 +1,238 @@
+import { useRef, useState, type FormEvent } from 'react'
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
-import { featuredRoom } from '../data/rooms'
+import { rooms as defaultRooms } from '../data/rooms'
+import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
+import { readPricingRules, readRooms } from '../utils/appStorage'
+import { defaultBookingStay, getSelectedStay, saveSelectedRoom } from '../utils/bookingSelections'
 import { formatCurrency } from '../utils/currency'
+import { applyPricingToRooms } from '../utils/pricing'
+import { getCurrentRoomSlug } from '../utils/router'
+
+const minBookingDate = '2026-05-20'
+
+function parseInputDate(value: string) {
+  return new Date(`${value}T00:00:00`)
+}
+
+function formatInputDate(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function formatDisplayDate(value: string) {
+  if (!value) {
+    return ''
+  }
+
+  const [year, month, day] = value.split('-')
+  return `${day}/${month}/${year}`
+}
+
+function parseDisplayDate(value: string) {
+  const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+
+  if (!match) {
+    return ''
+  }
+
+  const [, day, month, year] = match
+  const date = new Date(Number(year), Number(month) - 1, Number(day))
+  const isValidDate =
+    date.getFullYear() === Number(year) &&
+    date.getMonth() === Number(month) - 1 &&
+    date.getDate() === Number(day)
+
+  return isValidDate ? formatInputDate(date) : ''
+}
+
+function addDays(date: Date, days: number) {
+  const nextDate = new Date(date)
+  nextDate.setDate(nextDate.getDate() + days)
+  return nextDate
+}
+
+function getNightCount(checkInDate: Date | null, checkOutDate: Date | null) {
+  if (!checkInDate || !checkOutDate || checkOutDate <= checkInDate) {
+    return 0
+  }
+
+  return Math.round((checkOutDate.getTime() - checkInDate.getTime()) / 86_400_000)
+}
+
+function getMonthCells(monthDate: Date) {
+  const year = monthDate.getFullYear()
+  const month = monthDate.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const leadingBlanks = Array.from({ length: firstDay.getDay() }, () => null)
+  const monthDays = Array.from(
+    { length: daysInMonth },
+    (_, index) => new Date(year, month, index + 1),
+  )
+
+  return [...leadingBlanks, ...monthDays]
+}
 
 export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
-  const calendarDays = Array.from({ length: 31 }, (_, index) => index + 1)
-  const room = featuredRoom
+  const rooms = applyPricingToRooms(readRooms(), readPricingRules())
+  const room = rooms.find((item) => item.id === getCurrentRoomSlug()) ?? defaultRooms[0]
+  const selectedStay = getSelectedStay()
+  const [checkIn, setCheckIn] = useState(selectedStay.checkIn || defaultBookingStay.checkIn)
+  const [checkOut, setCheckOut] = useState(selectedStay.checkOut || defaultBookingStay.checkOut)
+  const [checkInText, setCheckInText] = useState(() =>
+    formatDisplayDate(selectedStay.checkIn || defaultBookingStay.checkIn),
+  )
+  const [checkOutText, setCheckOutText] = useState(() =>
+    formatDisplayDate(selectedStay.checkOut || defaultBookingStay.checkOut),
+  )
+  const [guests, setGuests] = useState(selectedStay.guests || room.guests)
+  const [dateError, setDateError] = useState('')
+  const [visibleMonth, setVisibleMonth] = useState(() =>
+    parseInputDate(selectedStay.checkIn || defaultBookingStay.checkIn),
+  )
+  const [activeDateField, setActiveDateField] = useState<'checkIn' | 'checkOut'>('checkIn')
+  const checkInPickerRef = useRef<HTMLInputElement>(null)
+  const checkOutPickerRef = useRef<HTMLInputElement>(null)
+  const { isAuthenticated } = useAuth()
+  const monthCells = getMonthCells(visibleMonth)
+  const monthLabel = new Intl.DateTimeFormat('vi-VN', {
+    month: 'long',
+    year: 'numeric',
+  }).format(visibleMonth)
+  const selectedCheckIn = checkIn ? parseInputDate(checkIn) : null
+  const selectedCheckOut = checkOut ? parseInputDate(checkOut) : null
+  const selectedNights = getNightCount(selectedCheckIn, selectedCheckOut)
+
+  const updateCheckIn = (value: string) => {
+    setCheckIn(value)
+    setCheckInText(formatDisplayDate(value))
+    setDateError('')
+
+    if (!value) {
+      return
+    }
+
+    const nextCheckIn = parseInputDate(value)
+    setVisibleMonth(nextCheckIn)
+
+    if (checkOut && parseInputDate(checkOut) <= nextCheckIn) {
+      const nextCheckOut = formatInputDate(addDays(nextCheckIn, 1))
+      setCheckOut(nextCheckOut)
+      setCheckOutText(formatDisplayDate(nextCheckOut))
+    }
+  }
+
+  const updateCheckOut = (value: string) => {
+    setCheckOut(value)
+    setCheckOutText(formatDisplayDate(value))
+    setDateError('')
+
+    if (value) {
+      setVisibleMonth(parseInputDate(value))
+    }
+  }
+
+  const handleCalendarDateClick = (date: Date) => {
+    const dateValue = formatInputDate(date)
+
+    if (activeDateField === 'checkIn' || !selectedCheckIn) {
+      updateCheckIn(dateValue)
+      setCheckOut('')
+      setCheckOutText('')
+      setActiveDateField('checkOut')
+      return
+    }
+
+    if (date <= selectedCheckIn) {
+      setDateError('Ngay tra phong phai sau ngay nhan phong.')
+      return
+    }
+
+    updateCheckOut(dateValue)
+  }
+
+  const activateDateField = (field: 'checkIn' | 'checkOut') => {
+    setActiveDateField(field)
+    const selectedDate = field === 'checkIn' ? selectedCheckIn : selectedCheckOut || selectedCheckIn
+
+    if (selectedDate) {
+      setVisibleMonth(selectedDate)
+    }
+  }
+
+  const handleCheckInTextChange = (value: string) => {
+    setCheckInText(value)
+    setDateError('')
+    const nextCheckIn = parseDisplayDate(value)
+
+    if (!nextCheckIn) {
+      setCheckIn('')
+      return
+    }
+
+    updateCheckIn(nextCheckIn)
+  }
+
+  const handleCheckOutTextChange = (value: string) => {
+    setCheckOutText(value)
+    setDateError('')
+    const nextCheckOut = parseDisplayDate(value)
+
+    if (!nextCheckOut) {
+      setCheckOut('')
+      return
+    }
+
+    updateCheckOut(nextCheckOut)
+  }
+
+  const openNativePicker = (field: 'checkIn' | 'checkOut') => {
+    activateDateField(field)
+    const picker = field === 'checkIn' ? checkInPickerRef.current : checkOutPickerRef.current
+    picker?.showPicker?.()
+    picker?.focus()
+  }
+
+  const moveMonth = (offset: number) => {
+    setVisibleMonth((currentMonth) => {
+      const nextMonth = new Date(currentMonth)
+      nextMonth.setMonth(nextMonth.getMonth() + offset)
+      return nextMonth
+    })
+  }
+
+  const handleReserve = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!checkIn || !checkOut) {
+      setDateError('Vui long chon ca ngay nhan phong va tra phong.')
+      return
+    }
+
+    const checkInDate = new Date(`${checkIn}T00:00:00`)
+    const checkOutDate = new Date(`${checkOut}T00:00:00`)
+
+    if (checkOutDate <= checkInDate) {
+      setDateError('Ngay tra phong phai sau ngay nhan phong.')
+      return
+    }
+
+    setDateError('')
+    saveSelectedRoom(room.id, { checkIn, checkOut, guests })
+
+    if (!isAuthenticated) {
+      window.sessionStorage.setItem('vip-booking:pending-route', 'booking')
+      navigate('login')
+      return
+    }
+
+    navigate('booking')
+  }
 
   return (
     <main className="page-shell room-detail-page">
@@ -54,11 +280,11 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
             </div>
             <div className="calendar-card">
               <div className="calendar-header">
-                <button type="button" aria-label="Previous month">
+                <button type="button" aria-label="Previous month" onClick={() => moveMonth(-1)}>
                   <Icon name="chevron" />
                 </button>
-                <strong>October 2026</strong>
-                <button type="button" aria-label="Next month">
+                <strong>{monthLabel}</strong>
+                <button type="button" aria-label="Next month" onClick={() => moveMonth(1)}>
                   <Icon name="chevron" />
                 </button>
               </div>
@@ -68,18 +294,32 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
                 ))}
               </div>
               <div className="calendar-grid">
-                {calendarDays.map((day) => {
-                  const available = room.availability.includes(day)
-                  const selected = [10, 11, 12].includes(day)
+                {monthCells.map((date, index) => {
+                  if (!date) {
+                    return <span className="calendar-empty" key={`empty-${index}`} />
+                  }
+
+                  const dateValue = formatInputDate(date)
+                  const isBeforeMinDate = date < parseInputDate(minBookingDate)
+                  const isCheckIn = checkIn === dateValue
+                  const isCheckOut = checkOut === dateValue
+                  const isInRange =
+                    selectedCheckIn !== null &&
+                    selectedCheckOut !== null &&
+                    date > selectedCheckIn &&
+                    date < selectedCheckOut
 
                   return (
                     <button
-                      className={`${available ? 'available' : ''} ${selected ? 'selected' : ''}`}
-                      disabled={!available}
-                      key={day}
+                      className={`available ${isCheckIn || isCheckOut ? 'selected' : ''} ${
+                        isInRange ? 'in-range' : ''
+                      }`}
+                      disabled={isBeforeMinDate}
+                      key={dateValue}
                       type="button"
+                      onClick={() => handleCalendarDateClick(date)}
                     >
-                      {day}
+                      {date.getDate()}
                     </button>
                   )
                 })}
@@ -88,30 +328,90 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
           </div>
         </div>
 
-        <aside className="booking-panel">
+        <form className="booking-panel" onSubmit={handleReserve}>
           <div className="price-block">
             <span>Starting from</span>
             <strong>{formatCurrency(room.price)}</strong>
             <small>per night</small>
           </div>
           <div className="booking-fields">
-            <label>
+            <label className={`date-field ${activeDateField === 'checkIn' ? 'active' : ''}`}>
               Check in
-              <input defaultValue="2026-10-10" type="date" />
+              <div className="date-input-row">
+                <input
+                  inputMode="numeric"
+                  placeholder="dd/mm/yyyy"
+                  value={checkInText}
+                  type="text"
+                  onChange={(event) => handleCheckInTextChange(event.target.value)}
+                  onFocus={() => activateDateField('checkIn')}
+                />
+                <button
+                  className="calendar-picker-button"
+                  type="button"
+                  aria-label="Chon ngay nhan phong"
+                  onClick={() => openNativePicker('checkIn')}
+                >
+                  <Icon name="calendar" size={18} />
+                </button>
+                <input
+                  ref={checkInPickerRef}
+                  className="native-date-picker"
+                  min={minBookingDate}
+                  value={checkIn}
+                  tabIndex={-1}
+                  type="date"
+                  onChange={(event) => updateCheckIn(event.target.value)}
+                />
+              </div>
             </label>
-            <label>
+            <label className={`date-field ${activeDateField === 'checkOut' ? 'active' : ''}`}>
               Check out
-              <input defaultValue="2026-10-13" type="date" />
+              <div className="date-input-row">
+                <input
+                  inputMode="numeric"
+                  placeholder="dd/mm/yyyy"
+                  value={checkOutText}
+                  type="text"
+                  onChange={(event) => handleCheckOutTextChange(event.target.value)}
+                  onFocus={() => activateDateField('checkOut')}
+                />
+                <button
+                  className="calendar-picker-button"
+                  type="button"
+                  aria-label="Chon ngay tra phong"
+                  onClick={() => openNativePicker('checkOut')}
+                >
+                  <Icon name="calendar" size={18} />
+                </button>
+                <input
+                  ref={checkOutPickerRef}
+                  className="native-date-picker"
+                  min={checkIn ? formatInputDate(addDays(parseInputDate(checkIn), 1)) : minBookingDate}
+                  value={checkOut}
+                  tabIndex={-1}
+                  type="date"
+                  onChange={(event) => updateCheckOut(event.target.value)}
+                />
+              </div>
             </label>
             <label>
               Guests
-              <select defaultValue="2 adults">
-                <option>2 adults</option>
+              <select value={guests} onChange={(event) => setGuests(event.target.value)}>
+                <option>2 guests</option>
                 <option>3 guests</option>
                 <option>4 guests</option>
               </select>
             </label>
           </div>
+          <p className="stay-length">
+            {selectedNights > 0
+              ? `Dang chon ${selectedNights} dem. Tong tien phong se tinh theo so dem nay.`
+              : activeDateField === 'checkIn'
+                ? 'Bam ngay tren lich de chon ngay nhan phong.'
+                : 'Bam ngay tren lich de chon ngay tra phong.'}
+          </p>
+          {dateError && <p className="form-error">{dateError}</p>}
           <ul className="highlight-list">
             {room.highlights.map((item) => (
               <li key={item}>
@@ -122,12 +422,11 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
           </ul>
           <button
             className="primary-button full-width"
-            type="button"
-            onClick={() => navigate('booking')}
+            type="submit"
           >
             Reserve Room
           </button>
-        </aside>
+        </form>
       </section>
     </main>
   )

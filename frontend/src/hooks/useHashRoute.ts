@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react'
-import { readRoute, setHashRoute } from '../utils/router'
+import { readRoute, setAppRoute } from '../utils/router'
 import type { Navigate, RouteKey } from '../types'
 
-export function useHashRoute(): { currentRoute: RouteKey; navigate: Navigate } {
+export function useAppRoute(): { currentRoute: RouteKey; navigate: Navigate } {
   const [currentRoute, setCurrentRoute] = useState<RouteKey>(() => readRoute())
 
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleRouteChange = () => {
       setCurrentRoute(readRoute())
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
-    window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
+    window.addEventListener('popstate', handleRouteChange)
+    return () => window.removeEventListener('popstate', handleRouteChange)
   }, [])
 
-  return { currentRoute, navigate: setHashRoute }
+  return { currentRoute, navigate: setAppRoute }
 }

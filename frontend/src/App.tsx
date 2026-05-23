@@ -2,14 +2,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { SiteFooter } from './components/layout/SiteFooter'
 import { SiteHeader } from './components/layout/SiteHeader'
 import { AuthProvider } from './context/AuthContext'
-import { authRouteKeys, privateRouteKeys, routeTitles } from './data/routes'
-import { useHashRoute } from './hooks/useHashRoute'
+import { adminRouteKeys, authRouteKeys, privateRouteKeys, routeTitles } from './data/routes'
+import { useAppRoute } from './hooks/useHashRoute'
 import { privateRoutes } from './routes/privateRoutes'
 import { publicRoutes } from './routes/publicRoutes'
 import { PrivateRoute, PublicRoute } from './routes/routeGuards'
 
+
 function App() {
-  const { currentRoute, navigate } = useHashRoute()
+  const { currentRoute, navigate } = useAppRoute()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -22,6 +23,7 @@ function App() {
 
   const isAuthPage = authRouteKeys.includes(currentRoute)
   const isPrivatePage = privateRouteKeys.includes(currentRoute)
+  const isAdminPage = adminRouteKeys.includes(currentRoute)
   const routeElement =
     activeRoute?.element(navigate) ??
     publicRoutes.find((route) => route.key === 'notFound')?.element(navigate)
@@ -42,12 +44,14 @@ function App() {
         )}
 
         {isPrivatePage ? (
-          <PrivateRoute navigate={navigate}>{routeElement}</PrivateRoute>
+          <PrivateRoute navigate={navigate} requireAdmin={isAdminPage}>
+            {routeElement}
+          </PrivateRoute>
         ) : (
           <PublicRoute>{routeElement}</PublicRoute>
         )}
 
-        {!isAuthPage && !isPrivatePage && <SiteFooter />}
+        {!isAuthPage && !isPrivatePage && <SiteFooter navigate={navigate} />}
       </div>
     </AuthProvider>
   )

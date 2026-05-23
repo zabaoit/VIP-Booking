@@ -1,8 +1,9 @@
+import { useEffect } from 'react'
 import { PriceDetails } from '../components/booking/PriceDetails'
 import { Icon } from '../components/icons/Icon'
-import { images } from '../data/images'
-import { featuredRoom } from '../data/rooms'
 import type { Navigate } from '../types'
+import { getSelectedRoom, getSelectedStay, getStayNights } from '../utils/bookingSelections'
+import { clearActiveBookingId, updateActiveBookingStatus } from '../utils/appStorage'
 
 export function PaymentStatusPage({
   variant,
@@ -12,6 +13,18 @@ export function PaymentStatusPage({
   navigate: Navigate
 }) {
   const isSuccess = variant === 'success'
+  const room = getSelectedRoom()
+  const nights = getStayNights(getSelectedStay())
+
+  useEffect(() => {
+    if (isSuccess) {
+      updateActiveBookingStatus('Confirmed')
+      clearActiveBookingId()
+      return
+    }
+
+    updateActiveBookingStatus('Pending')
+  }, [isSuccess])
 
   return (
     <main className="status-page">
@@ -26,8 +39,8 @@ export function PaymentStatusPage({
             : 'The payment could not be authorized. Review the details or try another payment method.'}
         </p>
         <div className="receipt-card">
-          <img src={images.exterior} alt="VIP Booking hotel exterior" />
-          <PriceDetails room={featuredRoom} />
+          <img src={room.image} alt={room.name} />
+          <PriceDetails room={room} nights={nights} />
         </div>
         <div className="status-actions">
           <button

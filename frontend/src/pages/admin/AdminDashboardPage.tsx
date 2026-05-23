@@ -1,16 +1,36 @@
 import { Icon } from '../../components/icons/Icon'
 import { DataTable } from '../../components/ui/DataTable'
 import type { IconName } from '../../types'
+import { readBookings, readRegisteredUsers } from '../../utils/appStorage'
 
 export function AdminDashboardPage() {
+  const registeredUsers = readRegisteredUsers()
+  const bookings = readBookings()
+  const guestCount = registeredUsers.filter((user) => user.role === 'guest').length
+  const confirmedBookings = bookings.filter((booking) => booking.status === 'Confirmed').length
+  const pendingBookings = bookings.filter((booking) => booking.status === 'Pending').length
+  const bookingRevenue = bookings.reduce((total, booking) => {
+    return total + Number(booking.amount.replace(/[^0-9.]/g, ''))
+  }, 0)
+  const recentBookings =
+    bookings.length > 0
+      ? bookings.slice(0, 6).map((booking) => [
+          booking.guest,
+          booking.room,
+          booking.checkIn,
+          booking.amount,
+          booking.status,
+        ])
+      : [['No bookings yet', '-', '-', '$0', 'Pending']]
+
   return (
     <div className="admin-stack">
       <div className="metric-grid">
         {[
-          ['Revenue', '$42.8K', '+18%', 'spark'],
-          ['Occupancy', '84%', '+6%', 'bed'],
-          ['Pending Requests', '18', '-4%', 'service'],
-          ['VIP Guests', '126', '+21%', 'users'],
+          ['Revenue', `$${bookingRevenue.toLocaleString()}`, `${bookings.length} bookings`, 'spark'],
+          ['Occupancy', `${confirmedBookings}`, 'confirmed bookings', 'bed'],
+          ['Pending Requests', `${pendingBookings}`, 'waiting review', 'service'],
+          ['VIP Guests', `${guestCount}`, 'registered guests', 'users'],
         ].map(([label, value, delta, icon]) => (
           <article className="metric-card" key={label}>
             <span className="icon-tile">
@@ -18,7 +38,7 @@ export function AdminDashboardPage() {
             </span>
             <p>{label}</p>
             <strong>{value}</strong>
-            <small>{delta} this month</small>
+            <small>{delta}</small>
           </article>
         ))}
       </div>
@@ -72,12 +92,7 @@ export function AdminDashboardPage() {
         </div>
         <DataTable
           headers={['Guest', 'Room', 'Check in', 'Amount', 'Status']}
-          rows={[
-            ['Anh Nguyen', 'Ocean View Grand Suite', 'Oct 10', '$1,583', 'Confirmed'],
-            ['Maya Le', 'Executive Sky Room', 'Oct 12', '$1,105', 'Pending'],
-            ['Daniel Park', 'Garden Residence', 'Oct 18', '$1,913', 'Cancelled'],
-            ['Linh Tran', 'Ocean View Grand Suite', 'Oct 23', '$1,583', 'Confirmed'],
-          ]}
+          rows={recentBookings}
         />
       </section>
     </div>

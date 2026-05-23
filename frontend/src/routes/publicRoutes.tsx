@@ -8,6 +8,7 @@ import { LoginPage } from '../pages/LoginPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { OtpPage } from '../pages/OtpPage'
 import { PaymentStatusPage } from '../pages/PaymentStatusPage'
+import { ProfilePage } from '../pages/ProfilePage'
 import { RegisterPage } from '../pages/RegisterPage'
 import { ResetPasswordPage } from '../pages/ResetPasswordPage'
 import { RoomDetailPage } from '../pages/RoomDetailPage'
@@ -32,6 +33,7 @@ export const publicRoutes: AppRoute[] = [
   },
   { key: 'contact', element: () => <ContactPage /> },
   { key: 'about', element: () => <AboutPage /> },
+  { key: 'profile', element: (navigate) => <ProfilePage navigate={navigate} /> },
   { key: 'login', element: (navigate) => <LoginPage navigate={navigate} /> },
   { key: 'register', element: (navigate) => <RegisterPage navigate={navigate} /> },
   { key: 'forgot', element: (navigate) => <ForgotPasswordPage navigate={navigate} /> },

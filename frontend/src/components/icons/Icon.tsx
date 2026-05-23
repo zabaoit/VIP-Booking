@@ -21,6 +21,13 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
           <path d="m8.5 12.5-1 7 4.5-2.5 4.5 2.5-1-7" />
         </svg>
       )
+    case 'bell':
+      return (
+        <svg {...common}>
+          <path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7" />
+          <path d="M10 19a2 2 0 0 0 4 0" />
+        </svg>
+      )
     case 'bed':
       return (
         <svg {...common}>
@@ -73,6 +80,22 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
           <rect x="14" y="3" width="7" height="5" rx="1.5" />
           <rect x="14" y="12" width="7" height="9" rx="1.5" />
           <rect x="3" y="15" width="7" height="6" rx="1.5" />
+        </svg>
+      )
+    case 'eye':
+      return (
+        <svg {...common}>
+          <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+          <circle cx="12" cy="12" r="2.8" />
+        </svg>
+      )
+    case 'eyeOff':
+      return (
+        <svg {...common}>
+          <path d="M3 3l18 18" />
+          <path d="M10.7 6.2A10.4 10.4 0 0 1 12 6c6.5 0 10 6 10 6a18 18 0 0 1-3.2 3.9" />
+          <path d="M6.3 8.7C3.8 10.7 2 13 2 13s3.5 6 10 6c1.2 0 2.3-.2 3.3-.5" />
+          <path d="M9.9 9.9A3 3 0 0 0 14 14" />
         </svg>
       )
     case 'edit':

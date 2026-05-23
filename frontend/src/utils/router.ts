@@ -1,19 +1,38 @@
 import { routeByPath, routePaths } from '../data/routes'
-import type { RouteKey } from '../types'
+import type { NavigateOptions, RouteKey } from '../types'
+
+function normalizePath(path: string) {
+  return path.replace(/^\/+/, '').replace(/\/$/, '') || routePaths.home
+}
 
 export function readRoute(): RouteKey {
-  const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/$/, '')
-  const path = rawHash || routePaths.home
+  const path = normalizePath(window.location.pathname)
+
+  if (/^rooms\/[^/]+$/.test(path)) {
+    return 'roomDetail'
+  }
+
   return routeByPath[path] ?? 'notFound'
 }
 
-export function setHashRoute(route: RouteKey) {
-  const nextHash = `#/${routePaths[route]}`
+export function getCurrentRoomSlug() {
+  const path = normalizePath(window.location.pathname)
+  const match = path.match(/^rooms\/([^/]+)$/)
+  return match?.[1]
+}
 
-  if (window.location.hash === nextHash) {
-    window.dispatchEvent(new HashChangeEvent('hashchange'))
+export function getRouteHref(route: RouteKey, options?: NavigateOptions) {
+  return `/${options?.path ?? routePaths[route]}`
+}
+
+export function setAppRoute(route: RouteKey, options?: NavigateOptions) {
+  const nextPath = getRouteHref(route, options)
+
+  if (window.location.pathname === nextPath) {
+    window.dispatchEvent(new PopStateEvent('popstate'))
     return
   }
 
-  window.location.hash = `/${routePaths[route]}`
+  window.history.pushState(null, '', nextPath)
+  window.dispatchEvent(new PopStateEvent('popstate'))
 }
