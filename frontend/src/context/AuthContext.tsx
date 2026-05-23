@@ -125,7 +125,7 @@ function saveRegisteredUsers(users: RegisteredUser[]) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => readStoredUser())
-  const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>(() =>
+  const [, setRegisteredUsers] = useState<RegisteredUser[]>(() =>
     readRegisteredUsers(),
   )
 
@@ -228,7 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null)
       },
     }),
-    [registeredUsers, user],
+    [user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

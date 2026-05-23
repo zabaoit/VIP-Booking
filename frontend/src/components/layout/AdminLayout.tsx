@@ -36,6 +36,7 @@ const readNotificationsStorageKey = 'vip-booking:admin-read-notifications'
 const adminBookingsFilterKey = 'vip-booking:admin-bookings-filter'
 const adminBookingsSearchKey = 'vip-booking:admin-bookings-search'
 const adminCustomersSearchKey = 'vip-booking:admin-customers-search'
+const darkModeStorageKey = 'vip-booking:dark-mode'
 
 function readSeenNotifications() {
   try {
@@ -66,6 +67,9 @@ export function AdminLayout({
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [isAccountOpen, setIsAccountOpen] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(
+    () => window.localStorage.getItem(darkModeStorageKey) !== 'false',
+  )
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>(() =>
     readSeenNotifications(),
   )
@@ -156,7 +160,7 @@ export function AdminLayout({
     })
 
     return [...baseNotifications, ...contactNotifications, ...bookingNotifications]
-  }, [currentRoute, isNotificationsOpen])
+  }, [])
 
   const unreadNotifications = notifications.filter(
     (notification) => !seenNotificationIds.includes(notification.id),
@@ -228,9 +232,11 @@ export function AdminLayout({
         route: 'adminCustomers',
       }))
 
-    return [...roomResults, ...bookingResults, ...serviceResults, ...pricingResults, ...userResults]
-      .slice(0, 8)
-  }, [searchQuery, currentRoute])
+    return [...roomResults, ...bookingResults, ...serviceResults, ...pricingResults, ...userResults].slice(
+      0,
+      8,
+    )
+  }, [searchQuery])
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -243,6 +249,19 @@ export function AdminLayout({
 
     document.addEventListener('mousedown', onPointerDown)
     return () => document.removeEventListener('mousedown', onPointerDown)
+  }, [])
+
+  useEffect(() => {
+    const onThemeChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ isDarkMode?: boolean }>).detail
+
+      if (typeof detail?.isDarkMode === 'boolean') {
+        setIsDarkMode(detail.isDarkMode)
+      }
+    }
+
+    window.addEventListener('vip-booking:theme-change', onThemeChange)
+    return () => window.removeEventListener('vip-booking:theme-change', onThemeChange)
   }, [])
 
   const markAllNotificationsRead = () => {
@@ -270,6 +289,14 @@ export function AdminLayout({
     setSearchQuery('')
     setIsSearchOpen(false)
     setAppRoute(route)
+  }
+
+  const handleToggleDarkMode = () => {
+    const nextValue = !isDarkMode
+    setIsDarkMode(nextValue)
+    window.dispatchEvent(
+      new CustomEvent('vip-booking:theme-change', { detail: { isDarkMode: nextValue } }),
+    )
   }
 
   const handleNotificationClick = (notification: AdminNotification) => {
@@ -300,7 +327,14 @@ export function AdminLayout({
   return (
     <main className="admin-layout">
       <aside className="admin-sidebar">
-        <a className="brand" href={getRouteHref('home')}>
+        <a
+          className="brand"
+          href={getRouteHref('home')}
+          onClick={(event) => {
+            event.preventDefault()
+            setAppRoute('home')
+          }}
+        >
           <span className="brand-mark">VIP</span>
           <span>VIP Booking</span>
         </a>
@@ -310,6 +344,10 @@ export function AdminLayout({
               className={currentRoute === item.route ? 'active' : ''}
               href={getRouteHref(item.route)}
               key={item.route}
+              onClick={(event) => {
+                event.preventDefault()
+                setAppRoute(item.route)
+              }}
             >
               <Icon name={item.icon} />
               {item.label}
@@ -362,6 +400,15 @@ export function AdminLayout({
             </div>
 
             <div className="admin-action-buttons">
+              <button
+                className={`admin-icon-button theme-toggle ${isDarkMode ? 'active' : ''}`}
+                type="button"
+                aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                title={isDarkMode ? 'Dark mode enabled' : 'Enable dark mode'}
+                onClick={handleToggleDarkMode}
+              >
+                <Icon name={isDarkMode ? 'moon' : 'sun'} size={15} />
+              </button>
               <button
                 className="admin-icon-button"
                 type="button"
@@ -426,7 +473,14 @@ export function AdminLayout({
                 <strong>{user?.email ?? 'admin@vipbooking.vn'}</strong>
                 <small>Administrator</small>
                 <div>
-                  <a className="ghost-button compact" href={getRouteHref('profile')}>
+                  <a
+                    className="ghost-button compact"
+                    href={getRouteHref('profile')}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      setAppRoute('profile')
+                    }}
+                  >
                     View Profile
                   </a>
                   <button className="secondary-button compact" type="button" onClick={handleLogout}>

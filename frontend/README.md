@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# VIP Booking Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend của VIP Booking được xây bằng React, TypeScript và Vite. App dùng dữ liệu demo trong browser storage để mô phỏng luồng đặt phòng, thanh toán, profile khách hàng và dashboard quản trị.
 
-Currently, two official plugins are available:
+## Chạy local
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Mở trình duyệt tại:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+http://localhost:5173
 ```
+
+## Environment
+
+Tạo file `.env` nếu cần cấu hình API hoặc OAuth:
+
+```env
+VITE_API_URL=http://localhost:8080
+VITE_GOOGLE_CLIENT_ID=your-google-client-id
+VITE_APPLE_CLIENT_ID=your-apple-service-id
+VITE_APPLE_REDIRECT_URI=http://localhost:5173/login
+```
+
+## Scripts
+
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run format
+npm run preview
+```
+
+## Route chính
+
+- `/home`
+- `/rooms`
+- `/rooms/:roomId`
+- `/booking-information`
+- `/confirm-booking`
+- `/secure-payment`
+- `/profile`
+- `/login`
+- `/register`
+- `/admin`
+- `/admin/bookings`
+- `/admin/room-types`
+- `/admin/services`
+- `/admin/pricing`
+- `/admin/customers`
+
+## UI
+
+- Client routes có header/footer chung.
+- Admin routes dùng admin layout riêng.
+- Auth routes dùng header/footer chung nhưng form auth riêng.
+- Dark mode và light mode được lưu bằng `localStorage`.
+

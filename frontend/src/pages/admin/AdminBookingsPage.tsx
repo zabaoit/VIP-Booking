@@ -26,8 +26,7 @@ export function AdminBookingsPage() {
 
     return 'All'
   })
-  const [refreshKey, setRefreshKey] = useState(0)
-  const bookings = readBookings()
+  const [bookings, setBookings] = useState(() => readBookings())
 
   const filteredBookings = useMemo(() => {
     const query = normalizeQuery(search)
@@ -41,11 +40,11 @@ export function AdminBookingsPage() {
         booking.room.toLowerCase().includes(query)
       return statusMatch && textMatch
     })
-  }, [bookings, search, statusFilter, refreshKey])
+  }, [bookings, search, statusFilter])
 
   const handleStatusChange = (bookingId: string, status: BookingRecord['status']) => {
     updateBookingStatus(bookingId, status)
-    setRefreshKey((value) => value + 1)
+    setBookings(readBookings())
   }
 
   return (

@@ -8,69 +8,71 @@ export function SiteFooter({ navigate }: { navigate: Navigate }) {
 
   return (
     <footer className="site-footer">
-      <div className="footer-top">
-        <section className="footer-intro">
-          <a className="brand" href={getRouteHref('home')}>
+      <div className="footer-wide">
+        <section className="footer-company">
+          <a
+            className="brand footer-brand"
+            href={getRouteHref('home')}
+            onClick={(event) => {
+              event.preventDefault()
+              navigate('home')
+            }}
+          >
             <span className="brand-mark">VIP</span>
             <span>VIP Booking</span>
           </a>
-          <p>
-            Private hospitality booking for premium rooms, curated services, and fast payment.
-            Designed for guests who expect precision and comfort in every step.
-          </p>
-          <div className="footer-cta">
-            <button className="secondary-button compact" type="button" onClick={() => navigate('rooms')}>
-              Explore Suites
-            </button>
-            <button className="ghost-button compact" type="button" onClick={() => navigate('contact')}>
-              Contact Concierge
-            </button>
-          </div>
+          <strong>VIP Hospitality Booking Company</strong>
+          <p>{supportInfo.address}</p>
+          <p>{supportInfo.email}</p>
+          <button className="footer-hotline" type="button" onClick={() => navigate('contact')}>
+            {supportInfo.hotline}
+          </button>
+          <small>24/7 concierge and guest assistance</small>
         </section>
 
         <section className="footer-column">
-          <h4>Quick Access</h4>
+          <h4>Information</h4>
           <div className="footer-links">
+            <button type="button" onClick={() => navigate('about')}>
+              About us
+            </button>
             <button type="button" onClick={() => navigate('rooms')}>
               Rooms
             </button>
             <button type="button" onClick={() => navigate('booking')}>
-              Booking
+              Booking guide
             </button>
             <button type="button" onClick={() => navigate('profile')}>
-              Profile
+              Guest profile
             </button>
-            <button type="button" onClick={() => navigate('about')}>
-              About
+            <button type="button" onClick={() => navigate('contact')}>
+              Help center
             </button>
           </div>
         </section>
 
         <section className="footer-column">
-          <h4>Guest Support</h4>
-          <div className="footer-contact">
-            <p>24/7 Hotline: {supportInfo.hotline}</p>
-            <p>Email: {supportInfo.email}</p>
-            <p>Address: {supportInfo.address}</p>
-          </div>
-          <div className="footer-badges">
-            {supportInfo.badges.map((badge) => (
-              <span key={badge}>{badge}</span>
-            ))}
+          <h4>Terms</h4>
+          <div className="footer-links">
+            <button type="button" onClick={() => navigate('contact')}>
+              Privacy policy
+            </button>
+            <button type="button" onClick={() => navigate('contact')}>
+              Terms of use
+            </button>
+            <button type="button" onClick={() => navigate('contact')}>
+              Data protection
+            </button>
+            <button type="button" onClick={() => navigate('admin')}>
+              Admin portal
+            </button>
           </div>
         </section>
       </div>
 
-      <div className="footer-bottom">
-        <p>(c) {currentYear} VIP Booking. All rights reserved.</p>
-        <div className="footer-bottom-links">
-          <button type="button" onClick={() => navigate('contact')}>
-            Support
-          </button>
-          <button type="button" onClick={() => navigate('admin')}>
-            Admin
-          </button>
-        </div>
+      <div className="footer-legal">
+        <p>© {currentYear} VIP Booking. All rights reserved.</p>
+        <p>Premium room reservations, curated services, and secure payment for every stay.</p>
       </div>
     </footer>
   )

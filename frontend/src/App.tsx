@@ -8,14 +8,36 @@ import { privateRoutes } from './routes/privateRoutes'
 import { publicRoutes } from './routes/publicRoutes'
 import { PrivateRoute, PublicRoute } from './routes/routeGuards'
 
+const darkModeStorageKey = 'vip-booking:dark-mode'
 
 function App() {
   const { currentRoute, navigate } = useAppRoute()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(
+    () => window.localStorage.getItem(darkModeStorageKey) !== 'false',
+  )
 
   useEffect(() => {
     document.title = routeTitles[currentRoute]
   }, [currentRoute])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = isDarkMode ? 'dark' : 'light'
+    window.localStorage.setItem(darkModeStorageKey, String(isDarkMode))
+  }, [isDarkMode])
+
+  useEffect(() => {
+    const onThemeChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ isDarkMode?: boolean }>).detail
+
+      if (typeof detail?.isDarkMode === 'boolean') {
+        setIsDarkMode(detail.isDarkMode)
+      }
+    }
+
+    window.addEventListener('vip-booking:theme-change', onThemeChange)
+    return () => window.removeEventListener('vip-booking:theme-change', onThemeChange)
+  }, [])
 
   const activeRoute = useMemo(() => {
     return [...publicRoutes, ...privateRoutes].find((route) => route.key === currentRoute)
@@ -24,6 +46,7 @@ function App() {
   const isAuthPage = authRouteKeys.includes(currentRoute)
   const isPrivatePage = privateRouteKeys.includes(currentRoute)
   const isAdminPage = adminRouteKeys.includes(currentRoute)
+  const shouldShowSiteChrome = !isAdminPage
   const routeElement =
     activeRoute?.element(navigate) ??
     publicRoutes.find((route) => route.key === 'notFound')?.element(navigate)
@@ -31,14 +54,16 @@ function App() {
   return (
     <AuthProvider>
       <div
-        className={`app-shell ${isAuthPage ? 'auth-mode' : ''} ${isPrivatePage ? 'admin-mode' : ''}`}
+        className={`app-shell ${isAuthPage ? 'auth-mode' : ''} ${isAdminPage ? 'admin-mode' : ''}`}
       >
-        {!isAuthPage && !isPrivatePage && (
+        {shouldShowSiteChrome && (
           <SiteHeader
             currentRoute={currentRoute}
+            isDarkMode={isDarkMode}
             isMenuOpen={isMenuOpen}
             navigate={navigate}
             onCloseMenu={() => setIsMenuOpen(false)}
+            onToggleDarkMode={() => setIsDarkMode((value) => !value)}
             onToggleMenu={() => setIsMenuOpen((value) => !value)}
           />
         )}
@@ -51,7 +76,7 @@ function App() {
           <PublicRoute>{routeElement}</PublicRoute>
         )}
 
-        {!isAuthPage && !isPrivatePage && <SiteFooter navigate={navigate} />}
+        {shouldShowSiteChrome && <SiteFooter navigate={navigate} />}
       </div>
     </AuthProvider>
   )
