@@ -7,6 +7,11 @@ import { Icon } from '../icons/Icon'
 export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate }) {
   const { isAuthenticated } = useAuth()
 
+  const handleViewDetails = () => {
+    saveSelectedRoom(room.id)
+    navigate('roomDetail', { path: `rooms/${room.id}` })
+  }
+
   const handleBook = () => {
     saveSelectedRoom(room.id)
 
@@ -21,7 +26,12 @@ export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate })
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-700/80 bg-slate-900/80 shadow-[0_22px_48px_rgba(2,8,23,0.45)]">
-      <div className="relative h-56 overflow-hidden">
+      <button
+        className="relative h-56 w-full overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+        type="button"
+        aria-label={`View details for ${room.name}`}
+        onClick={handleViewDetails}
+      >
         <img
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           src={room.image}
@@ -31,7 +41,7 @@ export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate })
         <span className="absolute left-3 top-3 rounded-md border border-amber-300/35 bg-slate-950/80 px-2 py-1 text-[11px] font-semibold text-amber-300">
           {room.category}
         </span>
-      </div>
+      </button>
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -57,9 +67,7 @@ export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate })
           </span>
           <span>{room.size}</span>
         </div>
-        <p className="max-h-[5.25rem] overflow-hidden text-[15px] leading-relaxed text-slate-300">
-          {room.description}
-        </p>
+        <p className="text-[15px] leading-relaxed text-slate-300">{room.description}</p>
         <div className="mt-auto flex items-end justify-between gap-2.5">
           <strong className="inline-flex items-baseline gap-1 text-xl font-semibold leading-none text-white">
             {formatCurrency(room.price)}
@@ -69,10 +77,7 @@ export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate })
             <button
               className="inline-flex h-7 items-center justify-center whitespace-nowrap rounded-md border border-slate-600 bg-slate-800/70 px-2.5 text-xs font-semibold text-slate-200 transition hover:border-slate-400 hover:text-white"
               type="button"
-              onClick={() => {
-                saveSelectedRoom(room.id)
-                navigate('roomDetail', { path: `rooms/${room.id}` })
-              }}
+              onClick={handleViewDetails}
             >
               Details
             </button>
