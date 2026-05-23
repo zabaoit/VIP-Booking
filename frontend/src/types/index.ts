@@ -11,6 +11,7 @@ export type RouteKey =
   | 'failed'
   | 'contact'
   | 'about'
+  | 'profile'
   | 'login'
   | 'register'
   | 'forgot'
@@ -19,10 +20,14 @@ export type RouteKey =
   | 'admin'
   | 'adminRooms'
   | 'adminServices'
+  | 'adminBookings'
+  | 'adminPricing'
+  | 'adminCustomers'
   | 'notFound'
 
 export type IconName =
   | 'award'
+  | 'bell'
   | 'bed'
   | 'calendar'
   | 'card'
@@ -30,6 +35,8 @@ export type IconName =
   | 'chevron'
   | 'close'
   | 'dashboard'
+  | 'eye'
+  | 'eyeOff'
   | 'edit'
   | 'filter'
   | 'home'
@@ -37,6 +44,7 @@ export type IconName =
   | 'mail'
   | 'mapPin'
   | 'menu'
+  | 'moon'
   | 'phone'
   | 'plus'
   | 'search'
@@ -44,6 +52,7 @@ export type IconName =
   | 'shield'
   | 'spark'
   | 'star'
+  | 'sun'
   | 'trash'
   | 'user'
   | 'users'
@@ -68,6 +77,29 @@ export type Room = {
   availability: number[]
 }
 
+export type PricingRule = {
+  id: string
+  name: string
+  roomType: string
+  trigger: string
+  adjustment: string
+  startDate: string
+  endDate: string
+}
+
+export type CustomerStatus = 'Active' | 'Disabled'
+export type CustomerTier = 'VIP GOLD' | 'Corporate Account' | 'Standard'
+
+export type CustomerProfile = {
+  id: string
+  email: string
+  name: string
+  phone: string
+  address: string
+  status: CustomerStatus
+  tier: CustomerTier
+}
+
 export type Service = {
   name: string
   icon: IconName
@@ -76,7 +108,48 @@ export type Service = {
   status: 'Active' | 'Paused'
 }
 
-export type Navigate = (route: RouteKey) => void
+export type RegisteredUser = {
+  email: string
+  password: string
+  role: 'guest' | 'admin'
+}
+
+export type SupportInfo = {
+  hotline: string
+  email: string
+  address: string
+  badges: string[]
+}
+
+export type ContactMessageStatus = 'New' | 'Handled'
+
+export type ContactMessage = {
+  id: string
+  name: string
+  email: string
+  subject: string
+  message: string
+  createdAt: string
+  status: ContactMessageStatus
+}
+
+export type BookingRecord = {
+  id: string
+  ownerEmail?: string
+  guest: string
+  email: string
+  room: string
+  checkIn: string
+  checkOut: string
+  amount: string
+  status: 'Confirmed' | 'Pending' | 'Cancelled'
+}
+
+export type NavigateOptions = {
+  path?: string
+}
+
+export type Navigate = (route: RouteKey, options?: NavigateOptions) => void
 
 export type AppRoute = {
   key: RouteKey

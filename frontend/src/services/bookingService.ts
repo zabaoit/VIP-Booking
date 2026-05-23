@@ -1,10 +1,10 @@
-import { rooms } from '../data/rooms'
-import { services } from '../data/services'
+import { readPricingRules, readRooms, readServices } from '../utils/appStorage'
+import { applyPricingToRooms } from '../utils/pricing'
 
 export async function getRooms() {
-  return rooms
+  return applyPricingToRooms(readRooms(), readPricingRules())
 }
 
 export async function getServices() {
-  return services
+  return readServices()
 }

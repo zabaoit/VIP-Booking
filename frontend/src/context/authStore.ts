@@ -1,8 +1,19 @@
 import { createContext } from 'react'
 
+export type UserRole = 'guest' | 'admin'
+
+export type AuthUser = {
+  email: string
+  role: UserRole
+}
+
 export type AuthContextValue = {
   isAuthenticated: boolean
-  login: () => void
+  user: AuthUser | null
+  login: (email: string, password: string) => boolean
+  socialLogin: (provider: 'google' | 'apple', email?: string) => AuthUser
+  register: (email: string, password: string) => void
+  changePassword: (currentPassword: string, nextPassword: string) => boolean
   logout: () => void
 }
 

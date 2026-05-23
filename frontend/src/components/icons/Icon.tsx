@@ -21,6 +21,13 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
           <path d="m8.5 12.5-1 7 4.5-2.5 4.5 2.5-1-7" />
         </svg>
       )
+    case 'bell':
+      return (
+        <svg {...common}>
+          <path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7" />
+          <path d="M10 19a2 2 0 0 0 4 0" />
+        </svg>
+      )
     case 'bed':
       return (
         <svg {...common}>
@@ -75,6 +82,22 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
           <rect x="3" y="15" width="7" height="6" rx="1.5" />
         </svg>
       )
+    case 'eye':
+      return (
+        <svg {...common}>
+          <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+          <circle cx="12" cy="12" r="2.8" />
+        </svg>
+      )
+    case 'eyeOff':
+      return (
+        <svg {...common}>
+          <path d="M3 3l18 18" />
+          <path d="M10.7 6.2A10.4 10.4 0 0 1 12 6c6.5 0 10 6 10 6a18 18 0 0 1-3.2 3.9" />
+          <path d="M6.3 8.7C3.8 10.7 2 13 2 13s3.5 6 10 6c1.2 0 2.3-.2 3.3-.5" />
+          <path d="M9.9 9.9A3 3 0 0 0 14 14" />
+        </svg>
+      )
     case 'edit':
       return (
         <svg {...common}>
@@ -127,6 +150,12 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
           <path d="M4 17h16" />
         </svg>
       )
+    case 'moon':
+      return (
+        <svg {...common}>
+          <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 7.5 7.5 0 1 0 20.5 14.5Z" />
+        </svg>
+      )
     case 'phone':
       return (
         <svg {...common}>
@@ -174,6 +203,20 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
       return (
         <svg {...common} fill="currentColor" stroke="none">
           <path d="m12 2.8 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.4l6.2-.9Z" />
+        </svg>
+      )
+    case 'sun':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2" />
+          <path d="M12 20v2" />
+          <path d="m4.93 4.93 1.41 1.41" />
+          <path d="m17.66 17.66 1.41 1.41" />
+          <path d="M2 12h2" />
+          <path d="M20 12h2" />
+          <path d="m6.34 17.66-1.41 1.41" />
+          <path d="m19.07 4.93-1.41 1.41" />
         </svg>
       )
     case 'trash':

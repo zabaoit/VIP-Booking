@@ -1,8 +1,36 @@
+import { useState, type FormEvent } from 'react'
 import { ContactCard } from '../components/contact/ContactCard'
 import { PageIntro } from '../components/ui/PageIntro'
 import { SectionHeading } from '../components/ui/SectionHeading'
+import { readSupportInfo, saveContactMessage } from '../utils/appStorage'
 
 export function ContactPage() {
+  const [messageStatus, setMessageStatus] = useState('')
+  const supportInfo = readSupportInfo()
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const fullName = String(formData.get('fullName') ?? '').trim()
+    const email = String(formData.get('email') ?? '').trim()
+    const subject = String(formData.get('subject') ?? '').trim()
+    const message = String(formData.get('message') ?? '').trim()
+
+    if (!fullName || !email || !subject || !message) {
+      setMessageStatus('Please complete all required fields before sending.')
+      return
+    }
+
+    saveContactMessage({
+      name: fullName,
+      email,
+      subject,
+      message,
+    })
+    setMessageStatus('Message sent successfully. Our concierge will contact you shortly.')
+    event.currentTarget.reset()
+  }
+
   return (
     <main className="page-shell">
       <PageIntro
@@ -13,25 +41,25 @@ export function ContactPage() {
 
       <section className="contact-grid">
         <aside className="contact-cards">
-          <ContactCard icon="phone" title="Call Concierge" copy="+84 901 123 456" />
-          <ContactCard icon="mail" title="Email Reservations" copy="reservations@vipbooking.vn" />
-          <ContactCard icon="mapPin" title="Visit Us" copy="Son Tra Coast, Da Nang, Viet Nam" />
+          <ContactCard icon="phone" title="Call Concierge" copy={supportInfo.hotline} />
+          <ContactCard icon="mail" title="Email Reservations" copy={supportInfo.email} />
+          <ContactCard icon="mapPin" title="Visit Us" copy={supportInfo.address} />
         </aside>
 
-        <form className="form-panel contact-form">
+        <form className="form-panel contact-form" onSubmit={handleSubmit}>
           <h2>Send a Message</h2>
           <div className="form-grid">
             <label>
               Full name
-              <input defaultValue="Anh Nguyen" />
+              <input defaultValue="Anh Nguyen" name="fullName" />
             </label>
             <label>
               Email
-              <input defaultValue="anh.nguyen@example.com" type="email" />
+              <input defaultValue="anh.nguyen@example.com" name="email" type="email" />
             </label>
             <label className="span-2">
               Subject
-              <select defaultValue="Booking Consultation">
+              <select defaultValue="Booking Consultation" name="subject">
                 <option>Booking Consultation</option>
                 <option>Private Event</option>
                 <option>Corporate Travel</option>
@@ -41,13 +69,15 @@ export function ContactPage() {
               Message
               <textarea
                 defaultValue="I would like to arrange a suite with airport pickup."
+                name="message"
                 rows={6}
               />
             </label>
           </div>
-          <button className="primary-button" type="button">
+          <button className="primary-button" type="submit">
             Send Message
           </button>
+          {messageStatus && <p className="form-success">{messageStatus}</p>}
         </form>
       </section>
 
