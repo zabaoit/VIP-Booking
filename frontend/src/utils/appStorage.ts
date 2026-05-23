@@ -14,6 +14,7 @@ import type {
 
 export const registeredUsersStorageKey = 'vip-booking-registered-users'
 export const roomsStorageKey = 'vip-booking-rooms'
+export const roomsVersionStorageKey = 'vip-booking-rooms-version'
 export const servicesStorageKey = 'vip-booking-services'
 export const pricingRulesStorageKey = 'vip-booking-pricing-rules'
 export const customerProfilesStorageKey = 'vip-booking-customer-profiles'
@@ -21,6 +22,8 @@ export const bookingsStorageKey = 'vip-booking-bookings'
 export const activeBookingIdStorageKey = 'vip-booking-active-booking-id'
 export const supportInfoStorageKey = 'vip-booking-support-info'
 export const contactMessagesStorageKey = 'vip-booking-contact-messages'
+
+const roomsDataVersion = 'home-room-data-2026-05-23'
 
 const defaultSupportInfo: SupportInfo = {
   hotline: '+84 901 123 456',
@@ -83,9 +86,11 @@ export function readRegisteredUsers(): RegisteredUser[] {
 
 export function readRooms(): Room[] {
   const roomItems = parseArrayStorage<Room>(roomsStorageKey)
+  const roomsVersion = localStorage.getItem(roomsVersionStorageKey)
 
-  if (!roomItems) {
+  if (!roomItems || roomsVersion !== roomsDataVersion) {
     localStorage.setItem(roomsStorageKey, JSON.stringify(defaultRooms))
+    localStorage.setItem(roomsVersionStorageKey, roomsDataVersion)
     return defaultRooms
   }
 
@@ -94,6 +99,7 @@ export function readRooms(): Room[] {
 
 export function saveRooms(roomItems: Room[]) {
   localStorage.setItem(roomsStorageKey, JSON.stringify(roomItems))
+  localStorage.setItem(roomsVersionStorageKey, roomsDataVersion)
 }
 
 export function readServices(): Service[] {
