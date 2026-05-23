@@ -127,7 +127,7 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
         </div>
         <div className="grid gap-2">
           <button
-            className="ghost-button full-width"
+            className="ghost-button full-width oauth-button"
             type="button"
             disabled={socialLoading !== null}
             onClick={handleSocialSignIn}

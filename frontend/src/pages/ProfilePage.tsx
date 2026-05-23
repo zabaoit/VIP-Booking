@@ -1,5 +1,4 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import heroImage from '../assets/hero.png'
 import { Icon } from '../components/icons/Icon'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
@@ -19,12 +18,9 @@ const sidebarSections = [
   { id: 'profile-security', label: 'Security', hint: 'Password and sessions', icon: 'shield' },
 ] as const
 
-const panelClass =
-  'rounded-2xl border border-slate-700/80 bg-slate-900/75 p-5 shadow-[0_16px_40px_rgba(2,6,23,0.45)] backdrop-blur'
-const inputClass =
-  'mt-1 h-11 w-full rounded-lg border border-slate-700 bg-slate-950/90 px-3 text-sm text-slate-100 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20'
-const textareaClass =
-  'mt-1 h-24 w-full rounded-lg border border-slate-700 bg-slate-950/90 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20'
+const panelClass = 'profile-panel'
+const inputClass = 'profile-input'
+const textareaClass = 'profile-input profile-textarea'
 
 type ProfileSectionId = (typeof sidebarSections)[number]['id']
 type BookingStatus = 'Pending' | 'Confirmed' | 'Cancelled'
@@ -272,9 +268,9 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   }
 
   const sectionHeader = (title: string, subtitle: string) => (
-    <div className="mb-4">
-      <h2 className="text-xl font-semibold text-white">{title}</h2>
-      <p className="mt-1 text-sm text-slate-300">{subtitle}</p>
+    <div className="profile-section-header">
+      <h2>{title}</h2>
+      <p>{subtitle}</p>
     </div>
   )
 
@@ -282,41 +278,41 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     <section className={panelClass}>
       {sectionHeader('Membership Overview', 'Your premium status and next reservation at a glance.')}
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <article className="rounded-xl border border-slate-700 bg-slate-950/75 p-3">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Tier</p>
-          <p className="mt-2 text-lg font-semibold text-amber-200">{tierName}</p>
+      <div className="profile-stat-grid">
+        <article className="profile-stat-card">
+          <p>Tier</p>
+          <strong>{tierName}</strong>
         </article>
-        <article className="rounded-xl border border-slate-700 bg-slate-950/75 p-3">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Confirmed Stays</p>
-          <p className="mt-2 text-lg font-semibold text-emerald-300">{confirmedBookings}</p>
+        <article className="profile-stat-card success">
+          <p>Confirmed Stays</p>
+          <strong>{confirmedBookings}</strong>
         </article>
-        <article className="rounded-xl border border-slate-700 bg-slate-950/75 p-3">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Total Spend</p>
-          <p className="mt-2 text-lg font-semibold text-white">{formatCurrency(totalSpent)}</p>
+        <article className="profile-stat-card">
+          <p>Total Spend</p>
+          <strong>{formatCurrency(totalSpent)}</strong>
         </article>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <article className="rounded-xl border border-slate-700 bg-slate-950/75 p-4">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-300">Upcoming Stay</h3>
+      <div className="profile-detail-grid">
+        <article className="profile-mini-card">
+          <h3>Upcoming Stay</h3>
           {upcomingBooking ? (
-            <div className="mt-3">
-              <p className="text-base font-semibold text-white">{upcomingBooking.room}</p>
-              <p className="mt-1 text-sm text-slate-300">{upcomingBooking.stay}</p>
-              <p className="mt-1 text-xs text-slate-400">Booking: {upcomingBooking.id}</p>
+            <div>
+              <strong>{upcomingBooking.room}</strong>
+              <p>{upcomingBooking.stay}</p>
+              <small>Booking: {upcomingBooking.id}</small>
             </div>
           ) : (
-            <p className="mt-3 text-sm text-slate-300">No upcoming booking yet.</p>
+            <p>No upcoming booking yet.</p>
           )}
         </article>
-        <article className="rounded-xl border border-slate-700 bg-slate-950/75 p-4">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-300">Concierge</h3>
-          <p className="mt-3 text-sm text-slate-300">
+        <article className="profile-mini-card">
+          <h3>Concierge</h3>
+          <p>
             Dedicated support is active for airport transfer, late check-out, and in-room arrangements.
           </p>
           <button
-            className="mt-3 inline-flex h-9 items-center justify-center rounded-lg border border-amber-300/35 bg-amber-300/10 px-4 text-sm font-semibold text-amber-200 transition hover:border-amber-200"
+            className="secondary-button compact"
             type="button"
             onClick={() => navigate('contact')}
           >
@@ -330,8 +326,8 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   const renderPersonal = () => (
     <section className={panelClass}>
       {sectionHeader('Personal Information', 'Manage identity details and in-stay preferences.')}
-      <form className="grid grid-cols-1 gap-3 md:grid-cols-2" onSubmit={handleSaveProfile}>
-        <label className="text-xs font-medium text-slate-300">
+      <form className="profile-form-grid" onSubmit={handleSaveProfile}>
+        <label>
           Full Name
           <input
             className={inputClass}
@@ -341,7 +337,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             }
           />
         </label>
-        <label className="text-xs font-medium text-slate-300">
+        <label>
           Phone Number
           <input
             className={inputClass}
@@ -351,7 +347,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             }
           />
         </label>
-        <label className="text-xs font-medium text-slate-300">
+        <label>
           Address
           <input
             className={inputClass}
@@ -361,7 +357,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             }
           />
         </label>
-        <label className="text-xs font-medium text-slate-300">
+        <label>
           City
           <input
             className={inputClass}
@@ -371,7 +367,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             }
           />
         </label>
-        <label className="text-xs font-medium text-slate-300 md:col-span-2">
+        <label className="profile-span-2">
           Stay Notes
           <textarea
             className={textareaClass}
@@ -381,10 +377,10 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             }
           />
         </label>
-        <div className="rounded-xl border border-slate-700 bg-slate-950/75 p-3 md:col-span-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Notifications</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <label className="flex items-center gap-2 text-sm text-slate-200">
+        <div className="profile-notification-card profile-span-2">
+          <p>Notifications</p>
+          <div className="profile-checkbox-grid">
+            <label className="check-row">
               <input
                 checked={profileSettings.emailUpdates}
                 type="checkbox"
@@ -394,7 +390,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
               />
               Email updates
             </label>
-            <label className="flex items-center gap-2 text-sm text-slate-200">
+            <label className="check-row">
               <input
                 checked={profileSettings.smsAlerts}
                 type="checkbox"
@@ -406,10 +402,10 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             </label>
           </div>
         </div>
-        {profileMessage && <p className="text-sm font-medium text-emerald-300 md:col-span-2">{profileMessage}</p>}
-        <div className="md:col-span-2">
+        {profileMessage && <p className="form-success profile-span-2">{profileMessage}</p>}
+        <div className="profile-span-2">
           <button
-            className="inline-flex h-10 items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 px-5 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(37,99,235,0.35)] transition hover:brightness-110"
+            className="primary-button"
             type="submit"
           >
             Save Information
@@ -422,7 +418,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   const renderHistory = () => (
     <section className={panelClass}>
       {sectionHeader('Booking History', 'Search and review all your reservations.')}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.6fr_1fr_1fr]">
+      <div className="profile-filter-grid">
         <input
           className={inputClass}
           value={bookingSearch}
@@ -451,9 +447,9 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
         </select>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-700 bg-slate-950/75">
-        <div className="min-w-[780px]">
-          <div className="grid grid-cols-[1fr_1.4fr_1.6fr_1fr_1fr_1fr] border-b border-slate-700 bg-slate-900/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+      <div className="profile-table-shell">
+        <div className="profile-booking-table">
+          <div className="profile-booking-row profile-booking-head">
             <span>Booking ID</span>
             <span>Room</span>
             <span>Stay</span>
@@ -463,7 +459,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           </div>
           {filteredBookings.map((booking) => (
             <div
-              className="grid grid-cols-[1fr_1.4fr_1.6fr_1fr_1fr_1fr] border-b border-slate-800 px-3 py-2 text-sm text-slate-200 last:border-b-0"
+              className="profile-booking-row"
               key={booking.id}
             >
               <span>{booking.id}</span>
@@ -471,13 +467,21 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
               <span>{booking.stay}</span>
               <span>{booking.amount}</span>
               <span>{booking.method}</span>
-              <span className={booking.status === 'Confirmed' ? 'text-emerald-300' : booking.status === 'Pending' ? 'text-amber-300' : 'text-rose-300'}>
+              <span
+                className={
+                  booking.status === 'Confirmed'
+                    ? 'profile-status success'
+                    : booking.status === 'Pending'
+                      ? 'profile-status pending'
+                      : 'profile-status failed'
+                }
+              >
                 {booking.status}
               </span>
             </div>
           ))}
           {filteredBookings.length === 0 && (
-            <p className="px-3 py-4 text-sm text-slate-300">No bookings found for this account yet.</p>
+            <p className="profile-empty-state">No bookings found for this account yet.</p>
           )}
         </div>
       </div>
@@ -487,22 +491,22 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   const renderPayment = () => (
     <section className={panelClass}>
       {sectionHeader('Payments', 'Control your preferred payment method and billing details.')}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <article className="rounded-xl border border-slate-700 bg-slate-950/75 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-400">Preferred Method</p>
-          <p className="mt-2 text-base font-semibold text-white">{paymentMethodLabel}</p>
+      <div className="profile-stat-grid">
+        <article className="profile-stat-card">
+          <p>Preferred Method</p>
+          <strong>{paymentMethodLabel}</strong>
         </article>
-        <article className="rounded-xl border border-slate-700 bg-slate-950/75 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-400">Pending Payments</p>
-          <p className="mt-2 text-base font-semibold text-white">{pendingBookings} booking</p>
+        <article className="profile-stat-card">
+          <p>Pending Payments</p>
+          <strong>{pendingBookings} booking</strong>
         </article>
-        <article className="rounded-xl border border-slate-700 bg-slate-950/75 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-400">Member ID</p>
-          <p className="mt-2 text-base font-semibold text-amber-200">{memberCode}</p>
+        <article className="profile-stat-card">
+          <p>Member ID</p>
+          <strong>{memberCode}</strong>
         </article>
       </div>
 
-      <label className="mt-3 block text-xs font-medium text-slate-300">
+      <label className="profile-field-block">
         Preferred Method
         <select
           className={inputClass}
@@ -518,23 +522,23 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
         </select>
       </label>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="profile-actions-row">
         <button
-          className="inline-flex h-10 items-center justify-center rounded-lg border border-amber-300/35 bg-amber-300/10 px-4 text-sm font-semibold text-amber-200 transition hover:border-amber-200"
+          className="secondary-button"
           type="button"
           onClick={handleSavePaymentMethod}
         >
           Save Preferred Method
         </button>
         <button
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 px-4 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(37,99,235,0.35)] transition hover:brightness-110"
+          className="primary-button"
           type="button"
           onClick={handlePayCurrentBooking}
         >
           Pay Current Booking
         </button>
       </div>
-      {paymentMessage && <p className="mt-2 text-sm font-medium text-emerald-300">{paymentMessage}</p>}
+      {paymentMessage && <p className="form-success">{paymentMessage}</p>}
     </section>
   )
 
@@ -542,24 +546,24 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     <section className={panelClass}>
       {sectionHeader('Security', 'Protect your account credentials and active sessions.')}
 
-      <form className="grid grid-cols-1 gap-3 md:grid-cols-2" onSubmit={handleChangePassword}>
-        <label className="text-xs font-medium text-slate-300 md:col-span-2">
+      <form className="profile-form-grid" onSubmit={handleChangePassword}>
+        <label className="profile-span-2">
           Current Password
           <input className={inputClass} name="currentPassword" type="password" required />
         </label>
-        <label className="text-xs font-medium text-slate-300">
+        <label>
           New Password
           <input className={inputClass} name="nextPassword" type="password" required />
         </label>
-        <label className="text-xs font-medium text-slate-300">
+        <label>
           Confirm New Password
           <input className={inputClass} name="confirmPassword" type="password" required />
         </label>
-        {passwordError && <p className="text-sm font-medium text-rose-300 md:col-span-2">{passwordError}</p>}
-        {passwordMessage && <p className="text-sm font-medium text-emerald-300 md:col-span-2">{passwordMessage}</p>}
-        <div className="md:col-span-2">
+        {passwordError && <p className="form-error profile-span-2">{passwordError}</p>}
+        {passwordMessage && <p className="form-success profile-span-2">{passwordMessage}</p>}
+        <div className="profile-span-2">
           <button
-            className="inline-flex h-10 items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 px-5 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(37,99,235,0.35)] transition hover:brightness-110"
+            className="primary-button"
             type="submit"
           >
             Update Password
@@ -578,53 +582,47 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#060e1f] px-4 py-8 sm:px-6">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(59,130,246,0.22),transparent_35%),radial-gradient(circle_at_85%_75%,rgba(245,158,11,0.1),transparent_35%)]" />
-
-      <section className="relative mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-5 lg:grid-cols-[250px_minmax(0,1fr)]">
-        <aside className="h-fit rounded-2xl border border-slate-700/80 bg-slate-900/80 p-4 shadow-[0_20px_48px_rgba(2,8,23,0.45)] backdrop-blur lg:sticky lg:top-24">
-          <div className="rounded-xl border border-slate-700 bg-slate-950/80 p-4">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-blue-300/45 bg-gradient-to-b from-cyan-300 to-blue-600 text-white">
+    <main className="profile-page">
+      <section className="profile-layout">
+        <aside className="profile-sidebar">
+          <div className="profile-user-card">
+            <div className="profile-avatar">
               <Icon name="user" size={22} />
             </div>
-            <p className="text-sm font-semibold text-white">{displayName}</p>
-            <p className="mt-1 text-xs text-slate-300">{userEmail}</p>
-            <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-amber-300">{tierName}</p>
+            <strong>{displayName}</strong>
+            <p>{userEmail}</p>
+            <small>{tierName}</small>
           </div>
 
-          <div className="mt-4 grid gap-2">
+          <div className="profile-nav">
             {sidebarSections.map((section) => {
               const isActive = activeSection === section.id
               return (
                 <button
-                  className={`rounded-lg border px-3 py-2 text-left transition ${
-                    isActive
-                      ? 'border-blue-400 bg-blue-500/15 text-white'
-                      : 'border-slate-700 bg-slate-900/80 text-slate-200 hover:border-blue-400 hover:text-white'
-                  }`}
+                  className={`profile-nav-button ${isActive ? 'active' : ''}`}
                   key={section.id}
                   type="button"
                   onClick={() => setActiveSection(section.id)}
                 >
-                  <div className="flex items-center gap-2">
+                  <div>
                     <Icon name={section.icon} size={15} />
-                    <span className="text-sm font-medium">{section.label}</span>
+                    <span>{section.label}</span>
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-400">{section.hint}</p>
+                  <p>{section.hint}</p>
                 </button>
               )
             })}
           </div>
 
           <button
-            className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg border border-amber-300/35 bg-gradient-to-r from-amber-400/20 to-slate-900 text-sm font-semibold text-amber-200 transition hover:border-amber-300"
+            className="secondary-button full-width"
             type="button"
             onClick={() => navigate('rooms')}
           >
             Book Now
           </button>
           <button
-            className="mt-2 inline-flex h-10 w-full items-center justify-center rounded-lg border border-slate-600 bg-slate-900/80 text-sm font-semibold text-slate-200 transition hover:border-blue-400"
+            className="ghost-button full-width"
             type="button"
             onClick={() => {
               logout()
@@ -635,33 +633,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           </button>
         </aside>
 
-        <div className="space-y-5">
-          <section className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-[0_24px_60px_rgba(2,8,23,0.5)] backdrop-blur">
-            <div className="relative h-52 sm:h-60">
-              <img className="h-full w-full object-cover" src={heroImage} alt="Luxury profile header" />
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/65 to-slate-950/55" />
-              <div className="absolute inset-0 p-5 sm:p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">VIP Booking</p>
-                <h1 className="mt-2 max-w-[520px] text-3xl font-semibold leading-tight text-white sm:text-4xl">
-                  Experience Premium Hospitality
-                </h1>
-                <p className="mt-2 max-w-[580px] text-sm text-slate-200">
-                  Manage your bookings, profile, payments, and account protection in one elite workspace.
-                </p>
-              </div>
-            </div>
-            <div className="grid gap-2 border-t border-slate-700/70 bg-slate-900/90 p-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2 text-xs text-slate-300">
-                <span className="block text-[11px] uppercase tracking-wide text-slate-500">Member</span>
-                <span className="mt-1 block font-semibold text-white">{memberCode}</span>
-              </div>
-              <div className="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2 text-xs text-slate-300">
-                <span className="block text-[11px] uppercase tracking-wide text-slate-500">Preferred Payment</span>
-                <span className="mt-1 block font-semibold text-white">{paymentMethodLabel}</span>
-              </div>
-            </div>
-          </section>
-
+        <div className="profile-content">
           {renderActiveSection()}
         </div>
       </section>
