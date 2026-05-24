@@ -1,11 +1,11 @@
 export const createRoom = (req, res) => {
-    res.json({ message: 'Tạo phòng thành công' });
+    res.json({ message: 'Room created successfully!' });
 };
 
 export const getAllRooms = (req, res) => {
-    res.json({ message: 'Danh sách phòng' });
+    res.json({ message: 'Get room list successfully!' });
 };
 
 export const deleteRoom = (req, res) => {
-    res.json({ message: 'Xóa phòng thành công' });
+    res.json({ message: 'Room deleted successfully!' });
 };

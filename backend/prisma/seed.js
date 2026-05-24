@@ -4,12 +4,10 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🔄 Đang khởi tạo dữ liệu mẫu...');
+  console.log('🔄 Initializing seed data...');
 
-  // 1. Mã hóa băm mật khẩu "123456" đúng chuẩn bảo mật
   const hashedPassword = await bcrypt.hash('123456', 10);
 
-  // 2. Insert tài khoản Admin
   const admin = await prisma.user.upsert({
     where: { email: 'admin@gmail.com' },
     update: {},
@@ -20,7 +18,6 @@ async function main() {
     },
   });
 
-  // 3. Insert tài khoản Khách hàng (User) mẫu
   const user = await prisma.user.upsert({
     where: { email: 'danhduong@gmail.com' },
     update: {},
@@ -31,14 +28,14 @@ async function main() {
     },
   });
 
-  console.log('✅ Đã insert tài khoản mẫu thành công:');
+  console.log('✅ Sample accounts seeded successfully:');
   console.log(' - Admin:', admin.email);
   console.log(' - User:', user.email);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Lỗi khi insert dữ liệu:', e);
+    console.error('❌ Error during data seeding:', e);
     process.exit(1);
   })
   .finally(async () => {

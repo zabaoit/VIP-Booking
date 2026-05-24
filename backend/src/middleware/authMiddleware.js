@@ -9,7 +9,7 @@ export const authorize = (allowedRoles = []) => {
 
         if (!token) {
             return res.status(401).json({
-                message: "Truy cập bị từ chối! Bạn chưa đăng nhập hoặc thiếu Token."
+                message: "Access denied! Missing token or you are not logged in."
             });
         }
 
@@ -24,7 +24,7 @@ export const authorize = (allowedRoles = []) => {
             // Nếu có cấu hình giới hạn quyền VÀ quyền của user không nằm trong danh sách cho phép
             if (allowedRoles.length > 0 && !allowedRoles.includes(decoded.role)) {
                 return res.status(403).json({
-                    message: `Lỗi phân quyền: Tài khoản quyền '${decoded.role}' không thể truy cập chức năng này!`
+                    message: `Permission denied: Accounts with the '${decoded.role}' role are not allowed to access this feature!`
                 });
             }
 
@@ -33,7 +33,7 @@ export const authorize = (allowedRoles = []) => {
 
         } catch (error) {
             return res.status(403).json({
-                message: "Mã Token không hợp lệ hoặc đã hết hạn!",
+                message: "Invalid or expired token!",
                 error: error.message
             });
         }

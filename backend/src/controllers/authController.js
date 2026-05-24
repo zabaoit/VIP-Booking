@@ -7,7 +7,7 @@ export const login = async (req, res) => {
 
     if (!email || !password)
         return res.status(400).json({
-            message: "Vui lòng nhập đầy đủ email và mật khẩu!"
+            message: "Please provide both email and password!"
         });
 
     try {
@@ -18,14 +18,14 @@ export const login = async (req, res) => {
 
         if (!user) {
             return res.status(400).json({
-                message: "Email hoặc mật khẩu không chính xác!"
+                message: "Incorrect email or password!"
             });
         }
 
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch)
             return res.status(400).json({
-                message: "Email hoặc mật khẩu không chính xác!"
+                message: "Incorrect email or password!"
             });
         
         const userRole = await prisma.role.findUnique({
@@ -48,7 +48,7 @@ export const login = async (req, res) => {
 
         // 5. Trả về kết quả hoàn chỉnh
         return res.status(200).json({
-            message: "Đăng nhập thành công!",
+            message: "Login successful!",
             token,
             user: {
                 id: user.id.toString(), // Đã ép kiểu String an toàn
@@ -61,7 +61,7 @@ export const login = async (req, res) => {
     } catch (error) {
         console.error("Lỗi AuthController thực tế:", error.message);
         return res.status(500).json({
-            message: "Lỗi máy chủ",
+            message: "Internal server error.",
             error: error.message
         });
     }
@@ -78,7 +78,7 @@ export const register = async (req, res) => {
     // 1. Kiểm tra các trường dữ liệu bắt buộc đầu vào
     if (!email || !password || !full_name) {
         return res.status(400).json({
-            message: "Vui lòng nhập đầy đủ các thông tin bắt buộc: Email, Mật khẩu, Họ tên!"
+            message: "Please fill in all required fields: Email, Password, and Full Name!"
         });
     }
 
@@ -90,7 +90,7 @@ export const register = async (req, res) => {
 
         if (existingUser) {
             return res.status(400).json({
-                message: "Email này đã được đăng ký bởi tài khoản khác!"
+                message: "This email is already registered by another account!"
             });
         }
 
@@ -106,13 +106,13 @@ export const register = async (req, res) => {
                 password_hash: hashedPassword,
                 full_name: full_name,
                 phone: phone || null, // Trường số điện thoại không bắt buộc, nếu không có thì để null
-                role_id: 5 // Khóa ngoại liên kết sang bảng role (2 = user khách)
+                role_id: 2 // Khóa ngoại liên kết sang bảng role (2 = user khách)
             }
         });
 
         // 5. Trả về thông báo thành công (Ẩn password_hash đi cho bảo mật)
         return res.status(201).json({
-            message: "Đăng ký tài khoản thành công!",
+            message: "Account registered successfully!",
             user: {
                 id: newUser.id.toString(), // Ép kiểu BigInt về String để không lỗi JSON
                 email: newUser.email,
@@ -125,7 +125,7 @@ export const register = async (req, res) => {
     } catch (error) {
         console.error("Lỗi chức năng Đăng ký:", error.message);
         return res.status(500).json({
-            message: "Lỗi máy chủ khi đăng ký tài khoản",
+            message: "Internal server error",
             error: error.message
         });
     }
