@@ -8,13 +8,11 @@ import {
   saveCustomerProfiles,
   setActiveBookingId,
 } from '../utils/appStorage'
-import { formatCurrency } from '../utils/currency'
 
 const sidebarSections = [
-  { id: 'profile-overview', label: 'Overview', hint: 'Membership summary', icon: 'dashboard' },
   { id: 'profile-personal', label: 'Personal Information', hint: 'Profile details', icon: 'user' },
   { id: 'profile-history', label: 'Booking History', hint: 'Reservation timeline', icon: 'calendar' },
-  { id: 'profile-payment', label: 'Payments', hint: 'Wallet and billing', icon: 'card' },
+  { id: 'profile-payment', label: 'Invoices & Payments', hint: 'Billing and methods', icon: 'card' },
   { id: 'profile-security', label: 'Security', hint: 'Password and sessions', icon: 'shield' },
 ] as const
 
@@ -70,7 +68,7 @@ function normalizeEmail(email: string) {
 
 export function ProfilePage({ navigate }: { navigate: Navigate }) {
   const { changePassword, logout, user } = useAuth()
-  const [activeSection, setActiveSection] = useState<ProfileSectionId>('profile-overview')
+  const [activeSection, setActiveSection] = useState<ProfileSectionId>('profile-personal')
   const [passwordMessage, setPasswordMessage] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [profileMessage, setProfileMessage] = useState('')
@@ -163,18 +161,9 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     )
   }, [bookingSearch, bookingSort, bookingStatusFilter, bookings])
 
-  const confirmedBookings = bookings.filter((booking) => booking.status === 'Confirmed').length
   const pendingBookings = bookings.filter((booking) => booking.status === 'Pending').length
   const paymentMethodLabel =
     paymentMethod === 'momo' ? 'MoMo' : paymentMethod === 'card' ? 'Credit Card' : 'VietQR'
-  const totalSpent = bookings.reduce((total, booking) => {
-    const value = Number(booking.amount.replace(/[^0-9.]/g, '')) || 0
-    return total + value
-  }, 0)
-
-  const loyaltyPoints = Math.max(850, confirmedBookings * 500 + pendingBookings * 180)
-  const tierName = loyaltyPoints >= 5000 ? 'Diamond Elite' : loyaltyPoints >= 2500 ? 'Platinum' : 'Gold'
-  const upcomingBooking = bookings.find((booking) => booking.status !== 'Cancelled')
 
   const persistProfileSettings = (nextSettings: ProfileSettings) => {
     const rawStoredSettings = window.localStorage.getItem(profileSettingsStorageKey)
@@ -272,55 +261,6 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
       <h2>{title}</h2>
       <p>{subtitle}</p>
     </div>
-  )
-
-  const renderOverview = () => (
-    <section className={panelClass}>
-      {sectionHeader('Membership Overview', 'Your premium status and next reservation at a glance.')}
-
-      <div className="profile-stat-grid">
-        <article className="profile-stat-card">
-          <p>Tier</p>
-          <strong>{tierName}</strong>
-        </article>
-        <article className="profile-stat-card success">
-          <p>Confirmed Stays</p>
-          <strong>{confirmedBookings}</strong>
-        </article>
-        <article className="profile-stat-card">
-          <p>Total Spend</p>
-          <strong>{formatCurrency(totalSpent)}</strong>
-        </article>
-      </div>
-
-      <div className="profile-detail-grid">
-        <article className="profile-mini-card">
-          <h3>Upcoming Stay</h3>
-          {upcomingBooking ? (
-            <div>
-              <strong>{upcomingBooking.room}</strong>
-              <p>{upcomingBooking.stay}</p>
-              <small>Booking: {upcomingBooking.id}</small>
-            </div>
-          ) : (
-            <p>No upcoming booking yet.</p>
-          )}
-        </article>
-        <article className="profile-mini-card">
-          <h3>Concierge</h3>
-          <p>
-            Dedicated support is active for airport transfer, late check-out, and in-room arrangements.
-          </p>
-          <button
-            className="secondary-button compact"
-            type="button"
-            onClick={() => navigate('contact')}
-          >
-            Contact Concierge
-          </button>
-        </article>
-      </div>
-    </section>
   )
 
   const renderPersonal = () => (
@@ -490,7 +430,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
 
   const renderPayment = () => (
     <section className={panelClass}>
-      {sectionHeader('Payments', 'Control your preferred payment method and billing details.')}
+      {sectionHeader('Invoices & Payments', 'Review billing status and choose a payment method.')}
       <div className="profile-stat-grid">
         <article className="profile-stat-card">
           <p>Preferred Method</p>
@@ -501,8 +441,31 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           <strong>{pendingBookings} booking</strong>
         </article>
         <article className="profile-stat-card">
-          <p>Member ID</p>
+          <p>Billing Account</p>
           <strong>{memberCode}</strong>
+        </article>
+      </div>
+
+      <div className="profile-detail-grid">
+        <article className="profile-mini-card">
+          <h3>Recent Invoice</h3>
+          {bookings[0] ? (
+            <div>
+              <strong>{bookings[0].amount}</strong>
+              <p>{bookings[0].room}</p>
+              <small>Booking: {bookings[0].id}</small>
+            </div>
+          ) : (
+            <p>No invoice has been created for this account yet.</p>
+          )}
+        </article>
+        <article className="profile-mini-card">
+          <h3>Payment Status</h3>
+          <p>
+            {pendingBookings > 0
+              ? `${pendingBookings} booking needs payment confirmation.`
+              : 'No pending payment for this account.'}
+          </p>
         </article>
       </div>
 
@@ -574,7 +537,6 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   )
 
   const renderActiveSection = () => {
-    if (activeSection === 'profile-overview') return renderOverview()
     if (activeSection === 'profile-personal') return renderPersonal()
     if (activeSection === 'profile-history') return renderHistory()
     if (activeSection === 'profile-payment') return renderPayment()
@@ -591,7 +553,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             </div>
             <strong>{displayName}</strong>
             <p>{userEmail}</p>
-            <small>{tierName}</small>
+            <small>Guest account</small>
           </div>
 
           <div className="profile-nav">
