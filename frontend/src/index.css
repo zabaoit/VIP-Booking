@@ -2495,17 +2495,38 @@ th {
   }
 
   .main-nav {
-    grid-column: 1 / -1;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
     display: none;
-    width: 100%;
+    width: auto;
     justify-self: stretch;
     flex-direction: column;
     align-items: stretch;
-    padding-bottom: 16px;
+    gap: 0;
+    padding: 14px clamp(20px, 4vw, 58px) 18px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(7, 11, 17, 0.96);
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(18px);
   }
 
   .main-nav.is-open {
     display: flex;
+  }
+
+  :root[data-theme='light'] .main-nav.is-open {
+    border-bottom-color: rgba(15, 23, 42, 0.1);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
+  }
+
+  .main-nav a {
+    min-height: 48px;
+    align-items: center;
+    display: flex;
+    border-radius: 7px;
   }
 
   .header-actions {
@@ -3193,51 +3214,86 @@ tbody tr:hover {
 
 .profile-page {
   min-height: 100vh;
+<<<<<<< HEAD
   padding: 44px clamp(18px, 4vw, 54px) 80px;
   background:
     linear-gradient(180deg, rgba(15, 23, 42, 0.42), transparent 300px),
+=======
+  padding: 34px clamp(18px, 4vw, 54px) 82px;
+  background:
+    linear-gradient(180deg, rgba(14, 21, 32, 0.88), rgba(7, 10, 15, 0.98) 360px),
+>>>>>>> main
     var(--bg);
 }
 
 .profile-layout {
   display: grid;
+<<<<<<< HEAD
   grid-template-columns: 260px minmax(0, 1fr);
   gap: 20px;
   width: min(1180px, 100%);
+=======
+  grid-template-columns: 282px minmax(0, 1fr);
+  gap: 22px;
+  width: min(1240px, 100%);
+>>>>>>> main
   margin: 0 auto;
   align-items: start;
 }
 
 .profile-sidebar,
+<<<<<<< HEAD
 .profile-panel,
 .profile-hero-card {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(15, 23, 42, 0.72);
   box-shadow: var(--shadow);
+=======
+.profile-panel {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 8px;
+  background: rgba(9, 14, 22, 0.82);
+  box-shadow: 0 20px 58px rgba(0, 0, 0, 0.28);
+>>>>>>> main
   backdrop-filter: blur(14px);
 }
 
 .profile-sidebar {
   position: sticky;
+<<<<<<< HEAD
   top: 92px;
   display: grid;
   gap: 14px;
   padding: 14px;
+=======
+  top: 88px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+>>>>>>> main
 }
 
 .profile-user-card,
 .profile-stat-card,
 .profile-mini-card,
+<<<<<<< HEAD
 .profile-notification-card,
 .profile-hero-meta > div {
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 8px;
   background: rgba(2, 6, 23, 0.34);
+=======
+.profile-notification-card {
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.28);
+>>>>>>> main
 }
 
 .profile-user-card {
   display: grid;
+<<<<<<< HEAD
   gap: 7px;
   padding: 14px;
 }
@@ -3257,6 +3313,30 @@ tbody tr:hover {
   margin-top: 4px;
   color: white;
   font-size: 0.95rem;
+=======
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 4px 12px;
+  padding: 14px;
+  align-items: center;
+}
+
+.profile-avatar {
+  grid-row: span 3;
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid rgba(34, 211, 238, 0.32);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.16), rgba(228, 185, 107, 0.12));
+  color: #a5f3fc;
+}
+
+.profile-user-card strong {
+  color: white;
+  font-size: 1rem;
+  line-height: 1.25;
+>>>>>>> main
   overflow-wrap: anywhere;
 }
 
@@ -3276,6 +3356,7 @@ tbody tr:hover {
 
 .profile-nav {
   display: grid;
+<<<<<<< HEAD
   gap: 8px;
 }
 
@@ -3287,6 +3368,20 @@ tbody tr:hover {
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 7px;
   background: rgba(15, 23, 42, 0.48);
+=======
+  gap: 7px;
+}
+
+.profile-nav-button {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 11px 12px 11px 14px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+>>>>>>> main
   color: var(--muted-strong);
   text-align: left;
   transition:
@@ -3297,11 +3392,30 @@ tbody tr:hover {
 
 .profile-nav-button:hover,
 .profile-nav-button.active {
+<<<<<<< HEAD
   border-color: rgba(56, 189, 248, 0.34);
   background: rgba(56, 189, 248, 0.09);
   color: white;
 }
 
+=======
+  border-color: rgba(34, 211, 238, 0.28);
+  background: rgba(34, 211, 238, 0.08);
+  color: white;
+}
+
+.profile-nav-button.active::before {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 6px;
+  width: 3px;
+  border-radius: 99px;
+  background: #22d3ee;
+  content: '';
+}
+
+>>>>>>> main
 .profile-nav-button > div {
   display: flex;
   align-items: center;
@@ -3318,6 +3432,7 @@ tbody tr:hover {
 
 .profile-content {
   display: grid;
+<<<<<<< HEAD
   gap: 18px;
 }
 
@@ -3386,6 +3501,11 @@ tbody tr:hover {
 }
 
 .profile-hero-meta span,
+=======
+  gap: 20px;
+}
+
+>>>>>>> main
 .profile-stat-card p,
 .profile-notification-card > p,
 .profile-mini-card h3,
@@ -3398,7 +3518,10 @@ tbody tr:hover {
   text-transform: uppercase;
 }
 
+<<<<<<< HEAD
 .profile-hero-meta strong,
+=======
+>>>>>>> main
 .profile-stat-card strong {
   color: white;
   font-family: var(--font-ui);
@@ -3407,6 +3530,7 @@ tbody tr:hover {
 
 .profile-panel {
   display: grid;
+<<<<<<< HEAD
   gap: 16px;
   padding: 18px;
 }
@@ -3414,13 +3538,29 @@ tbody tr:hover {
 .profile-section-header {
   display: grid;
   gap: 6px;
+=======
+  gap: 18px;
+  padding: 20px;
+}
+
+.profile-section-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 4px;
+>>>>>>> main
 }
 
 .profile-section-header h2 {
   margin: 0;
   color: white;
   font-family: var(--font-ui);
+<<<<<<< HEAD
   font-size: 1.35rem;
+=======
+  font-size: 1.32rem;
+>>>>>>> main
   font-weight: 800;
 }
 
@@ -3433,14 +3573,25 @@ tbody tr:hover {
 .profile-stat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+<<<<<<< HEAD
   gap: 12px;
+=======
+  gap: 14px;
+>>>>>>> main
 }
 
 .profile-stat-card {
   display: grid;
+<<<<<<< HEAD
   gap: 8px;
   min-height: 92px;
   padding: 14px;
+=======
+  gap: 10px;
+  min-height: 104px;
+  align-content: space-between;
+  padding: 16px;
+>>>>>>> main
 }
 
 .profile-stat-card p {
@@ -3448,7 +3599,11 @@ tbody tr:hover {
 }
 
 .profile-stat-card strong {
+<<<<<<< HEAD
   font-size: 1.15rem;
+=======
+  font-size: clamp(1.08rem, 2vw, 1.35rem);
+>>>>>>> main
 }
 
 .profile-stat-card.success strong {
@@ -3458,14 +3613,25 @@ tbody tr:hover {
 .profile-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+<<<<<<< HEAD
   gap: 12px;
+=======
+  gap: 14px;
+>>>>>>> main
 }
 
 .profile-mini-card {
   display: grid;
+<<<<<<< HEAD
   gap: 12px;
   align-content: start;
   padding: 14px;
+=======
+  gap: 13px;
+  align-content: start;
+  min-height: 164px;
+  padding: 16px;
+>>>>>>> main
 }
 
 .profile-mini-card h3,
@@ -3490,7 +3656,11 @@ tbody tr:hover {
 .profile-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+<<<<<<< HEAD
   gap: 14px;
+=======
+  gap: 16px;
+>>>>>>> main
 }
 
 .profile-form-grid label,
@@ -3509,12 +3679,21 @@ tbody tr:hover {
 
 .profile-input {
   width: 100%;
+<<<<<<< HEAD
   min-height: 44px;
   padding: 0 12px;
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 7px;
   outline: none;
   background: rgba(3, 7, 18, 0.72);
+=======
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 7px;
+  outline: none;
+  background: rgba(3, 7, 18, 0.54);
+>>>>>>> main
   color: var(--text);
   font-size: 0.92rem;
   transition:
@@ -3523,8 +3702,14 @@ tbody tr:hover {
 }
 
 .profile-textarea {
+<<<<<<< HEAD
   min-height: 108px;
   padding: 12px;
+=======
+  min-height: 118px;
+  padding: 12px;
+  resize: vertical;
+>>>>>>> main
 }
 
 .profile-input:focus {
@@ -3533,7 +3718,11 @@ tbody tr:hover {
 }
 
 .profile-notification-card {
+<<<<<<< HEAD
   padding: 14px;
+=======
+  padding: 16px;
+>>>>>>> main
 }
 
 .profile-notification-card > p {
@@ -3557,7 +3746,11 @@ tbody tr:hover {
   overflow-x: auto;
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 8px;
+<<<<<<< HEAD
   background: rgba(2, 6, 23, 0.3);
+=======
+  background: rgba(2, 6, 23, 0.22);
+>>>>>>> main
 }
 
 .profile-booking-table {
@@ -3569,7 +3762,12 @@ tbody tr:hover {
   grid-template-columns: 1fr 1.35fr 1.65fr 1fr 1fr 1fr;
   gap: 12px;
   align-items: center;
+<<<<<<< HEAD
   padding: 11px 12px;
+=======
+  min-height: 52px;
+  padding: 12px 14px;
+>>>>>>> main
   border-bottom: 1px solid rgba(148, 163, 184, 0.1);
   color: var(--muted-strong);
   font-size: 0.86rem;
@@ -3580,10 +3778,25 @@ tbody tr:hover {
 }
 
 .profile-booking-head {
+<<<<<<< HEAD
   background: rgba(15, 23, 42, 0.62);
 }
 
 .profile-status {
+=======
+  min-height: 44px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.profile-status {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 26px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 9px;
+  background: rgba(148, 163, 184, 0.1);
+>>>>>>> main
   font-weight: 800;
 }
 
@@ -3630,27 +3843,44 @@ tbody tr:hover {
   }
 
   .profile-nav {
+<<<<<<< HEAD
     grid-template-columns: repeat(2, minmax(0, 1fr));
+=======
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+>>>>>>> main
   }
 }
 
 @media (max-width: 820px) {
   .profile-page {
+<<<<<<< HEAD
     padding: 28px 14px 64px;
+=======
+    padding: 24px 14px 64px;
+>>>>>>> main
   }
 
   .profile-stat-grid,
   .profile-detail-grid,
   .profile-form-grid,
   .profile-filter-grid,
+<<<<<<< HEAD
   .profile-hero-meta,
+=======
+>>>>>>> main
   .profile-checkbox-grid,
   .profile-nav {
     grid-template-columns: 1fr;
   }
 
+<<<<<<< HEAD
   .profile-hero-media > div {
     padding: 22px;
+=======
+  .profile-section-header {
+    display: grid;
+    align-items: start;
+>>>>>>> main
   }
 }
 
@@ -3731,6 +3961,15 @@ tbody tr:hover {
   color: var(--text);
 }
 
+<<<<<<< HEAD
+=======
+:root[data-theme='light'] .profile-page {
+  background:
+    linear-gradient(180deg, rgba(232, 238, 247, 0.94), rgba(246, 248, 251, 1) 360px),
+    #f6f8fb;
+}
+
+>>>>>>> main
 :root[data-theme='light'] .site-header,
 :root[data-theme='light'] .admin-topbar,
 :root[data-theme='light'] .admin-sidebar,
@@ -3756,7 +3995,10 @@ tbody tr:hover {
 :root[data-theme='light'] .auth-card,
 :root[data-theme='light'] .profile-sidebar,
 :root[data-theme='light'] .profile-panel,
+<<<<<<< HEAD
 :root[data-theme='light'] .profile-hero-card,
+=======
+>>>>>>> main
 :root[data-theme='light'] .results-toolbar,
 :root[data-theme='light'] .calendar-card,
 :root[data-theme='light'] .receipt-card,
@@ -3794,8 +4036,12 @@ tbody tr:hover {
 }
 
 :root[data-theme='light'] .hero-overlay,
+<<<<<<< HEAD
 :root[data-theme='light'] .not-found::before,
 :root[data-theme='light'] .profile-hero-media::after {
+=======
+:root[data-theme='light'] .not-found::before {
+>>>>>>> main
   background:
     linear-gradient(90deg, rgba(3, 7, 18, 0.78), rgba(3, 7, 18, 0.48) 55%, rgba(3, 7, 18, 0.7)),
     linear-gradient(180deg, rgba(3, 7, 18, 0.1), rgba(3, 7, 18, 0.64));
@@ -3803,6 +4049,7 @@ tbody tr:hover {
 
 :root[data-theme='light'] .hero-content h1,
 :root[data-theme='light'] .hero-content p,
+<<<<<<< HEAD
 :root[data-theme='light'] .hero-content strong,
 :root[data-theme='light'] .profile-hero-media h1,
 :root[data-theme='light'] .profile-hero-media p:not(.eyebrow) {
@@ -3821,6 +4068,21 @@ tbody tr:hover {
 
 :root[data-theme='light'] .hero-content .eyebrow,
 :root[data-theme='light'] .profile-hero-media .eyebrow {
+=======
+:root[data-theme='light'] .hero-content strong {
+  color: #f8fafc;
+}
+
+:root[data-theme='light'] .hero-content h1 {
+  text-shadow: 0 18px 48px rgba(3, 7, 18, 0.44);
+}
+
+:root[data-theme='light'] .hero-content p {
+  color: #dbeafe;
+}
+
+:root[data-theme='light'] .hero-content .eyebrow {
+>>>>>>> main
   color: #bae6fd;
 }
 
@@ -3835,6 +4097,21 @@ tbody tr:hover {
   color: #0f172a;
 }
 
+<<<<<<< HEAD
+=======
+:root[data-theme='light'] .site-header .mobile-menu-button {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+:root[data-theme='light'] .site-header .mobile-menu-button:hover {
+  border-color: rgba(14, 165, 183, 0.3);
+  background: rgba(14, 165, 183, 0.08);
+  color: #0f172a;
+}
+
+>>>>>>> main
 :root[data-theme='light'] .theme-toggle {
   border-color: rgba(15, 23, 42, 0.12);
   background: #eef2f7;
@@ -3898,6 +4175,33 @@ tbody tr:hover {
   color: #0891b2;
 }
 
+<<<<<<< HEAD
+=======
+:root[data-theme='light'] .access-denied-page {
+  background:
+    linear-gradient(180deg, rgba(232, 238, 247, 0.86), rgba(246, 248, 251, 1) 320px),
+    #f6f8fb;
+}
+
+:root[data-theme='light'] .access-denied-panel {
+  border-color: rgba(15, 23, 42, 0.1);
+  background: #ffffff;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme='light'] .access-denied-panel h1 {
+  color: #0f172a;
+}
+
+:root[data-theme='light'] .access-denied-panel p {
+  color: #64748b;
+}
+
+:root[data-theme='light'] .access-denied-panel .eyebrow {
+  color: #0891b2;
+}
+
+>>>>>>> main
 :root[data-theme='light'] .service-card > span:last-child,
 :root[data-theme='light'] .rating-pill,
 :root[data-theme='light'] .status-chip.pending {
@@ -4165,8 +4469,13 @@ tbody tr:hover {
   display: grid;
   grid-template-columns: minmax(320px, 1.4fr) minmax(180px, 0.8fr) minmax(220px, 0.9fr);
   gap: clamp(24px, 4vw, 58px);
+<<<<<<< HEAD
   width: min(1180px, 100%);
   margin: 0 auto;
+=======
+  width: 100%;
+  margin: 0;
+>>>>>>> main
   align-items: start;
 }
 
@@ -4530,6 +4839,95 @@ tbody tr:hover {
   color: #d97706 !important;
 }
 
+<<<<<<< HEAD
+=======
+:root[data-theme='light'] .admin-quick-search-popover,
+:root[data-theme='light'] .admin-notification-popover,
+:root[data-theme='light'] .admin-account-popover,
+:root[data-theme='light'] .account-popover,
+:root[data-theme='light'] .admin-modal {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.98);
+  color: #0f172a;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme='light'] .account-popover::before {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.98);
+}
+
+:root[data-theme='light'] .admin-quick-search-item,
+:root[data-theme='light'] .admin-notification-item {
+  border-color: rgba(15, 23, 42, 0.1);
+  background: #ffffff;
+  color: #0f172a;
+}
+
+:root[data-theme='light'] .admin-quick-search-item:hover,
+:root[data-theme='light'] .admin-notification-item:hover,
+:root[data-theme='light'] .admin-notification-item.is-unread {
+  border-color: rgba(14, 165, 183, 0.28);
+  background: rgba(14, 165, 183, 0.08);
+}
+
+:root[data-theme='light'] .admin-quick-search-item strong,
+:root[data-theme='light'] .admin-notification-header strong,
+:root[data-theme='light'] .admin-notification-item strong,
+:root[data-theme='light'] .admin-account-popover strong,
+:root[data-theme='light'] .account-popover strong,
+:root[data-theme='light'] .admin-modal-header h2 {
+  color: #0f172a;
+}
+
+:root[data-theme='light'] .admin-quick-search-item small,
+:root[data-theme='light'] .admin-quick-search-empty,
+:root[data-theme='light'] .admin-notification-item p,
+:root[data-theme='light'] .admin-notification-item small,
+:root[data-theme='light'] .account-popover small {
+  color: #64748b;
+}
+
+:root[data-theme='light'] .admin-account-popover small {
+  color: #d97706;
+}
+
+:root[data-theme='light'] .admin-layout input,
+:root[data-theme='light'] .admin-layout select,
+:root[data-theme='light'] .admin-layout textarea {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  color: #0f172a;
+}
+
+:root[data-theme='light'] .admin-layout input::placeholder,
+:root[data-theme='light'] .admin-layout textarea::placeholder {
+  color: #94a3b8;
+}
+
+:root[data-theme='light'] .admin-layout label,
+:root[data-theme='light'] .admin-room-form label {
+  color: #475569;
+}
+
+:root[data-theme='light'] .admin-panel .ghost-button {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  color: #334155;
+}
+
+:root[data-theme='light'] .admin-panel .ghost-button:hover,
+:root[data-theme='light'] .admin-panel .ghost-button[class*='border-slate-500'][class*='text-white'] {
+  border-color: rgba(14, 165, 183, 0.34);
+  background: rgba(14, 165, 183, 0.1);
+  color: #0f172a !important;
+}
+
+:root[data-theme='light'] .admin-notification-dot {
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+>>>>>>> main
 :root[data-theme='light'] .room-card,
 :root[data-theme='light'] [class*='bg-slate-900'][class*='shadow'][class*='overflow-hidden'] {
   border-color: rgba(15, 23, 42, 0.1) !important;
@@ -4726,6 +5124,72 @@ tbody tr:hover {
   color: #475569;
 }
 
+<<<<<<< HEAD
+=======
+:root[data-theme='light'] [class*='border-slate-'],
+:root[data-theme='light'] [class*='border-blue-'],
+:root[data-theme='light'] [class*='border-amber-'] {
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+:root[data-theme='light'] [class*='bg-slate-950'],
+:root[data-theme='light'] [class*='bg-slate-900'],
+:root[data-theme='light'] [class*='bg-slate-800'],
+:root[data-theme='light'] [class*='bg-slate-700'],
+:root[data-theme='light'] [class*='bg-slate-600'] {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme='light'] [class*='hover:bg-slate-800'] {
+  background: #ffffff;
+}
+
+:root[data-theme='light'] [class*='hover:bg-slate-800']:hover {
+  background: rgba(14, 165, 183, 0.08) !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme='light'] [class*='text-white'],
+:root[data-theme='light'] [class*='text-slate-100'],
+:root[data-theme='light'] [class*='text-slate-200'] {
+  color: #0f172a !important;
+}
+
+:root[data-theme='light'] [class*='text-slate-300'] {
+  color: #334155 !important;
+}
+
+:root[data-theme='light'] [class*='text-slate-400'],
+:root[data-theme='light'] [class*='text-slate-500'] {
+  color: #64748b !important;
+}
+
+:root[data-theme='light'] [class*='bg-slate-950'][class*='text-amber'],
+:root[data-theme='light'] [class*='bg-amber'] {
+  border-color: rgba(245, 158, 11, 0.28) !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #b45309 !important;
+}
+
+:root[data-theme='light'] [class*='from-blue'][class*='to-blue'] {
+  background: #0ea5b7 !important;
+  color: #031217 !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme='light'] [class*='shadow-'] {
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08) !important;
+}
+
+:root[data-theme='light'] .hero-section [class*='text-white'],
+:root[data-theme='light'] .hero-section [class*='text-slate-100'],
+:root[data-theme='light'] .hero-section [class*='text-slate-200'],
+:root[data-theme='light'] .hero-section [class*='text-slate-300'] {
+  color: #f8fafc !important;
+}
+
+>>>>>>> main
 :root[data-theme='dark'] [class*='rounded-xl'],
 :root[data-theme='dark'] [class*='rounded-2xl'] {
   border-radius: 8px !important;

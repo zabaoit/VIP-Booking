@@ -8,6 +8,7 @@ import {
   saveCustomerProfiles,
   setActiveBookingId,
 } from '../utils/appStorage'
+<<<<<<< HEAD
 import { formatCurrency } from '../utils/currency'
 
 const sidebarSections = [
@@ -15,6 +16,13 @@ const sidebarSections = [
   { id: 'profile-personal', label: 'Personal Information', hint: 'Profile details', icon: 'user' },
   { id: 'profile-history', label: 'Booking History', hint: 'Reservation timeline', icon: 'calendar' },
   { id: 'profile-payment', label: 'Payments', hint: 'Wallet and billing', icon: 'card' },
+=======
+
+const sidebarSections = [
+  { id: 'profile-personal', label: 'Personal Information', hint: 'Profile details', icon: 'user' },
+  { id: 'profile-history', label: 'Booking History', hint: 'Reservation timeline', icon: 'calendar' },
+  { id: 'profile-payment', label: 'Invoices & Payments', hint: 'Billing and methods', icon: 'card' },
+>>>>>>> main
   { id: 'profile-security', label: 'Security', hint: 'Password and sessions', icon: 'shield' },
 ] as const
 
@@ -70,7 +78,11 @@ function normalizeEmail(email: string) {
 
 export function ProfilePage({ navigate }: { navigate: Navigate }) {
   const { changePassword, logout, user } = useAuth()
+<<<<<<< HEAD
   const [activeSection, setActiveSection] = useState<ProfileSectionId>('profile-overview')
+=======
+  const [activeSection, setActiveSection] = useState<ProfileSectionId>('profile-personal')
+>>>>>>> main
   const [passwordMessage, setPasswordMessage] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [profileMessage, setProfileMessage] = useState('')
@@ -163,6 +175,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     )
   }, [bookingSearch, bookingSort, bookingStatusFilter, bookings])
 
+<<<<<<< HEAD
   const confirmedBookings = bookings.filter((booking) => booking.status === 'Confirmed').length
   const pendingBookings = bookings.filter((booking) => booking.status === 'Pending').length
   const paymentMethodLabel =
@@ -175,6 +188,11 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   const loyaltyPoints = Math.max(850, confirmedBookings * 500 + pendingBookings * 180)
   const tierName = loyaltyPoints >= 5000 ? 'Diamond Elite' : loyaltyPoints >= 2500 ? 'Platinum' : 'Gold'
   const upcomingBooking = bookings.find((booking) => booking.status !== 'Cancelled')
+=======
+  const pendingBookings = bookings.filter((booking) => booking.status === 'Pending').length
+  const paymentMethodLabel =
+    paymentMethod === 'momo' ? 'MoMo' : paymentMethod === 'card' ? 'Credit Card' : 'VietQR'
+>>>>>>> main
 
   const persistProfileSettings = (nextSettings: ProfileSettings) => {
     const rawStoredSettings = window.localStorage.getItem(profileSettingsStorageKey)
@@ -274,6 +292,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     </div>
   )
 
+<<<<<<< HEAD
   const renderOverview = () => (
     <section className={panelClass}>
       {sectionHeader('Membership Overview', 'Your premium status and next reservation at a glance.')}
@@ -323,6 +342,8 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     </section>
   )
 
+=======
+>>>>>>> main
   const renderPersonal = () => (
     <section className={panelClass}>
       {sectionHeader('Personal Information', 'Manage identity details and in-stay preferences.')}
@@ -490,7 +511,11 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
 
   const renderPayment = () => (
     <section className={panelClass}>
+<<<<<<< HEAD
       {sectionHeader('Payments', 'Control your preferred payment method and billing details.')}
+=======
+      {sectionHeader('Invoices & Payments', 'Review billing status and choose a payment method.')}
+>>>>>>> main
       <div className="profile-stat-grid">
         <article className="profile-stat-card">
           <p>Preferred Method</p>
@@ -501,11 +526,41 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           <strong>{pendingBookings} booking</strong>
         </article>
         <article className="profile-stat-card">
+<<<<<<< HEAD
           <p>Member ID</p>
+=======
+          <p>Billing Account</p>
+>>>>>>> main
           <strong>{memberCode}</strong>
         </article>
       </div>
 
+<<<<<<< HEAD
+=======
+      <div className="profile-detail-grid">
+        <article className="profile-mini-card">
+          <h3>Recent Invoice</h3>
+          {bookings[0] ? (
+            <div>
+              <strong>{bookings[0].amount}</strong>
+              <p>{bookings[0].room}</p>
+              <small>Booking: {bookings[0].id}</small>
+            </div>
+          ) : (
+            <p>No invoice has been created for this account yet.</p>
+          )}
+        </article>
+        <article className="profile-mini-card">
+          <h3>Payment Status</h3>
+          <p>
+            {pendingBookings > 0
+              ? `${pendingBookings} booking needs payment confirmation.`
+              : 'No pending payment for this account.'}
+          </p>
+        </article>
+      </div>
+
+>>>>>>> main
       <label className="profile-field-block">
         Preferred Method
         <select
@@ -574,7 +629,10 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   )
 
   const renderActiveSection = () => {
+<<<<<<< HEAD
     if (activeSection === 'profile-overview') return renderOverview()
+=======
+>>>>>>> main
     if (activeSection === 'profile-personal') return renderPersonal()
     if (activeSection === 'profile-history') return renderHistory()
     if (activeSection === 'profile-payment') return renderPayment()
@@ -591,7 +649,11 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             </div>
             <strong>{displayName}</strong>
             <p>{userEmail}</p>
+<<<<<<< HEAD
             <small>{tierName}</small>
+=======
+            <small>Guest account</small>
+>>>>>>> main
           </div>
 
           <div className="profile-nav">

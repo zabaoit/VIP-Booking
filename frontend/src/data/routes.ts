@@ -23,6 +23,10 @@ export const routePaths: Record<RouteKey, string> = {
   adminBookings: 'admin/bookings',
   adminPricing: 'admin/pricing',
   adminCustomers: 'admin/customers',
+<<<<<<< HEAD
+=======
+  adminUsers: 'admin/users',
+>>>>>>> main
   notFound: '404',
 }
 
@@ -46,9 +50,16 @@ export const routeTitles: Record<RouteKey, string> = {
   admin: 'Admin Dashboard - VIP Booking',
   adminRooms: 'Room Types Management - VIP Booking',
   adminServices: 'Service Management - VIP Booking',
+<<<<<<< HEAD
   adminBookings: 'Booking Management - VIP Booking',
   adminPricing: 'Pricing Management - VIP Booking',
   adminCustomers: 'Customer Management - VIP Booking',
+=======
+  adminBookings: 'Booking & Payment Management - VIP Booking',
+  adminPricing: 'Pricing Management - VIP Booking',
+  adminCustomers: 'Customer Management - VIP Booking',
+  adminUsers: 'User Role Management - VIP Booking',
+>>>>>>> main
   notFound: '404 - VIP Booking',
 }
 
@@ -69,5 +80,9 @@ export const adminRouteKeys: RouteKey[] = [
   'adminBookings',
   'adminPricing',
   'adminCustomers',
+<<<<<<< HEAD
+=======
+  'adminUsers',
+>>>>>>> main
 ]
 export const privateRouteKeys: RouteKey[] = [...protectedRouteKeys, ...adminRouteKeys]

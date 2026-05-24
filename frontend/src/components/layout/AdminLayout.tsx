@@ -199,6 +199,23 @@ export function AdminLayout({
         route: 'adminBookings',
       }))
 
+<<<<<<< HEAD
+=======
+    const billingResults: SearchResult[] = readBookings()
+      .filter((booking) =>
+        `${booking.guest} ${booking.room} ${booking.email} ${booking.id} invoice payment`
+          .toLowerCase()
+          .includes(query),
+      )
+      .slice(0, 2)
+      .map((booking) => ({
+        id: `invoice-${booking.id}`,
+        title: `Invoice #${booking.id}`,
+        meta: `${booking.amount} - ${booking.status}`,
+        route: 'adminBookings',
+      }))
+
+>>>>>>> main
     const serviceResults: SearchResult[] = readServices()
       .filter((service) => `${service.name} ${service.note}`.toLowerCase().includes(query))
       .slice(0, 2)
@@ -222,12 +239,16 @@ export function AdminLayout({
       }))
 
     const userResults: SearchResult[] = readRegisteredUsers()
+<<<<<<< HEAD
       .filter((item) => item.role === 'guest')
+=======
+>>>>>>> main
       .filter((item) => item.email.toLowerCase().includes(query))
       .slice(0, 2)
       .map((item) => ({
         id: `user-${item.email}`,
         title: item.email,
+<<<<<<< HEAD
         meta: 'Customer account',
         route: 'adminCustomers',
       }))
@@ -236,6 +257,20 @@ export function AdminLayout({
       0,
       8,
     )
+=======
+        meta: `${item.role} account`,
+        route: item.role === 'admin' ? 'adminUsers' : 'adminCustomers',
+      }))
+
+    return [
+      ...roomResults,
+      ...bookingResults,
+      ...billingResults,
+      ...serviceResults,
+      ...pricingResults,
+      ...userResults,
+    ].slice(0, 8)
+>>>>>>> main
   }, [searchQuery])
 
   useEffect(() => {
@@ -324,6 +359,11 @@ export function AdminLayout({
     setAppRoute(notification.route)
   }
 
+<<<<<<< HEAD
+=======
+  const showGlobalSearch = currentRoute === 'admin'
+
+>>>>>>> main
   return (
     <main className="admin-layout">
       <aside className="admin-sidebar">
@@ -362,6 +402,7 @@ export function AdminLayout({
             <h1>{routeTitles[currentRoute].replace(' - VIP Booking', '')}</h1>
           </div>
           <div className="admin-topbar-actions" ref={topbarActionsRef}>
+<<<<<<< HEAD
             <div className="admin-search-shell">
               <div className="admin-search">
                 <span className="admin-search-icon">
@@ -398,6 +439,46 @@ export function AdminLayout({
                 </div>
               )}
             </div>
+=======
+            {showGlobalSearch && (
+              <div className="admin-search-shell">
+                <div className="admin-search">
+                  <span className="admin-search-icon">
+                    <Icon name="search" size={16} />
+                  </span>
+                  <input
+                    className="admin-search-input"
+                    value={searchQuery}
+                    placeholder="Search bookings, rooms, guests..."
+                    onFocus={() => setIsSearchOpen(true)}
+                    onChange={(event) => {
+                      setSearchQuery(event.target.value)
+                      setIsSearchOpen(true)
+                    }}
+                  />
+                </div>
+                {isSearchOpen && searchQuery.trim().length >= 2 && (
+                  <div className="admin-quick-search-popover">
+                    {searchResults.length > 0 ? (
+                      searchResults.map((result) => (
+                        <button
+                          key={result.id}
+                          className="admin-quick-search-item"
+                          type="button"
+                          onClick={() => handleSearchPick(result.route)}
+                        >
+                          <strong>{result.title}</strong>
+                          <small>{result.meta}</small>
+                        </button>
+                      ))
+                    ) : (
+                      <p className="admin-quick-search-empty">No matching results.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+>>>>>>> main
 
             <div className="admin-action-buttons">
               <button

@@ -14,4 +14,8 @@ export const adminNavItems: Array<{ label: string; route: RouteKey; icon: IconNa
   { label: 'Services', route: 'adminServices', icon: 'service' },
   { label: 'Pricing', route: 'adminPricing', icon: 'card' },
   { label: 'Customers', route: 'adminCustomers', icon: 'users' },
+<<<<<<< HEAD
+=======
+  { label: 'User Roles', route: 'adminUsers', icon: 'shield' },
+>>>>>>> main
 ]

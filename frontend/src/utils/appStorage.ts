@@ -14,6 +14,10 @@ import type {
 
 export const registeredUsersStorageKey = 'vip-booking-registered-users'
 export const roomsStorageKey = 'vip-booking-rooms'
+<<<<<<< HEAD
+=======
+export const roomsVersionStorageKey = 'vip-booking-rooms-version'
+>>>>>>> main
 export const servicesStorageKey = 'vip-booking-services'
 export const pricingRulesStorageKey = 'vip-booking-pricing-rules'
 export const customerProfilesStorageKey = 'vip-booking-customer-profiles'
@@ -22,6 +26,11 @@ export const activeBookingIdStorageKey = 'vip-booking-active-booking-id'
 export const supportInfoStorageKey = 'vip-booking-support-info'
 export const contactMessagesStorageKey = 'vip-booking-contact-messages'
 
+<<<<<<< HEAD
+=======
+const roomsDataVersion = 'home-room-data-2026-05-23'
+
+>>>>>>> main
 const defaultSupportInfo: SupportInfo = {
   hotline: '+84 901 123 456',
   email: 'guest@vipbooking.vn',
@@ -83,9 +92,17 @@ export function readRegisteredUsers(): RegisteredUser[] {
 
 export function readRooms(): Room[] {
   const roomItems = parseArrayStorage<Room>(roomsStorageKey)
+<<<<<<< HEAD
 
   if (!roomItems) {
     localStorage.setItem(roomsStorageKey, JSON.stringify(defaultRooms))
+=======
+  const roomsVersion = localStorage.getItem(roomsVersionStorageKey)
+
+  if (!roomItems || roomsVersion !== roomsDataVersion) {
+    localStorage.setItem(roomsStorageKey, JSON.stringify(defaultRooms))
+    localStorage.setItem(roomsVersionStorageKey, roomsDataVersion)
+>>>>>>> main
     return defaultRooms
   }
 
@@ -94,6 +111,10 @@ export function readRooms(): Room[] {
 
 export function saveRooms(roomItems: Room[]) {
   localStorage.setItem(roomsStorageKey, JSON.stringify(roomItems))
+<<<<<<< HEAD
+=======
+  localStorage.setItem(roomsVersionStorageKey, roomsDataVersion)
+>>>>>>> main
 }
 
 export function readServices(): Service[] {
@@ -136,9 +157,19 @@ export function readBookings(): BookingRecord[] {
   return parseArrayStorage<BookingRecord>(bookingsStorageKey) ?? []
 }
 
+<<<<<<< HEAD
 export function saveBooking(booking: BookingRecord) {
   const bookings = readBookings()
   localStorage.setItem(bookingsStorageKey, JSON.stringify([booking, ...bookings]))
+=======
+export function saveBookings(bookings: BookingRecord[]) {
+  localStorage.setItem(bookingsStorageKey, JSON.stringify(bookings))
+}
+
+export function saveBooking(booking: BookingRecord) {
+  const bookings = readBookings()
+  saveBookings([booking, ...bookings])
+>>>>>>> main
 }
 
 export function readBookingsByOwner(userEmail: string): BookingRecord[] {
@@ -160,7 +191,11 @@ export function updateBookingStatus(bookingId: string, status: BookingRecord['st
     booking.id === normalizedId || booking.id === bookingId ? { ...booking, status } : booking,
   )
 
+<<<<<<< HEAD
   localStorage.setItem(bookingsStorageKey, JSON.stringify(updatedBookings))
+=======
+  saveBookings(updatedBookings)
+>>>>>>> main
 }
 
 export function setActiveBookingId(bookingId: string) {
