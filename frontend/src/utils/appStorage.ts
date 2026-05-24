@@ -142,9 +142,13 @@ export function readBookings(): BookingRecord[] {
   return parseArrayStorage<BookingRecord>(bookingsStorageKey) ?? []
 }
 
+export function saveBookings(bookings: BookingRecord[]) {
+  localStorage.setItem(bookingsStorageKey, JSON.stringify(bookings))
+}
+
 export function saveBooking(booking: BookingRecord) {
   const bookings = readBookings()
-  localStorage.setItem(bookingsStorageKey, JSON.stringify([booking, ...bookings]))
+  saveBookings([booking, ...bookings])
 }
 
 export function readBookingsByOwner(userEmail: string): BookingRecord[] {
@@ -166,7 +170,7 @@ export function updateBookingStatus(bookingId: string, status: BookingRecord['st
     booking.id === normalizedId || booking.id === bookingId ? { ...booking, status } : booking,
   )
 
-  localStorage.setItem(bookingsStorageKey, JSON.stringify(updatedBookings))
+  saveBookings(updatedBookings)
 }
 
 export function setActiveBookingId(bookingId: string) {

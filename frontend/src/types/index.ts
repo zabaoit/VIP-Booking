@@ -23,6 +23,7 @@ export type RouteKey =
   | 'adminBookings'
   | 'adminPricing'
   | 'adminCustomers'
+  | 'adminUsers'
   | 'notFound'
 
 export type IconName =

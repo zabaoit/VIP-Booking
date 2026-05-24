@@ -5,6 +5,7 @@ import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'
 import { AdminPricingPage } from '../pages/admin/AdminPricingPage'
 import { AdminRoomTypesPage } from '../pages/admin/AdminRoomTypesPage'
 import { AdminServicesPage } from '../pages/admin/AdminServicesPage'
+import { AdminUsersPage } from '../pages/admin/AdminUsersPage'
 import type { AppRoute } from '../types'
 
 export const privateRoutes: AppRoute[] = [
@@ -53,6 +54,14 @@ export const privateRoutes: AppRoute[] = [
     element: () => (
       <AdminLayout currentRoute="adminCustomers">
         <AdminCustomersPage />
+      </AdminLayout>
+    ),
+  },
+  {
+    key: 'adminUsers',
+    element: () => (
+      <AdminLayout currentRoute="adminUsers">
+        <AdminUsersPage />
       </AdminLayout>
     ),
   },

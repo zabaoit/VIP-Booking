@@ -6,6 +6,7 @@ import { readPricingRules, savePricingRules } from '../../utils/appStorage'
 export function AdminPricingPage() {
   const [rules, setRules] = useState<PricingRule[]>(() => readPricingRules())
   const [activeTab, setActiveTab] = useState<'dynamic' | 'seasonal' | 'discounts'>('dynamic')
+  const [activeRule, setActiveRule] = useState<PricingRule | null>(null)
   const [search, setSearch] = useState('')
 
   const persistRules = (nextRules: PricingRule[]) => {
@@ -29,7 +30,7 @@ export function AdminPricingPage() {
     })
   }, [rules, search])
 
-  const handleCreateRule = (event: FormEvent<HTMLFormElement>) => {
+  const handleRuleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const name = String(formData.get('ruleName') ?? '').trim()
@@ -46,7 +47,7 @@ export function AdminPricingPage() {
 
     const adjustment = `${actionType === 'Increase (+)' ? '+' : '-'}${actionValue}%`
     const nextRule: PricingRule = {
-      id: `${Date.now()}`,
+      id: activeRule?.id ?? `${Date.now()}`,
       name,
       roomType,
       trigger,
@@ -55,8 +56,25 @@ export function AdminPricingPage() {
       endDate,
     }
 
-    persistRules([nextRule, ...rules])
+    persistRules(
+      activeRule
+        ? rules.map((rule) => (rule.id === activeRule.id ? nextRule : rule))
+        : [nextRule, ...rules],
+    )
+    setActiveRule(null)
     event.currentTarget.reset()
+  }
+
+  const handleDeleteRule = (rule: PricingRule) => {
+    const shouldDelete = window.confirm(`Delete pricing rule "${rule.name}"?`)
+    if (!shouldDelete) {
+      return
+    }
+
+    persistRules(rules.filter((item) => item.id !== rule.id))
+    if (activeRule?.id === rule.id) {
+      setActiveRule(null)
+    }
   }
 
   return (
@@ -90,22 +108,31 @@ export function AdminPricingPage() {
           ))}
         </div>
 
-        {activeTab === 'dynamic' && (
+        {activeTab && (
           <div className="grid gap-4">
             <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-4">
               <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
-                <Icon name="plus" size={15} />
-                <span>Create New Rule</span>
+                <Icon name={activeRule ? 'edit' : 'plus'} size={15} />
+                <span>{activeRule ? 'Edit Rule' : 'Create New Rule'}</span>
               </div>
 
-              <form className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4" onSubmit={handleCreateRule}>
+              <form
+                key={activeRule?.id ?? 'new-rule'}
+                className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4"
+                onSubmit={handleRuleSubmit}
+              >
                 <label className="grid gap-1 text-xs text-slate-300 xl:col-span-2">
                   Rule Name
-                  <input name="ruleName" placeholder="e.g. High Occupancy Week" required />
+                  <input
+                    name="ruleName"
+                    defaultValue={activeRule?.name}
+                    placeholder="e.g. High Occupancy Week"
+                    required
+                  />
                 </label>
                 <label className="grid gap-1 text-xs text-slate-300">
                   Room Type
-                  <select name="roomType" defaultValue="All Room Types">
+                  <select name="roomType" defaultValue={activeRule?.roomType ?? 'All Room Types'}>
                     <option>All Room Types</option>
                     <option>Standard King</option>
                     <option>Executive Ocean View</option>
@@ -114,7 +141,7 @@ export function AdminPricingPage() {
                 </label>
                 <label className="grid gap-1 text-xs text-slate-300">
                   Trigger Condition
-                  <select name="trigger" defaultValue="Occupancy > 80%">
+                  <select name="trigger" defaultValue={activeRule?.trigger ?? 'Occupancy > 80%'}>
                     <option>Occupancy &gt; 80%</option>
                     <option>Occupancy &gt; 85%</option>
                     <option>Days to Check in &lt; 3</option>
@@ -124,7 +151,10 @@ export function AdminPricingPage() {
                 <label className="grid gap-1 text-xs text-slate-300">
                   Price Adjustment
                   <div className="grid grid-cols-[1fr_84px] gap-2">
-                    <select name="actionType" defaultValue="Increase (+)">
+                    <select
+                      name="actionType"
+                      defaultValue={activeRule?.adjustment.startsWith('-') ? 'Decrease (-)' : 'Increase (+)'}
+                    >
                       <option>Increase (+)</option>
                       <option>Decrease (-)</option>
                     </select>
@@ -133,25 +163,29 @@ export function AdminPricingPage() {
                       type="number"
                       min="1"
                       max="100"
-                      defaultValue={15}
+                      defaultValue={activeRule ? Number(activeRule.adjustment.replace(/[^0-9.]/g, '')) : 15}
                     />
                   </div>
                 </label>
                 <label className="grid gap-1 text-xs text-slate-300">
                   Effective Start Date
-                  <input name="startDate" type="date" required />
+                  <input name="startDate" defaultValue={activeRule?.startDate} type="date" required />
                 </label>
                 <label className="grid gap-1 text-xs text-slate-300">
                   Effective End Date
-                  <input name="endDate" type="date" required />
+                  <input name="endDate" defaultValue={activeRule?.endDate} type="date" required />
                 </label>
                 <div className="flex items-end justify-end gap-2 md:col-span-2 xl:col-span-4">
-                  <button className="ghost-button compact" type="reset">
-                    Clear
+                  <button
+                    className="ghost-button compact"
+                    type="button"
+                    onClick={() => setActiveRule(null)}
+                  >
+                    {activeRule ? 'Cancel Edit' : 'Clear'}
                   </button>
                   <button className="primary-button compact" type="submit">
                     <Icon name="check" size={14} />
-                    Save Rule
+                    {activeRule ? 'Update Rule' : 'Save Rule'}
                   </button>
                 </div>
               </form>
@@ -182,6 +216,7 @@ export function AdminPricingPage() {
                       <th>Trigger</th>
                       <th>Adjustment</th>
                       <th>Date Range</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -204,11 +239,21 @@ export function AdminPricingPage() {
                         <td>
                           {rule.startDate} to {rule.endDate}
                         </td>
+                        <td>
+                          <div className="row-actions">
+                            <button className="link-button" type="button" onClick={() => setActiveRule(rule)}>
+                              Edit
+                            </button>
+                            <button className="link-button" type="button" onClick={() => handleDeleteRule(rule)}>
+                              Delete
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                     {visibleRules.length === 0 && (
                       <tr>
-                        <td colSpan={5}>No pricing rules matched your search.</td>
+                        <td colSpan={6}>No pricing rules matched your search.</td>
                       </tr>
                     )}
                   </tbody>
@@ -218,17 +263,6 @@ export function AdminPricingPage() {
           </div>
         )}
 
-        {activeTab === 'seasonal' && (
-          <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-slate-300">
-            Configure monthly and holiday-based multipliers for each room class.
-          </div>
-        )}
-
-        {activeTab === 'discounts' && (
-          <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-4 text-slate-300">
-            Manage loyalty, corporate, and campaign discount settings in one place.
-          </div>
-        )}
       </section>
     </div>
   )
