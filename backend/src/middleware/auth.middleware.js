@@ -39,3 +39,23 @@ export const requireAuth = (req, res, next) => {
     });
   }
 };
+
+export const requireRoles = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Bạn cần đăng nhập để tiếp tục',
+      });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn không có quyền thực hiện thao tác này',
+      });
+    }
+
+    return next();
+  };
+};

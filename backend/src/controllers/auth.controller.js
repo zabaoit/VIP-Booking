@@ -4,6 +4,7 @@ import {
   loginUser,
   registerUser,
 } from '../services/auth.service.js';
+import { handleControllerError, sendSuccess } from '../utils/response.js';
 
 const registerSchema = z.object({
   email: z.email('Email không hợp lệ'),
@@ -17,31 +18,13 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
 });
 
-const handleControllerError = (res, error) => {
-  if (error instanceof z.ZodError) {
-    return res.status(400).json({
-      success: false,
-      message: 'Dữ liệu không hợp lệ',
-      errors: error.issues.map((issue) => ({
-        field: issue.path.join('.'),
-        message: issue.message,
-      })),
-    });
-  }
-
-  return res.status(error.statusCode || 500).json({
-    success: false,
-    message: error.message || 'Lỗi hệ thống',
-  });
-};
-
 export const register = async (req, res) => {
   try {
     const payload = registerSchema.parse(req.body);
     const result = await registerUser(payload);
 
-    return res.status(201).json({
-      success: true,
+    return sendSuccess(res, {
+      statusCode: 201,
       message: 'Đăng ký tài khoản thành công',
       data: result,
     });
@@ -55,8 +38,7 @@ export const login = async (req, res) => {
     const payload = loginSchema.parse(req.body);
     const result = await loginUser(payload);
 
-    return res.status(200).json({
-      success: true,
+    return sendSuccess(res, {
       message: 'Đăng nhập thành công',
       data: result,
     });
@@ -69,8 +51,7 @@ export const me = async (req, res) => {
   try {
     const user = await getCurrentUser(req.user.id);
 
-    return res.status(200).json({
-      success: true,
+    return sendSuccess(res, {
       data: { user },
     });
   } catch (error) {
@@ -79,8 +60,7 @@ export const me = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-  return res.status(200).json({
-    success: true,
+  return sendSuccess(res, {
     message: 'Đăng xuất thành công',
   });
 };
