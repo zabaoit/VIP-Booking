@@ -6,7 +6,16 @@ import {
   findPayments,
   updatePaymentRecord,
 } from '../models/payment.model.js';
+import { findPublicUserById } from '../models/user.model.js';
 import { createHttpError } from '../utils/response.js';
+
+const ensureAdminUser = async (userId) => {
+  const user = await findPublicUserById(userId);
+
+  if (!user || user.role?.role_name !== 'admin') {
+    throw createHttpError(400, 'Nguoi thuc hien phai la admin');
+  }
+};
 
 export const listPayments = (filters) => {
   return findPayments(filters);
@@ -16,7 +25,7 @@ export const getPayment = async (paymentId) => {
   const payment = await findPaymentById(paymentId);
 
   if (!payment) {
-    throw createHttpError(404, 'Không tìm thấy thanh toán');
+    throw createHttpError(404, 'Khong tim thay thanh toan');
   }
 
   return payment;
@@ -26,8 +35,11 @@ export const addPayment = async (payload, actor) => {
   const invoice = await findInvoiceById(payload.invoice_id);
 
   if (!invoice) {
-    throw createHttpError(400, 'Hóa đơn không tồn tại');
+    throw createHttpError(400, 'Hoa don khong ton tai');
   }
+
+  const staffId = payload.staff_id || actor.id;
+  await ensureAdminUser(staffId);
 
   const payment = await createPaymentRecord({
     invoice_id: BigInt(payload.invoice_id),
@@ -35,7 +47,7 @@ export const addPayment = async (payload, actor) => {
     payment_method: payload.payment_method,
     status: payload.status || 'pending',
     paid_at: payload.paid_at ? new Date(payload.paid_at) : new Date(),
-    staff_id: BigInt(payload.staff_id || actor.id),
+    staff_id: BigInt(staffId),
   });
 
   if (payment.status === 'success') {
@@ -56,6 +68,10 @@ export const addPayment = async (payload, actor) => {
 
 export const editPayment = async (paymentId, payload) => {
   await getPayment(paymentId);
+
+  if (payload.staff_id) {
+    await ensureAdminUser(payload.staff_id);
+  }
 
   return updatePaymentRecord(paymentId, {
     ...(payload.amount !== undefined ? { amount: payload.amount.toString() } : {}),

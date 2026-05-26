@@ -10,7 +10,7 @@ import { createHttpError, handleControllerError, sendSuccess } from '../utils/re
 
 const idSchema = z.string().regex(/^\d+$/, 'ID không hợp lệ');
 const userStatusSchema = z.enum(['active', 'inactive', 'locked']);
-const managerRoles = ['admin', 'staff'];
+const managerRoles = ['admin'];
 
 const userSchema = z.object({
   email: z.email('Email không hợp lệ'),

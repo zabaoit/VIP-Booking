@@ -10,10 +10,10 @@ import { requireAuth, requireRoles } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-router.get('/api/service-usages', requireAuth, requireRoles('admin', 'staff'), index);
-router.get('/api/service-usages/:id', requireAuth, requireRoles('admin', 'staff'), show);
-router.post('/api/service-usages', requireAuth, requireRoles('admin', 'staff'), store);
-router.patch('/api/service-usages/:id', requireAuth, requireRoles('admin', 'staff'), update);
-router.delete('/api/service-usages/:id', requireAuth, requireRoles('admin', 'staff'), destroy);
+router.get('/api/service-usages', requireAuth, requireRoles('admin'), index);
+router.get('/api/service-usages/:id', requireAuth, requireRoles('admin'), show);
+router.post('/api/service-usages', requireAuth, requireRoles('admin'), store);
+router.patch('/api/service-usages/:id', requireAuth, requireRoles('admin'), update);
+router.delete('/api/service-usages/:id', requireAuth, requireRoles('admin'), destroy);
 
 export default router;

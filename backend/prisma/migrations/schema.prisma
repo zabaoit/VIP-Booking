@@ -118,7 +118,7 @@ model User {
 
 model Role {
   role_id     BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
-  role_name   String  @db.VarChar(50)
+  role_name   String  @unique(map: "role_name") @db.VarChar(50)
   description String? @db.VarChar(255)
   users       User[]
 

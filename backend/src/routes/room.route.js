@@ -12,8 +12,8 @@ const router = express.Router();
 
 router.get('/api/rooms', index);
 router.get('/api/rooms/:id', show);
-router.post('/api/rooms', requireAuth, requireRoles('admin', 'staff'), store);
-router.patch('/api/rooms/:id', requireAuth, requireRoles('admin', 'staff'), update);
-router.delete('/api/rooms/:id', requireAuth, requireRoles('admin', 'staff'), destroy);
+router.post('/api/rooms', requireAuth, requireRoles('admin'), store);
+router.patch('/api/rooms/:id', requireAuth, requireRoles('admin'), update);
+router.delete('/api/rooms/:id', requireAuth, requireRoles('admin'), destroy);
 
 export default router;

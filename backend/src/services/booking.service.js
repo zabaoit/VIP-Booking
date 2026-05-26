@@ -23,11 +23,11 @@ const calculateNights = (checkInDate, checkOutDate) => {
 };
 
 const canAccessBooking = (booking, actor) => {
-  return ['admin', 'staff'].includes(actor.role) || booking.user_id === BigInt(actor.id);
+  return actor.role === 'admin' || booking.user_id === BigInt(actor.id);
 };
 
 export const listBookings = async (filters, actor) => {
-  const scopedFilters = ['admin', 'staff'].includes(actor.role)
+  const scopedFilters = actor.role === 'admin'
     ? filters
     : { ...filters, userId: actor.id };
 
@@ -50,7 +50,7 @@ export const getBooking = async (bookingId, actor) => {
 
 export const addBooking = async (payload, actor) => {
   const nights = calculateNights(payload.check_in_date, payload.check_out_date);
-  const userId = ['admin', 'staff'].includes(actor.role) && payload.user_id ? payload.user_id : actor.id;
+  const userId = actor.role === 'admin' && payload.user_id ? payload.user_id : actor.id;
   const details = [];
 
   for (const item of payload.rooms) {
