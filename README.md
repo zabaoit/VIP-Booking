@@ -1,130 +1,308 @@
-# VIP Booking
+# VIP-Booking
 
-VIP Booking là demo ứng dụng đặt phòng khách sạn cao cấp, gồm frontend React/Vite và backend Express tối giản. Frontend hiện tập trung vào trải nghiệm đặt phòng, quản lý hồ sơ khách, thanh toán mô phỏng và dashboard quản trị.
+VIP-Booking la du an dat phong khach san gom:
 
-## Tính năng chính
+- Backend: Node.js, Express, Prisma, MySQL
+- Frontend: React, TypeScript, Vite, Tailwind CSS
 
-- Giao diện client: trang chủ, danh sách phòng, chi tiết phòng, đặt phòng, xác nhận, thanh toán và trạng thái thanh toán.
-- Giao diện auth: đăng nhập, đăng ký, quên mật khẩu, OTP và đặt lại mật khẩu.
-- Giao diện profile: thông tin cá nhân, lịch sử đặt phòng, phương thức thanh toán và đổi mật khẩu.
-- Giao diện admin: dashboard, booking, room types, services, pricing và customers.
-- Dark mode/light mode đồng bộ trên client và admin.
-- Dữ liệu demo lưu bằng `localStorage` ở frontend.
-- Backend Express có endpoint kiểm tra sức khỏe `/health`.
+Huong dan nay dung de chay ca backend va frontend tren may local.
 
-## Công nghệ
+## 1. Yeu Cau Moi Truong
 
-- Frontend: React 19, TypeScript, Vite, Tailwind CSS v4, ESLint, Prettier.
-- Backend: Node.js, Express 5, JavaScript ESM, dotenv.
-- Database định hướng: MySQL, mysql2, Prisma. Backend hiện mới là scaffold tối giản.
+Can cai san:
 
-## Cấu trúc thư mục
+- Node.js
+- npm
+- MySQL
+- Git
 
-```text
+Database backend mac dinh:
+
+```txt
+Database: vipbooking
+Host: localhost
+Port: 3306
+User: root
+Password: 123456
+```
+
+Chuoi ket noi mac dinh trong `backend/.env`:
+
+```env
+DATABASE_URL="mysql://root:123456@localhost:3306/vipbooking"
+```
+
+Neu MySQL cua ban khac user/password/port thi sua lai `backend/.env`.
+
+## 2. Cau Truc Du An
+
+```txt
 VIP-Booking/
   backend/
+    prisma/migrations/schema.prisma
     src/app.js
     package.json
   frontend/
     src/
-      components/
-      context/
-      data/
-      pages/
-      routes/
-      utils/
     package.json
+  docs/
+    api-routes.md
   README.md
 ```
 
-## Yêu cầu môi trường
+Tai lieu API chi tiet:
 
-- Node.js phiên bản mới tương thích Vite 8 và React 19.
-- npm.
+```txt
+docs/api-routes.md
+```
 
-## Chạy frontend
+## 3. Cai Dependencies
 
-```bash
-cd frontend
+Mo PowerShell tai thu muc root `D:\Project\VIP-Booking`.
+
+Cai backend:
+
+```powershell
+cd D:\Project\VIP-Booking\backend
 npm install
-npm run dev
 ```
 
-Frontend mặc định chạy ở:
+Cai frontend:
 
-```text
-http://localhost:5173
+```powershell
+cd D:\Project\VIP-Booking\frontend
+npm install
 ```
 
-Nếu port `5173` đang bận, Vite sẽ dùng port kế tiếp.
+## 4. Chuan Bi Database MySQL
 
-## Cấu hình frontend
+Dam bao MySQL dang chay va co database:
 
-Tạo file `.env` trong thư mục `frontend` nếu cần gọi API hoặc OAuth:
+```sql
+CREATE DATABASE IF NOT EXISTS vipbooking;
+```
+
+Schema Prisma nam o:
+
+```txt
+backend/prisma/migrations/schema.prisma
+```
+
+Kiem tra Prisma schema:
+
+```powershell
+cd D:\Project\VIP-Booking\backend
+npm run prisma:validate
+```
+
+Generate Prisma Client:
+
+```powershell
+npm run prisma:generate
+```
+
+Neu DB moi chua co bang, dong bo schema vao MySQL:
+
+```powershell
+npx prisma db push --schema=prisma/migrations/schema.prisma
+```
+
+Luu y: lenh tren chi tao/cap nhat cau truc bang. Neu can du lieu mau nhu admin, room, service, booking thi can import SQL dump hoac tu tao du lieu trong MySQL.
+
+## 5. Cau Hinh Backend
+
+File `backend/.env` can co:
+
+```env
+PORT=8080
+DATABASE_URL="mysql://root:123456@localhost:3306/vipbooking"
+JWT_SECRET="VIP_BOOKING_SECRET_KEY_2026"
+```
+
+| Bien | Y nghia |
+| --- | --- |
+| `PORT` | Port backend |
+| `DATABASE_URL` | Ket noi MySQL cho Prisma |
+| `JWT_SECRET` | Khoa ky JWT token |
+
+## 6. Cau Hinh Frontend
+
+File `frontend/.env` can co:
 
 ```env
 VITE_API_URL=http://localhost:8080
 VITE_GOOGLE_CLIENT_ID=your-google-client-id
-VITE_APPLE_CLIENT_ID=your-apple-service-id
+VITE_APPLE_CLIENT_ID=REPLACE_WITH_APPLE_SERVICE_ID
 VITE_APPLE_REDIRECT_URI=http://localhost:5173/login
 ```
 
-## Chạy backend
+Quan trong nhat la:
 
-```bash
-cd backend
-npm install
+```env
+VITE_API_URL=http://localhost:8080
+```
+
+Neu `VITE_API_URL` de trong, cac request API tu frontend se goi theo cung origin frontend va co the khong toi backend Express.
+
+## 7. Chay Du An
+
+Can mo 2 terminal rieng.
+
+Terminal 1: chay backend
+
+```powershell
+cd D:\Project\VIP-Booking\backend
 npm run dev
 ```
 
-Backend mặc định chạy ở:
+Backend chay tai:
 
-```text
+```txt
 http://localhost:8080
 ```
 
-Kiểm tra backend:
+Kiem tra backend:
 
-```bash
-curl http://localhost:8080/health
+```powershell
+Invoke-WebRequest http://localhost:8080/health
 ```
 
-Kết quả mong đợi:
+Response mong doi:
 
 ```json
-{ "status": "ok" }
+{
+  "success": true,
+  "message": "VIP-Booking API is running"
+}
 ```
 
-## Scripts frontend
+Terminal 2: chay frontend
 
-```bash
-npm run dev      # chạy Vite dev server
-npm run build    # type-check và build production
-npm run lint     # kiểm tra ESLint
-npm run format   # format code bằng Prettier
-npm run preview  # preview build production
+```powershell
+cd D:\Project\VIP-Booking\frontend
+npm run dev
 ```
 
-## Scripts backend
+Frontend chay tai:
 
-```bash
-npm run dev      # chạy backend bằng nodemon
-npm start        # chạy backend bằng node
+```txt
+http://localhost:5173
 ```
 
-## Tài khoản demo
+Mo trinh duyet vao:
 
-```text
-Admin:
-email: admin@vipbooking.vn
-password: vipbooking
-
-Guest:
-email: guest@vipbooking.vn
-password: vipbooking
+```txt
+http://localhost:5173
 ```
 
-## Ghi chú Git
+## 8. Scripts
 
-Một số thư mục backend có file `a.txt` để Git theo dõi thư mục rỗng. Git không push thư mục rỗng nếu không có file bên trong.
+Backend scripts, chay trong `backend`:
 
+| Script | Chuc nang |
+| --- | --- |
+| `npm run dev` | Chay backend bang nodemon |
+| `npm start` | Chay backend bang Node |
+| `npm run prisma:validate` | Kiem tra Prisma schema |
+| `npm run prisma:generate` | Generate Prisma Client |
+
+Frontend scripts, chay trong `frontend`:
+
+| Script | Chuc nang |
+| --- | --- |
+| `npm run dev` | Chay Vite dev server |
+| `npm run build` | Build production |
+| `npm run lint` | Kiem tra ESLint |
+| `npm run format` | Format code bang Prettier |
+| `npm run preview` | Preview ban build |
+
+## 9. Role Hien Tai
+
+He thong hien chi dung 2 role:
+
+| Role | Y nghia |
+| --- | --- |
+| `admin` | Quan tri he thong, quan ly user, phong, dich vu, booking, hoa don, thanh toan |
+| `customer` | Khach hang, dang ky, dang nhap, xem phong/dich vu va quan ly booking cua minh |
+
+Khong con role `staff`.
+
+Mot so bang van co cot ten `staff_id` nhu `CheckInOut` va `Payment`. Day la ten cot DB hien co, nhung backend da rang buoc gia tri nay phai la `user_id` cua admin.
+
+## 10. Test API Nhanh
+
+Dang ky customer:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri http://localhost:8080/api/auth/register `
+  -ContentType "application/json" `
+  -Body '{"email":"customer@example.com","password":"Customer123","fullName":"Nguyen Van A","phone":"0900111222"}'
+```
+
+Dang nhap:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri http://localhost:8080/api/auth/login `
+  -ContentType "application/json" `
+  -Body '{"email":"customer@example.com","password":"Customer123"}'
+```
+
+API can dang nhap dung header:
+
+```txt
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+## 11. Loi Thuong Gap
+
+### Backend khong ket noi duoc DB
+
+Kiem tra:
+
+- MySQL da bat chua
+- Database `vipbooking` da ton tai chua
+- `DATABASE_URL` trong `backend/.env` co dung user/password/port khong
+
+### Port 8080 dang ban
+
+Doi `PORT` trong `backend/.env`, vi du:
+
+```env
+PORT=18080
+```
+
+Sau do chay lai backend:
+
+```powershell
+npm run dev
+```
+
+### Frontend khong goi duoc backend
+
+Kiem tra:
+
+- Backend dang chay tai `http://localhost:8080`
+- `frontend/.env` co `VITE_API_URL=http://localhost:8080`
+- Sau khi sua `.env`, can stop va chay lai `npm run dev` o frontend
+
+### Prisma bao khong tim thay schema
+
+Project nay khong dung duong dan mac dinh `prisma/schema.prisma`.
+
+Dung script co san:
+
+```powershell
+npm run prisma:validate
+npm run prisma:generate
+```
+
+Hoac them schema path:
+
+```powershell
+npx prisma validate --schema=prisma/migrations/schema.prisma
+```
