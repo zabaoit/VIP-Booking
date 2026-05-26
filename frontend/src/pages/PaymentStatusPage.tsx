@@ -1,8 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { fetchRoom } from '../api/vipBookingApi'
 import { PriceDetails } from '../components/booking/PriceDetails'
 import { Icon } from '../components/icons/Icon'
-import type { Navigate } from '../types'
-import { getSelectedRoom, getSelectedStay, getStayNights } from '../utils/bookingSelections'
+import { rooms as defaultRooms } from '../data/rooms'
+import type { Navigate, Room } from '../types'
+import { getSelectedRoomId, getSelectedStay, getStayNights } from '../utils/bookingSelections'
 import { clearActiveBookingId, updateActiveBookingStatus } from '../utils/appStorage'
 
 export function PaymentStatusPage({
@@ -13,10 +15,15 @@ export function PaymentStatusPage({
   navigate: Navigate
 }) {
   const isSuccess = variant === 'success'
-  const room = getSelectedRoom()
+  const [room, setRoom] = useState<Room>(defaultRooms[0])
   const nights = getStayNights(getSelectedStay())
 
   useEffect(() => {
+    const roomId = getSelectedRoomId()
+    if (roomId) {
+      fetchRoom(roomId).then(setRoom).catch(() => undefined)
+    }
+
     if (isSuccess) {
       updateActiveBookingStatus('Confirmed')
       clearActiveBookingId()

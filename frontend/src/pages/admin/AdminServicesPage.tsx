@@ -1,11 +1,16 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import {
+  createServiceWithApi,
+  deleteServiceWithApi,
+  fetchServices,
+  updateServiceWithApi,
+} from '../../api/vipBookingApi'
 import { Icon } from '../../components/icons/Icon'
+import { useToast } from '../../context/ToastContext'
 import type { ContactMessage, IconName, Service, SupportInfo } from '../../types'
 import {
   readContactMessages,
-  readServices,
   readSupportInfo,
-  saveServices,
   saveSupportInfo,
   updateContactMessageStatus,
 } from '../../utils/appStorage'
@@ -13,8 +18,12 @@ import {
 const serviceIconOptions: IconName[] = ['spark', 'shield', 'award', 'calendar', 'service']
 
 function formatServicePrice(price: string) {
-  const value = price.trim()
-  return value.startsWith('$') ? value : `$${value}`
+  const value = Number(price.replace(/[^0-9]/g, '')) || 0
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
 function formatMessageDate(value: string) {
@@ -40,14 +49,28 @@ function parseBadges(value: string) {
 }
 
 export function AdminServicesPage() {
-  const [serviceItems, setServiceItems] = useState<Service[]>(() => readServices())
+  const { confirmToast, showToast } = useToast()
+  const [serviceItems, setServiceItems] = useState<Service[]>([])
   const [supportInfo, setSupportInfo] = useState<SupportInfo>(() => readSupportInfo())
-  const [supportSaveMessage, setSupportSaveMessage] = useState('')
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>(() => readContactMessages())
   const [activeService, setActiveService] = useState<Service | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'All' | Service['status']>('All')
+  const [, setDataError] = useState('')
+
+  const reloadServices = async () => {
+    setServiceItems(await fetchServices())
+    setDataError('')
+  }
+
+  useEffect(() => {
+    reloadServices().catch((error) => {
+      const message = error instanceof Error ? error.message : 'Could not load services.'
+      setDataError(message)
+      showToast({ title: 'Could not load services', message, variant: 'error' })
+    })
+  }, [showToast])
 
   const openAddModal = () => {
     setActiveService(null)
@@ -59,22 +82,24 @@ export function AdminServicesPage() {
     setIsModalOpen(true)
   }
 
-  const persistServices = (nextServices: Service[]) => {
-    setServiceItems(nextServices)
-    saveServices(nextServices)
+  const handleToggleStatus = async (service: Service) => {
+    if (!service.id) return
+
+    try {
+      const updatedService = await updateServiceWithApi(service.id, {
+        ...service,
+        status: service.status === 'Active' ? 'Paused' : 'Active',
+      })
+      await reloadServices()
+      showToast({ title: 'Service updated', message: updatedService.apiMessage, variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not update service status.'
+      setDataError(message)
+      showToast({ title: 'Could not update service', message, variant: 'error' })
+    }
   }
 
-  const handleToggleStatus = (serviceName: string) => {
-    const nextServices = serviceItems.map((service) =>
-      service.name === serviceName
-        ? { ...service, status: (service.status === 'Active' ? 'Paused' : 'Active') as Service['status'] }
-        : service,
-    )
-
-    persistServices(nextServices)
-  }
-
-  const handleServiceSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleServiceSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     const formData = new FormData(event.currentTarget)
@@ -96,13 +121,43 @@ export function AdminServicesPage() {
       status,
     }
 
-    const nextServices = activeService
-      ? serviceItems.map((service) => (service.name === activeService.name ? nextService : service))
-      : [nextService, ...serviceItems]
+    try {
+      if (activeService?.id) {
+        const service = await updateServiceWithApi(activeService.id, nextService)
+        showToast({ title: 'Service saved', message: service.apiMessage, variant: 'success' })
+      } else {
+        const service = await createServiceWithApi(nextService)
+        showToast({ title: 'Service saved', message: service.apiMessage, variant: 'success' })
+      }
+      await reloadServices()
+      setIsModalOpen(false)
+      setActiveService(null)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not save service.'
+      setDataError(message)
+      showToast({ title: 'Could not save service', message, variant: 'error' })
+    }
+  }
 
-    persistServices(nextServices)
-    setIsModalOpen(false)
-    setActiveService(null)
+  const handleDeleteService = async (service: Service) => {
+    if (!service.id) return
+    const shouldDelete = await confirmToast({
+      title: 'Delete service?',
+      message: `Delete service "${service.name}"?`,
+      confirmLabel: 'Delete',
+      variant: 'warning',
+    })
+    if (!shouldDelete) return
+
+    try {
+      const message = await deleteServiceWithApi(service.id)
+      await reloadServices()
+      showToast({ title: 'Service deleted', message, variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not delete service.'
+      setDataError(message)
+      showToast({ title: 'Could not delete service', message, variant: 'error' })
+    }
   }
 
   const filteredServices = serviceItems.filter((service) => {
@@ -126,7 +181,8 @@ export function AdminServicesPage() {
     const badges = parseBadges(String(formData.get('badges') ?? ''))
 
     if (!hotline || !email || !address) {
-      setSupportSaveMessage('Please complete hotline, email, and address.')
+      const message = 'Please complete hotline, email, and address.'
+      showToast({ title: 'Support info incomplete', message, variant: 'error' })
       return
     }
 
@@ -139,7 +195,8 @@ export function AdminServicesPage() {
 
     setSupportInfo(nextSupportInfo)
     saveSupportInfo(nextSupportInfo)
-    setSupportSaveMessage('Support information updated successfully.')
+    const message = 'Support information updated successfully.'
+    showToast({ title: 'Support info saved', message, variant: 'success' })
   }
 
   const handleContactMessageStatus = (messageId: string, status: ContactMessage['status']) => {
@@ -221,7 +278,7 @@ export function AdminServicesPage() {
                       <input
                         checked={service.status === 'Active'}
                         type="checkbox"
-                        onChange={() => handleToggleStatus(service.name)}
+                        onChange={() => handleToggleStatus(service)}
                       />
                     </label>
                   </td>
@@ -237,9 +294,7 @@ export function AdminServicesPage() {
                       <button
                         className="link-button"
                         type="button"
-                        onClick={() =>
-                          persistServices(serviceItems.filter((item) => item.name !== service.name))
-                        }
+                        onClick={() => handleDeleteService(service)}
                       >
                         Delete
                       </button>
@@ -292,7 +347,6 @@ export function AdminServicesPage() {
               Save Support Info
             </button>
           </div>
-          {supportSaveMessage && <p className="form-success span-2">{supportSaveMessage}</p>}
         </form>
       </section>
 

@@ -1,9 +1,12 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { fetchRoom } from '../api/vipBookingApi'
 import { BookingSummary } from '../components/booking/BookingSummary'
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
-import type { Navigate } from '../types'
-import { getSelectedRoom } from '../utils/bookingSelections'
+import { useToast } from '../context/ToastContext'
+import { rooms as defaultRooms } from '../data/rooms'
+import type { Navigate, Room } from '../types'
+import { getSelectedRoomId } from '../utils/bookingSelections'
 import { updateActiveBookingStatus } from '../utils/appStorage'
 
 const paymentMethods = [
@@ -31,20 +34,32 @@ const paymentMethods = [
 ]
 
 export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
-  const room = getSelectedRoom()
+  const { showToast } = useToast()
+  const [room, setRoom] = useState<Room>(defaultRooms[0])
   const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0])
   const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(true)
-  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const roomId = getSelectedRoomId()
+    if (!roomId) return
+
+    fetchRoom(roomId)
+      .then(setRoom)
+      .catch((loadError) => {
+        const message = loadError instanceof Error ? loadError.message : 'Could not load payment room.'
+        showToast({ title: 'Could not load payment room', message, variant: 'error' })
+      })
+  }, [])
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (!isPaymentConfirmed) {
-      setError('Please confirm that payment is completed before continuing.')
+      const message = 'Please confirm that payment is completed before continuing.'
+      showToast({ title: 'Payment confirmation required', message, variant: 'warning' })
       return
     }
 
-    setError('')
     window.localStorage.setItem('vip-booking:preferred-payment', paymentMethod.id)
     updateActiveBookingStatus('Confirmed')
     navigate('success')
@@ -93,14 +108,10 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
               type="checkbox"
               onChange={(event) => {
                 setIsPaymentConfirmed(event.target.checked)
-                if (event.target.checked) {
-                  setError('')
-                }
               }}
             />
             <span>I have completed the payment in {paymentMethod.label}.</span>
           </label>
-          {error && <p className="form-error">{error}</p>}
           <button className="primary-button full-width" type="submit">
             <Icon name="lock" />
             Confirm Payment

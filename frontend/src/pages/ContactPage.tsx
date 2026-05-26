@@ -1,11 +1,12 @@
-import { useState, type FormEvent } from 'react'
+import type { FormEvent } from 'react'
 import { ContactCard } from '../components/contact/ContactCard'
 import { PageIntro } from '../components/ui/PageIntro'
 import { SectionHeading } from '../components/ui/SectionHeading'
+import { useToast } from '../context/ToastContext'
 import { readSupportInfo, saveContactMessage } from '../utils/appStorage'
 
 export function ContactPage() {
-  const [messageStatus, setMessageStatus] = useState('')
+  const { showToast } = useToast()
   const supportInfo = readSupportInfo()
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -17,7 +18,8 @@ export function ContactPage() {
     const message = String(formData.get('message') ?? '').trim()
 
     if (!fullName || !email || !subject || !message) {
-      setMessageStatus('Please complete all required fields before sending.')
+      const status = 'Please complete all required fields before sending.'
+      showToast({ title: 'Message is incomplete', message: status, variant: 'error' })
       return
     }
 
@@ -27,7 +29,8 @@ export function ContactPage() {
       subject,
       message,
     })
-    setMessageStatus('Message sent successfully. Our concierge will contact you shortly.')
+    const status = 'Message sent successfully. Our concierge will contact you shortly.'
+    showToast({ title: 'Message sent', message: status, variant: 'success' })
     event.currentTarget.reset()
   }
 
@@ -77,7 +80,6 @@ export function ContactPage() {
           <button className="primary-button" type="submit">
             Send Message
           </button>
-          {messageStatus && <p className="form-success">{messageStatus}</p>}
         </form>
       </section>
 

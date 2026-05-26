@@ -1,7 +1,8 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { deleteBookingWithApi, fetchBookings, updateBookingWithApi } from '../../api/vipBookingApi'
 import { Icon } from '../../components/icons/Icon'
+import { useToast } from '../../context/ToastContext'
 import type { BookingRecord } from '../../types'
-import { readBookings, saveBookings, updateBookingStatus } from '../../utils/appStorage'
 
 const adminBookingsFilterKey = 'vip-booking:admin-bookings-filter'
 const adminBookingsSearchKey = 'vip-booking:admin-bookings-search'
@@ -24,10 +25,6 @@ function invoiceCode(booking: BookingRecord) {
   return `INV-${booking.id.replace(/[^a-z0-9]/gi, '').padStart(5, '0')}`
 }
 
-function createBookingId() {
-  return `BK${Date.now().toString().slice(-6)}`
-}
-
 function getOperationalStatus(booking: BookingRecord) {
   const today = new Date()
   const checkIn = new Date(booking.checkIn)
@@ -41,6 +38,7 @@ function getOperationalStatus(booking: BookingRecord) {
 }
 
 export function AdminBookingsPage() {
+  const { confirmToast, showToast } = useToast()
   const [activeBooking, setActiveBooking] = useState<BookingRecord | null>(null)
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
   const [invoiceSearch, setInvoiceSearch] = useState('')
@@ -60,7 +58,21 @@ export function AdminBookingsPage() {
 
     return 'All'
   })
-  const [bookings, setBookings] = useState(() => readBookings())
+  const [bookings, setBookings] = useState<BookingRecord[]>([])
+  const [, setDataError] = useState('')
+
+  const reloadBookings = async () => {
+    setBookings(await fetchBookings())
+    setDataError('')
+  }
+
+  useEffect(() => {
+    reloadBookings().catch((error) => {
+      const message = error instanceof Error ? error.message : 'Could not load bookings.'
+      setDataError(message)
+      showToast({ title: 'Could not load bookings', message, variant: 'error' })
+    })
+  }, [showToast])
 
   const filteredBookings = useMemo(() => {
     const query = normalizeQuery(search)
@@ -105,14 +117,16 @@ export function AdminBookingsPage() {
     .filter((booking) => invoiceStatus(booking) === 'Unpaid')
     .reduce((total, booking) => total + parseAmount(booking.amount), 0)
 
-  const handleStatusChange = (bookingId: string, status: BookingRecord['status']) => {
-    updateBookingStatus(bookingId, status)
-    setBookings(readBookings())
-  }
-
-  const persistBookings = (nextBookings: BookingRecord[]) => {
-    setBookings(nextBookings)
-    saveBookings(nextBookings)
+  const handleStatusChange = async (bookingId: string, status: BookingRecord['status']) => {
+    try {
+      const booking = await updateBookingWithApi(bookingId, { status })
+      await reloadBookings()
+      showToast({ title: 'Booking updated', message: booking.apiMessage, variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not update booking status.'
+      setDataError(message)
+      showToast({ title: 'Could not update booking', message, variant: 'error' })
+    }
   }
 
   const openAddBookingModal = () => {
@@ -130,48 +144,64 @@ export function AdminBookingsPage() {
     setIsBookingModalOpen(false)
   }
 
-  const handleBookingSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleBookingSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
-    const guest = String(formData.get('guest') ?? '').trim()
-    const email = String(formData.get('email') ?? '').trim().toLowerCase()
-    const room = String(formData.get('room') ?? '').trim()
     const checkIn = String(formData.get('checkIn') ?? '')
     const checkOut = String(formData.get('checkOut') ?? '')
-    const amountValue = Number(formData.get('amount') ?? 0)
     const status = String(formData.get('status') ?? 'Pending') as BookingRecord['status']
 
-    if (!guest || !email || !room || !checkIn || !checkOut || amountValue <= 0) {
+    if (!activeBooking) {
+      setDataError('Please create new bookings from the customer booking flow so room/user constraints stay valid.')
+      showToast({
+        title: 'Cannot create booking here',
+        message: 'Please create new bookings from the customer booking flow so room/user constraints stay valid.',
+        variant: 'warning',
+      })
       return
     }
 
-    const nextBooking: BookingRecord = {
-      id: activeBooking?.id ?? createBookingId(),
-      ownerEmail: email,
-      guest,
-      email,
-      room,
-      checkIn,
-      checkOut,
-      amount: `$${amountValue.toLocaleString()}`,
-      status,
+    if (!checkIn || !checkOut) {
+      return
     }
 
-    persistBookings(
-      activeBooking
-        ? bookings.map((booking) => (booking.id === activeBooking.id ? nextBooking : booking))
-        : [nextBooking, ...bookings],
-    )
-    closeBookingModal()
+    try {
+      const booking = await updateBookingWithApi(activeBooking.id, {
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        guestCount: 1,
+        status,
+      })
+      await reloadBookings()
+      closeBookingModal()
+      showToast({ title: 'Booking saved', message: booking.apiMessage, variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not save booking.'
+      setDataError(message)
+      showToast({ title: 'Could not save booking', message, variant: 'error' })
+    }
   }
 
-  const handleDeleteBooking = (booking: BookingRecord) => {
-    const shouldDelete = window.confirm(`Delete booking #${booking.id}?`)
+  const handleDeleteBooking = async (booking: BookingRecord) => {
+    const shouldDelete = await confirmToast({
+      title: 'Delete booking?',
+      message: `Delete booking #${booking.id}?`,
+      confirmLabel: 'Delete',
+      variant: 'warning',
+    })
     if (!shouldDelete) {
       return
     }
 
-    persistBookings(bookings.filter((item) => item.id !== booking.id))
+    try {
+      const message = await deleteBookingWithApi(booking.id)
+      await reloadBookings()
+      showToast({ title: 'Booking deleted', message, variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not delete booking.'
+      setDataError(message)
+      showToast({ title: 'Could not delete booking', message, variant: 'error' })
+    }
   }
 
   return (

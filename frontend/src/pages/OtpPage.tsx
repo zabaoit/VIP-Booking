@@ -1,12 +1,12 @@
-import { useState } from 'react'
 import { AuthShell } from '../components/layout/AuthShell'
+import { useToast } from '../context/ToastContext'
 import type { Navigate } from '../types'
 import { handleRouteSubmit } from '../utils/forms'
 
 export function OtpPage({ navigate }: { navigate: Navigate }) {
+  const { showToast } = useToast()
   const otpFlow = window.sessionStorage.getItem('vip-booking:otp-flow')
   const nextRoute = otpFlow === 'register' ? 'login' : 'reset'
-  const [resendMessage, setResendMessage] = useState('')
 
   return (
     <AuthShell title="Secure Verification" subtitle="Enter the six-digit code sent to your inbox.">
@@ -30,12 +30,17 @@ export function OtpPage({ navigate }: { navigate: Navigate }) {
         Did not receive it?{' '}
         <button
           type="button"
-          onClick={() => setResendMessage('A new verification code has been sent to your email.')}
+          onClick={() =>
+            showToast({
+              title: 'Verification code sent',
+              message: 'A new verification code has been sent to your email.',
+              variant: 'success',
+            })
+          }
         >
           Resend code
         </button>
       </p>
-      {resendMessage && <p className="auth-switch">{resendMessage}</p>}
     </AuthShell>
   )
 }

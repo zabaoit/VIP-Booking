@@ -21,6 +21,8 @@ export type RouteKey =
   | 'adminRooms'
   | 'adminServices'
   | 'adminBookings'
+  | 'adminOperations'
+  | 'adminBilling'
   | 'adminPricing'
   | 'adminCustomers'
   | 'adminUsers'
@@ -61,6 +63,10 @@ export type IconName =
 
 export type Room = {
   id: string
+  roomNumber?: string
+  floor?: number
+  status?: 'available' | 'booked' | 'occupied' | 'maintenance'
+  typeId?: string
   name: string
   category: string
   location: string
@@ -102,6 +108,7 @@ export type CustomerProfile = {
 }
 
 export type Service = {
+  id?: string
   name: string
   icon: IconName
   price: string
@@ -110,9 +117,14 @@ export type Service = {
 }
 
 export type RegisteredUser = {
+  id?: string
   email: string
   password: string
   role: 'guest' | 'admin'
+  fullName?: string
+  phone?: string | null
+  status?: 'active' | 'inactive' | 'locked'
+  roleId?: string
 }
 
 export type SupportInfo = {
@@ -144,6 +156,54 @@ export type BookingRecord = {
   checkOut: string
   amount: string
   status: 'Confirmed' | 'Pending' | 'Cancelled'
+}
+
+export type CheckInOutRecord = {
+  id: string
+  bookingId: string
+  roomId: string
+  roomLabel: string
+  staffName: string
+  checkInTime: string
+  checkOutTime: string
+  status: 'checked_in' | 'checked_out'
+  note: string
+}
+
+export type ServiceUsageRecord = {
+  id: string
+  bookingId: string
+  serviceId: string
+  serviceName: string
+  quantity: number
+  unitPrice: string
+  subtotal: string
+  usedAt: string
+  note: string
+}
+
+export type InvoiceRecord = {
+  id: string
+  bookingId: string
+  code: string
+  guest: string
+  issuedDate: string
+  roomAmount: string
+  serviceAmount: string
+  totalAmount: string
+  status: 'unpaid' | 'partial_paid' | 'paid' | 'cancelled'
+  note: string
+}
+
+export type PaymentRecord = {
+  id: string
+  invoiceId: string
+  invoiceCode: string
+  amount: string
+  method: 'cash' | 'bank_transfer' | 'online'
+  status: 'pending' | 'success' | 'failed' | 'refunded'
+  paidAt: string
+  staffName: string
 }
 
 export type NavigateOptions = {

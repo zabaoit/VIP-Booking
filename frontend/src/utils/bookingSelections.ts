@@ -1,8 +1,3 @@
-import { rooms as defaultRooms } from '../data/rooms'
-import type { Room } from '../types'
-import { readPricingRules, readRooms } from './appStorage'
-import { applyPricingToRooms } from './pricing'
-
 const selectedRoomKey = 'vip-booking:selected-room-id'
 const selectedStayKey = 'vip-booking:selected-stay'
 const roomSearchQueryKey = 'vip-booking:room-search-query'
@@ -52,6 +47,10 @@ export function saveSelectedRoom(roomId: string, stay: BookingStay = getSelected
   saveSelectedStay(stay)
 }
 
+export function getSelectedRoomId() {
+  return window.sessionStorage.getItem(selectedRoomKey) ?? ''
+}
+
 export function saveRoomSearchQuery(query: string) {
   const trimmedQuery = query.trim()
 
@@ -65,12 +64,6 @@ export function saveRoomSearchQuery(query: string) {
 
 export function getRoomSearchQuery() {
   return window.sessionStorage.getItem(roomSearchQueryKey) ?? ''
-}
-
-export function getSelectedRoom(): Room {
-  const rooms = applyPricingToRooms(readRooms(), readPricingRules())
-  const selectedRoomId = window.sessionStorage.getItem(selectedRoomKey)
-  return rooms.find((room) => room.id === selectedRoomId) ?? defaultRooms[0]
 }
 
 export function getSelectedStay(): BookingStay {

@@ -1,14 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { Icon } from '../components/icons/Icon'
 import { AuthShell } from '../components/layout/AuthShell'
+import { useToast } from '../context/ToastContext'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
 import { OAuthConfigError, signInWithGoogleAccount } from '../utils/oauthProviders'
 
 export function LoginPage({ navigate }: { navigate: Navigate }) {
+  const { showToast } = useToast()
   const { login, socialLogin } = useAuth()
-  const [error, setError] = useState('')
-  const [info, setInfo] = useState('')
   const [socialLoading, setSocialLoading] = useState<'google' | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [registeredEmail] = useState(() => {
@@ -16,23 +16,19 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
     window.sessionStorage.removeItem('vip-booking:register-success')
     return email
   })
-  const [bookingRequired] = useState(() => {
-    return window.sessionStorage.getItem('vip-booking:pending-route') === 'booking'
-  })
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const email = String(formData.get('email') ?? '').trim()
     const password = String(formData.get('password') ?? '')
 
-    if (!login(email, password)) {
-      setError('This account is not registered or the password is incorrect.')
+    const result = await login(email, password)
+    if (!result.ok) {
+      const message = result.message || 'This account is not registered or the password is incorrect.'
+      showToast({ title: 'Sign in failed', message, variant: 'error' })
       return
     }
 
-    setError('')
-    setInfo('')
     const pendingRoute = window.sessionStorage.getItem('vip-booking:pending-route')
     window.sessionStorage.removeItem('vip-booking:pending-route')
     navigate(pendingRoute === 'booking' ? 'booking' : 'home')
@@ -41,12 +37,14 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
   const handleSocialSignIn = async () => {
     try {
       setSocialLoading('google')
-      setError('')
-      setInfo('')
 
       const account = await signInWithGoogleAccount()
-      const authUser = socialLogin('google', account.email)
-      setInfo(`Signed in with Google as ${authUser.email}.`)
+      const authUser = await socialLogin('google', account.email)
+      showToast({
+        title: 'Signed in with Google',
+        message: `Signed in as ${authUser.email}.`,
+        variant: 'success',
+      })
       const pendingRoute = window.sessionStorage.getItem('vip-booking:pending-route')
       window.sessionStorage.removeItem('vip-booking:pending-route')
       navigate(pendingRoute === 'booking' ? 'booking' : 'home')
@@ -57,7 +55,7 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
           : socialError instanceof Error
             ? socialError.message
             : 'Social sign-in failed.'
-      setError(message)
+      showToast({ title: 'Google sign-in failed', message, variant: 'error' })
     } finally {
       setSocialLoading(null)
     }
@@ -71,13 +69,6 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
       maxWidthClass="w-full max-w-[430px]"
     >
       <form onSubmit={handleSubmit}>
-        {registeredEmail && (
-          <p className="form-success">
-            Registration successful. Please sign in with {registeredEmail}.
-          </p>
-        )}
-        {bookingRequired && !registeredEmail && <p className="form-success">Please sign in to continue booking.</p>}
-        {info && <p className="form-success">{info}</p>}
         <label>
           Email address
           <input
@@ -107,7 +98,6 @@ export function LoginPage({ navigate }: { navigate: Navigate }) {
             </button>
           </div>
         </label>
-        {error && <p className="form-error">{error}</p>}
         <div className="auth-row">
           <label className="check-row">
             <input defaultChecked type="checkbox" />

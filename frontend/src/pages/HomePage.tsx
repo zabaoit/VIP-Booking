@@ -1,20 +1,44 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { fetchRooms, fetchServices } from '../api/vipBookingApi'
 import { SearchPanel, type SearchPayload } from '../components/search/SearchPanel'
 import { Icon } from '../components/icons/Icon'
 import { RoomCard } from '../components/rooms/RoomCard'
 import { SectionHeading } from '../components/ui/SectionHeading'
+import { useToast } from '../context/ToastContext'
 import { images } from '../data/images'
 import { useAuth } from '../hooks/useAuth'
-import type { Navigate } from '../types'
-import { readPricingRules, readRooms, readServices } from '../utils/appStorage'
-import { applyPricingToRooms } from '../utils/pricing'
+import type { Navigate, Room, Service } from '../types'
 
 export function HomePage({ navigate }: { navigate: Navigate }) {
+  const { showToast } = useToast()
   const { isAuthenticated } = useAuth()
-  const services = readServices().filter((service) => service.status === 'Active')
-  const rooms = applyPricingToRooms(readRooms(), readPricingRules())
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [services, setServices] = useState<Service[]>([])
+  const [, setDataError] = useState('')
   const [homeSearchTerm, setHomeSearchTerm] = useState('')
   const [hasSearched, setHasSearched] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+
+    Promise.all([fetchRooms(), fetchServices()])
+      .then(([nextRooms, nextServices]) => {
+        if (!isMounted) return
+        setRooms(nextRooms)
+        setServices(nextServices.filter((service) => service.status === 'Active'))
+        setDataError('')
+      })
+      .catch((error) => {
+        if (!isMounted) return
+        const message = error instanceof Error ? error.message : 'Could not load booking data.'
+        setDataError(message)
+        showToast({ title: 'Could not load booking data', message, variant: 'error' })
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleStartBooking = () => {
     if (!isAuthenticated) {
@@ -57,7 +81,7 @@ export function HomePage({ navigate }: { navigate: Navigate }) {
   const featuredActionLabel = hasSearched ? 'View all rooms' : 'View all'
 
   return (
-    <main>
+    <main className="home-page">
       <section className="hero-section" style={{ backgroundImage: `url(${images.hero})` }}>
         <div className="hero-overlay" />
         <div className="hero-content">

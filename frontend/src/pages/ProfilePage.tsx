@@ -1,9 +1,10 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { fetchBookings } from '../api/vipBookingApi'
 import { Icon } from '../components/icons/Icon'
+import { useToast } from '../context/ToastContext'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
 import {
-  readBookingsByOwner,
   readCustomerProfiles,
   saveCustomerProfiles,
   setActiveBookingId,
@@ -67,12 +68,9 @@ function normalizeEmail(email: string) {
 }
 
 export function ProfilePage({ navigate }: { navigate: Navigate }) {
+  const { showToast } = useToast()
   const { changePassword, logout, user } = useAuth()
   const [activeSection, setActiveSection] = useState<ProfileSectionId>('profile-personal')
-  const [passwordMessage, setPasswordMessage] = useState('')
-  const [passwordError, setPasswordError] = useState('')
-  const [profileMessage, setProfileMessage] = useState('')
-  const [paymentMessage, setPaymentMessage] = useState('')
   const [paymentMethod, setPaymentMethod] = useState(
     () => window.localStorage.getItem('vip-booking:preferred-payment') ?? 'vietqr',
   )
@@ -81,6 +79,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     'all' | 'pending' | 'confirmed' | 'cancelled'
   >('all')
   const [bookingSort, setBookingSort] = useState<'latest' | 'oldest'>('latest')
+  const [profileBookings, setProfileBookings] = useState<ProfileBooking[]>([])
 
   const userEmail = user?.email ?? 'guest@vipbooking.vn'
   const [customerProfiles, setCustomerProfiles] = useState(() => readCustomerProfiles())
@@ -118,9 +117,13 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   const displayName = profileSettings.fullName || toDisplayName(userEmail)
   const memberCode = `VIP-${String(userEmail.length * 173).slice(0, 4)}`
 
-  const bookings = useMemo<ProfileBooking[]>(() => {
-    const storageBookings = readBookingsByOwner(userEmail)
-    return storageBookings.map((booking) => ({
+  useEffect(() => {
+    let isMounted = true
+
+    fetchBookings()
+      .then((apiBookings) => {
+        if (!isMounted) return
+        setProfileBookings(apiBookings.map((booking) => ({
       id: booking.id.startsWith('#') ? booking.id : `#${booking.id}`,
       room: booking.room,
       stay: `${booking.checkIn} - ${booking.checkOut}`,
@@ -132,8 +135,20 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           : booking.status === 'Pending'
             ? 'Pending'
             : 'Confirmed',
-    }))
-  }, [paymentMethod, userEmail])
+        })))
+      })
+      .catch((error) => {
+        if (!isMounted) return
+        const message = error instanceof Error ? error.message : 'Could not load bookings.'
+        showToast({ title: 'Could not load bookings', message, variant: 'error' })
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [paymentMethod])
+
+  const bookings = profileBookings
 
   const filteredBookings = useMemo<ProfileBooking[]>(() => {
     const query = bookingSearch.trim().toLowerCase()
@@ -205,12 +220,14 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
 
     saveCustomerProfiles(nextProfiles)
     setCustomerProfiles(nextProfiles)
-    setProfileMessage('Personal information has been saved successfully.')
+    const message = 'Personal information has been saved successfully.'
+    showToast({ title: 'Profile updated', message, variant: 'success' })
   }
 
   const handleSavePaymentMethod = () => {
     window.localStorage.setItem('vip-booking:preferred-payment', paymentMethod)
-    setPaymentMessage('Preferred payment method updated successfully.')
+    const message = 'Preferred payment method updated successfully.'
+    showToast({ title: 'Payment method saved', message, variant: 'success' })
   }
 
   const handlePayCurrentBooking = () => {
@@ -218,15 +235,15 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     const pendingBooking = bookings.find((booking) => booking.status === 'Pending')
     if (pendingBooking) {
       setActiveBookingId(pendingBooking.id)
-      setPaymentMessage('')
       navigate('payment')
       return
     }
 
-    setPaymentMessage('No pending booking found. Please create a booking first.')
+    const message = 'No pending booking found. Please create a booking first.'
+    showToast({ title: 'No pending booking', message, variant: 'warning' })
   }
 
-  const handleChangePassword = (event: FormEvent<HTMLFormElement>) => {
+  const handleChangePassword = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const currentPassword = String(formData.get('currentPassword') ?? '')
@@ -234,25 +251,25 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     const confirmPassword = String(formData.get('confirmPassword') ?? '')
 
     if (!currentPassword || !nextPassword || !confirmPassword) {
-      setPasswordError('Please complete all required fields.')
-      setPasswordMessage('')
+      const message = 'Please complete all required fields.'
+      showToast({ title: 'Password form incomplete', message, variant: 'error' })
       return
     }
 
     if (nextPassword !== confirmPassword) {
-      setPasswordError('Password confirmation does not match.')
-      setPasswordMessage('')
+      const message = 'Password confirmation does not match.'
+      showToast({ title: 'Password mismatch', message, variant: 'error' })
       return
     }
 
-    if (!changePassword(currentPassword, nextPassword)) {
-      setPasswordError('Current password is incorrect.')
-      setPasswordMessage('')
+    if (!(await changePassword(currentPassword, nextPassword))) {
+      const message = 'Current password is incorrect.'
+      showToast({ title: 'Password update failed', message, variant: 'error' })
       return
     }
 
-    setPasswordError('')
-    setPasswordMessage('Password updated successfully.')
+    const message = 'Password updated successfully.'
+    showToast({ title: 'Password updated', message, variant: 'success' })
     event.currentTarget.reset()
   }
 
@@ -342,7 +359,6 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             </label>
           </div>
         </div>
-        {profileMessage && <p className="form-success profile-span-2">{profileMessage}</p>}
         <div className="profile-span-2">
           <button
             className="primary-button"
@@ -476,7 +492,6 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           value={paymentMethod}
           onChange={(event) => {
             setPaymentMethod(event.target.value)
-            setPaymentMessage('')
           }}
         >
           <option value="vietqr">VietQR</option>
@@ -501,7 +516,6 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           Pay Current Booking
         </button>
       </div>
-      {paymentMessage && <p className="form-success">{paymentMessage}</p>}
     </section>
   )
 
@@ -522,8 +536,6 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           Confirm New Password
           <input className={inputClass} name="confirmPassword" type="password" required />
         </label>
-        {passwordError && <p className="form-error profile-span-2">{passwordError}</p>}
-        {passwordMessage && <p className="form-success profile-span-2">{passwordMessage}</p>}
         <div className="profile-span-2">
           <button
             className="primary-button"

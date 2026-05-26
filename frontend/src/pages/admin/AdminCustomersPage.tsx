@@ -1,11 +1,10 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { deleteUserWithApi, fetchBookings, fetchUsers } from '../../api/vipBookingApi'
 import { Icon } from '../../components/icons/Icon'
-import type { CustomerProfile, CustomerStatus, CustomerTier, RegisteredUser } from '../../types'
+import { useToast } from '../../context/ToastContext'
+import type { BookingRecord, CustomerProfile, CustomerStatus, CustomerTier, RegisteredUser } from '../../types'
 import {
-  registeredUsersStorageKey,
-  readBookings,
   readCustomerProfiles,
-  readRegisteredUsers,
   saveCustomerProfiles,
 } from '../../utils/appStorage'
 
@@ -42,6 +41,7 @@ type CustomerView = CustomerProfile & {
 }
 
 export function AdminCustomersPage() {
+  const { confirmToast, showToast } = useToast()
   const [search, setSearch] = useState(() => {
     const value = window.sessionStorage.getItem(adminCustomersSearchKey) ?? ''
     window.sessionStorage.removeItem(adminCustomersSearchKey)
@@ -51,10 +51,26 @@ export function AdminCustomersPage() {
   const [tierFilter, setTierFilter] = useState(false)
   const [activeCustomer, setActiveCustomer] = useState<CustomerView | null>(null)
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
-  const [users, setUsers] = useState<RegisteredUser[]>(() => readRegisteredUsers())
+  const [users, setUsers] = useState<RegisteredUser[]>([])
+  const [bookings, setBookings] = useState<BookingRecord[]>([])
   const [profileData, setProfileData] = useState<CustomerProfile[]>(() => readCustomerProfiles())
+  const [, setDataError] = useState('')
 
-  const bookings = readBookings()
+  const reloadCustomers = async () => {
+    const [nextUsers, nextBookings] = await Promise.all([fetchUsers(), fetchBookings()])
+    setUsers(nextUsers)
+    setBookings(nextBookings)
+    setDataError('')
+  }
+
+  useEffect(() => {
+    reloadCustomers().catch((error) => {
+      const message = error instanceof Error ? error.message : 'Could not load customers.'
+      setDataError(message)
+      showToast({ title: 'Could not load customers', message, variant: 'error' })
+    })
+  }, [showToast])
+
   const guestUsers = users.filter((user) => user.role !== 'admin')
 
   const customers = useMemo<CustomerView[]>(() => {
@@ -104,11 +120,6 @@ export function AdminCustomersPage() {
   const totalSpent = customers.reduce((total, customer) => total + customer.totalSpent, 0)
   const activeCount = customers.filter((customer) => customer.status === 'Active').length
   const vipCount = customers.filter((customer) => customer.tier !== 'Standard').length
-
-  const persistUsers = (nextUsers: RegisteredUser[]) => {
-    setUsers(nextUsers)
-    localStorage.setItem(registeredUsersStorageKey, JSON.stringify(nextUsers))
-  }
 
   const persistProfiles = (nextProfiles: CustomerProfile[]) => {
     setProfileData(nextProfiles)
@@ -175,19 +186,22 @@ export function AdminCustomersPage() {
 
     const hasUser = users.some((user) => normalizeEmail(user.email) === email)
     if (!activeCustomer && hasUser) {
-      window.alert('This customer email already exists.')
+      showToast({
+        title: 'Customer already exists',
+        message: 'This customer email already exists.',
+        variant: 'error',
+      })
       return
     }
 
     if (!hasUser) {
-      persistUsers([
-        {
-          email,
-          password: 'vipbooking',
-          role: 'guest',
-        },
-        ...users,
-      ])
+      setDataError('Please create customer accounts from User Role Management or the public register flow.')
+      showToast({
+        title: 'Cannot create customer here',
+        message: 'Please create customer accounts from User Role Management or the public register flow.',
+        variant: 'warning',
+      })
+      return
     }
 
     upsertCustomerProfile(email, {
@@ -200,16 +214,33 @@ export function AdminCustomersPage() {
     closeCustomerModal()
   }
 
-  const handleDeleteCustomer = (customer: CustomerView) => {
-    const shouldDelete = window.confirm(`Delete customer "${customer.email}"?`)
+  const handleDeleteCustomer = async (customer: CustomerView) => {
+    const shouldDelete = await confirmToast({
+      title: 'Delete customer?',
+      message: `Delete customer "${customer.email}"?`,
+      confirmLabel: 'Delete',
+      variant: 'warning',
+    })
     if (!shouldDelete) {
       return
     }
 
-    persistUsers(users.filter((user) => normalizeEmail(user.email) !== normalizeEmail(customer.email)))
     persistProfiles(
       profileData.filter((profile) => normalizeEmail(profile.email) !== normalizeEmail(customer.email)),
     )
+
+    const matchedUser = users.find((user) => normalizeEmail(user.email) === normalizeEmail(customer.email))
+    if (!matchedUser?.id) return
+
+    try {
+      const message = await deleteUserWithApi(matchedUser.id)
+      await reloadCustomers()
+      showToast({ title: 'Customer deleted', message, variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not delete customer.'
+      setDataError(message)
+      showToast({ title: 'Could not delete customer', message, variant: 'error' })
+    }
   }
 
   return (

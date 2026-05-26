@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useToast } from '../../context/ToastContext'
 import type { Navigate } from '../../types'
 import {
   type BookingStay,
@@ -21,22 +22,24 @@ export function SearchPanel({
   mode?: 'navigate' | 'inline'
   onSearch?: (payload: SearchPayload) => void
 }) {
+  const { showToast } = useToast()
   const [destination, setDestination] = useState(() => getRoomSearchQuery() || 'Da Nang Oceanfront')
   const [checkIn, setCheckIn] = useState('2026-10-10')
   const [checkOut, setCheckOut] = useState('2026-10-13')
   const [guests, setGuests] = useState('2 guests')
-  const [error, setError] = useState('')
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (!destination.trim()) {
-      setError('Please enter a destination.')
+      const message = 'Please enter a destination.'
+      showToast({ title: 'Destination is required', message, variant: 'error' })
       return
     }
 
     if (!checkIn || !checkOut) {
-      setError('Please select check-in and check-out dates.')
+      const message = 'Please select check-in and check-out dates.'
+      showToast({ title: 'Stay dates are required', message, variant: 'error' })
       return
     }
 
@@ -44,11 +47,11 @@ export function SearchPanel({
     const checkOutDate = new Date(`${checkOut}T00:00:00`)
 
     if (checkOutDate <= checkInDate) {
-      setError('Check-out must be after check-in.')
+      const message = 'Check-out must be after check-in.'
+      showToast({ title: 'Invalid stay dates', message, variant: 'error' })
       return
     }
 
-    setError('')
     saveRoomSearchQuery(destination)
     saveSelectedStay({ checkIn, checkOut, guests })
     onSearch?.({
@@ -93,7 +96,6 @@ export function SearchPanel({
         <Icon name="search" />
         Search
       </button>
-      {error && <p className="form-error search-form-error">{error}</p>}
     </form>
   )
 }
