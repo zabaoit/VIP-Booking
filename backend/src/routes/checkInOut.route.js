@@ -9,12 +9,11 @@ import {
 import { requireAuth, requireRoles } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
-const canManageOperations = [requireAuth, requireRoles('admin', 'staff')];
 
-router.get('/', canManageOperations, index);
-router.get('/:id', canManageOperations, show);
-router.post('/', canManageOperations, store);
-router.patch('/:id', canManageOperations, update);
-router.delete('/:id', canManageOperations, destroy);
+router.get('/api/check-in-out', requireAuth, requireRoles('admin', 'staff'), index);
+router.get('/api/check-in-out/:id', requireAuth, requireRoles('admin', 'staff'), show);
+router.post('/api/check-in-out', requireAuth, requireRoles('admin', 'staff'), store);
+router.patch('/api/check-in-out/:id', requireAuth, requireRoles('admin', 'staff'), update);
+router.delete('/api/check-in-out/:id', requireAuth, requireRoles('admin', 'staff'), destroy);
 
 export default router;

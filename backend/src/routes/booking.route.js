@@ -10,10 +10,10 @@ import { requireAuth } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-router.get('/', requireAuth, index);
-router.get('/:id', requireAuth, show);
-router.post('/', requireAuth, store);
-router.patch('/:id', requireAuth, update);
-router.delete('/:id', requireAuth, destroy);
+router.get('/api/bookings', requireAuth, index);
+router.get('/api/bookings/:id', requireAuth, show);
+router.post('/api/bookings', requireAuth, store);
+router.patch('/api/bookings/:id', requireAuth, update);
+router.delete('/api/bookings/:id', requireAuth, destroy);
 
 export default router;

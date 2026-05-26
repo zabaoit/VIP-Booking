@@ -39,17 +39,17 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/roles', roleRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/room-types', roomTypeRoutes);
-app.use('/api/rooms', roomRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/check-in-out', checkInOutRoutes);
-app.use('/api/service-usages', serviceUsageRoutes);
-app.use('/api/invoices', invoiceRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use(authRoutes);
+app.use(roleRoutes);
+app.use(userRoutes);
+app.use(roomTypeRoutes);
+app.use(roomRoutes);
+app.use(serviceRoutes);
+app.use(bookingRoutes);
+app.use(checkInOutRoutes);
+app.use(serviceUsageRoutes);
+app.use(invoiceRoutes);
+app.use(paymentRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
