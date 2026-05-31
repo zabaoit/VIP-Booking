@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { SiteFooter } from './components/layout/SiteFooter'
 import { SiteHeader } from './components/layout/SiteHeader'
 import { AuthProvider } from './context/AuthContext'
+import { useToast } from './context/ToastContext'
 import { adminRouteKeys, authRouteKeys, privateRouteKeys, routeTitles } from './data/routes'
 import { useAppRoute } from './hooks/useHashRoute'
 import { privateRoutes } from './routes/privateRoutes'
@@ -12,6 +13,7 @@ const darkModeStorageKey = 'vip-booking:dark-mode'
 
 function App() {
   const { currentRoute, navigate } = useAppRoute()
+  const { showToast } = useToast()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(
     () => window.localStorage.getItem(darkModeStorageKey) !== 'false',
@@ -55,6 +57,17 @@ function App() {
     <AuthProvider>
       <div
         className={`app-shell ${isAuthPage ? 'auth-mode' : ''} ${isAdminPage ? 'admin-mode' : ''}`}
+        onInvalidCapture={(event) => {
+          event.preventDefault()
+          const field = event.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+          const message = field.validationMessage || 'Please check this field and try again.'
+          showToast({
+            title: 'Thong tin chua hop le',
+            message,
+            variant: 'error',
+          })
+          field.focus()
+        }}
       >
         {shouldShowSiteChrome && (
           <SiteHeader

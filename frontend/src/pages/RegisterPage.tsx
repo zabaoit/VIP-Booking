@@ -1,17 +1,18 @@
 import { useState, type FormEvent } from 'react'
 import { Icon } from '../components/icons/Icon'
 import { AuthShell } from '../components/layout/AuthShell'
+import { useToast } from '../context/ToastContext'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
 
 export function RegisterPage({ navigate }: { navigate: Navigate }) {
+  const { showToast } = useToast()
   const { register } = useAuth()
-  const [error, setError] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const email = String(formData.get('email') ?? '').trim()
@@ -20,28 +21,44 @@ export function RegisterPage({ navigate }: { navigate: Navigate }) {
     const acceptedTerms = formData.get('terms') === 'on'
 
     if (!email || !nextPassword) {
-      setError('Please enter email and password.')
+      const message = 'Please enter email and password.'
+      showToast({ title: 'Registration incomplete', message, variant: 'error' })
       return
     }
 
     if (nextPassword.length < 8) {
-      setError('Password must be at least 8 characters.')
+      const message = 'Password must be at least 8 characters.'
+      showToast({ title: 'Password is too short', message, variant: 'error' })
       return
     }
 
     if (nextPassword !== nextConfirmPassword) {
-      setError('Password confirmation does not match.')
+      const message = 'Password confirmation does not match.'
+      showToast({ title: 'Password mismatch', message, variant: 'error' })
       return
     }
 
     if (!acceptedTerms) {
-      setError('Please agree to the Terms of Service and Privacy Policy.')
+      const message = 'Please agree to the Terms of Service and Privacy Policy.'
+      showToast({ title: 'Terms are required', message, variant: 'warning' })
       return
     }
 
-    register(email, nextPassword)
-    setError('')
+    const fullName = String(formData.get('fullName') ?? '').trim()
+    const phone = String(formData.get('phone') ?? '').trim()
+
+    const result = await register(email, nextPassword, fullName, phone)
+
+    if (!result.ok) {
+      const message = result.message || 'Registration failed. This email may already exist.'
+      showToast({ title: 'Registration failed', message, variant: 'error' })
+      return
+    }
+
     window.sessionStorage.setItem('vip-booking:register-success', email)
+    if (result.message) {
+      showToast({ title: 'Registration successful', message: result.message, variant: 'success' })
+    }
     navigate('login')
   }
 
@@ -97,7 +114,6 @@ export function RegisterPage({ navigate }: { navigate: Navigate }) {
             <button className="link-button" type="button">Privacy Policy</button>.
           </span>
         </label>
-        {error && <p className="form-error">{error}</p>}
         <button className="primary-button full-width" type="submit">
           Create Account
           <Icon name="chevron" size={14} />

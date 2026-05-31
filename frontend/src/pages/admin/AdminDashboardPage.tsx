@@ -1,16 +1,47 @@
+import { useEffect, useState } from 'react'
+import { fetchBookings, fetchRooms, fetchServices, fetchUsers } from '../../api/vipBookingApi'
 import { Icon } from '../../components/icons/Icon'
 import { DataTable } from '../../components/ui/DataTable'
-import type { IconName } from '../../types'
-import { readBookings, readRegisteredUsers, readRooms, readServices } from '../../utils/appStorage'
+import { useToast } from '../../context/ToastContext'
+import type { BookingRecord, IconName, RegisteredUser, Room, Service } from '../../types'
 
 export function AdminDashboardPage() {
-  const registeredUsers = readRegisteredUsers()
-  const bookings = readBookings()
+  const { showToast } = useToast()
+  const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([])
+  const [bookings, setBookings] = useState<BookingRecord[]>([])
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [services, setServices] = useState<Service[]>([])
+  const [, setDataError] = useState('')
+
+  useEffect(() => {
+    let isMounted = true
+
+    Promise.all([fetchUsers(), fetchBookings(), fetchRooms(), fetchServices()])
+      .then(([nextUsers, nextBookings, nextRooms, nextServices]) => {
+        if (!isMounted) return
+        setRegisteredUsers(nextUsers)
+        setBookings(nextBookings)
+        setRooms(nextRooms)
+        setServices(nextServices)
+        setDataError('')
+      })
+      .catch((error) => {
+        if (!isMounted) return
+        const message = error instanceof Error ? error.message : 'Could not load dashboard data.'
+        setDataError(message)
+        showToast({ title: 'Could not load dashboard data', message, variant: 'error' })
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [showToast])
+
   const guestCount = registeredUsers.filter((user) => user.role === 'guest').length
   const confirmedBookings = bookings.filter((booking) => booking.status === 'Confirmed').length
   const pendingBookings = bookings.filter((booking) => booking.status === 'Pending').length
-  const roomCount = readRooms().length
-  const activeServices = readServices().filter((service) => service.status === 'Active').length
+  const roomCount = rooms.length
+  const activeServices = services.filter((service) => service.status === 'Active').length
   const bookingRevenue = bookings.reduce((total, booking) => {
     return total + Number(booking.amount.replace(/[^0-9.]/g, ''))
   }, 0)

@@ -68,12 +68,12 @@ export function RoomCard({ room, navigate }: { room: Room; navigate: Navigate })
           <span>{room.size}</span>
         </div>
         <p className="text-[15px] leading-relaxed text-slate-300">{room.description}</p>
-        <div className="mt-auto flex items-end justify-between gap-2.5">
-          <strong className="inline-flex items-baseline gap-1 text-xl font-semibold leading-none text-white">
+        <div className="mt-auto flex flex-wrap items-end justify-between gap-2.5">
+          <strong className="min-w-0 flex-1 basis-[140px] break-words text-lg font-semibold leading-tight text-white">
             {formatCurrency(room.price)}
-            <small className="text-[11px] font-medium text-slate-400">/night</small>
+            <small className="ml-1 whitespace-nowrap text-[11px] font-medium text-slate-400">/night</small>
           </strong>
-          <div className="flex gap-1.5">
+          <div className="ml-auto flex shrink-0 gap-1.5">
             <button
               className="inline-flex h-7 items-center justify-center whitespace-nowrap rounded-md border border-slate-600 bg-slate-800/70 px-2.5 text-xs font-semibold text-slate-200 transition hover:border-slate-400 hover:text-white"
               type="button"

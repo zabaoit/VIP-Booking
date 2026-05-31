@@ -1,13 +1,13 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { fetchRoom } from '../api/vipBookingApi'
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
+import { useToast } from '../context/ToastContext'
 import { rooms as defaultRooms } from '../data/rooms'
 import { useAuth } from '../hooks/useAuth'
-import type { Navigate } from '../types'
-import { readPricingRules, readRooms } from '../utils/appStorage'
+import type { Navigate, Room } from '../types'
 import { defaultBookingStay, getSelectedStay, saveSelectedRoom } from '../utils/bookingSelections'
 import { formatCurrency } from '../utils/currency'
-import { applyPricingToRooms } from '../utils/pricing'
 import { getCurrentRoomSlug } from '../utils/router'
 
 const minBookingDate = '2026-05-20'
@@ -79,8 +79,9 @@ function getMonthCells(monthDate: Date) {
 }
 
 export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
-  const rooms = applyPricingToRooms(readRooms(), readPricingRules())
-  const room = rooms.find((item) => item.id === getCurrentRoomSlug()) ?? defaultRooms[0]
+  const { showToast } = useToast()
+  const [room, setRoom] = useState<Room>(defaultRooms[0])
+  const [, setDataError] = useState('')
   const selectedStay = getSelectedStay()
   const [checkIn, setCheckIn] = useState(selectedStay.checkIn || defaultBookingStay.checkIn)
   const [checkOut, setCheckOut] = useState(selectedStay.checkOut || defaultBookingStay.checkOut)
@@ -91,7 +92,7 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
     formatDisplayDate(selectedStay.checkOut || defaultBookingStay.checkOut),
   )
   const [guests, setGuests] = useState(selectedStay.guests || room.guests)
-  const [dateError, setDateError] = useState('')
+  const [, setDateError] = useState('')
   const [visibleMonth, setVisibleMonth] = useState(() =>
     parseInputDate(selectedStay.checkIn || defaultBookingStay.checkIn),
   )
@@ -107,6 +108,36 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
   const selectedCheckIn = checkIn ? parseInputDate(checkIn) : null
   const selectedCheckOut = checkOut ? parseInputDate(checkOut) : null
   const selectedNights = getNightCount(selectedCheckIn, selectedCheckOut)
+
+  useEffect(() => {
+    let isMounted = true
+    const roomId = getCurrentRoomSlug()
+
+    if (!roomId) {
+      const message = 'Room id is missing.'
+      setDataError(message)
+      showToast({ title: 'Room is missing', message, variant: 'error' })
+      return
+    }
+
+    fetchRoom(roomId)
+      .then((nextRoom) => {
+        if (!isMounted) return
+        setRoom(nextRoom)
+        setGuests((currentGuests) => currentGuests || nextRoom.guests)
+        setDataError('')
+      })
+      .catch((error) => {
+        if (!isMounted) return
+        const message = error instanceof Error ? error.message : 'Could not load room details.'
+        setDataError(message)
+        showToast({ title: 'Could not load room details', message, variant: 'error' })
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const updateCheckIn = (value: string) => {
     setCheckIn(value)
@@ -149,7 +180,9 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
     }
 
     if (date <= selectedCheckIn) {
-      setDateError('Ngay tra phong phai sau ngay nhan phong.')
+      const message = 'Ngay tra phong phai sau ngay nhan phong.'
+      setDateError(message)
+      showToast({ title: 'Ngay dat phong khong hop le', message, variant: 'error' })
       return
     }
 
@@ -210,7 +243,9 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
     event.preventDefault()
 
     if (!checkIn || !checkOut) {
-      setDateError('Vui long chon ca ngay nhan phong va tra phong.')
+      const message = 'Vui long chon ca ngay nhan phong va tra phong.'
+      setDateError(message)
+      showToast({ title: 'Thieu ngay dat phong', message, variant: 'error' })
       return
     }
 
@@ -218,7 +253,9 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
     const checkOutDate = new Date(`${checkOut}T00:00:00`)
 
     if (checkOutDate <= checkInDate) {
-      setDateError('Ngay tra phong phai sau ngay nhan phong.')
+      const message = 'Ngay tra phong phai sau ngay nhan phong.'
+      setDateError(message)
+      showToast({ title: 'Ngay dat phong khong hop le', message, variant: 'error' })
       return
     }
 
@@ -411,7 +448,6 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
                 ? 'Bam ngay tren lich de chon ngay nhan phong.'
                 : 'Bam ngay tren lich de chon ngay tra phong.'}
           </p>
-          {dateError && <p className="form-error">{dateError}</p>}
           <ul className="highlight-list">
             {room.highlights.map((item) => (
               <li key={item}>

@@ -1,46 +1,90 @@
-import type { FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { createBooking, fetchRoom } from '../api/vipBookingApi'
 import { BookingSummary } from '../components/booking/BookingSummary'
 import { PageIntro } from '../components/ui/PageIntro'
+import { useToast } from '../context/ToastContext'
+import { rooms as defaultRooms } from '../data/rooms'
 import { useAuth } from '../hooks/useAuth'
-import type { Navigate } from '../types'
+import type { Navigate, Room } from '../types'
 import {
-  formatStayRange,
-  getSelectedRoom,
+  getSelectedRoomId,
   getSelectedStay,
-  getStayNights,
 } from '../utils/bookingSelections'
-import { formatCurrency } from '../utils/currency'
-import { saveBooking, setActiveBookingId } from '../utils/appStorage'
+import { setActiveBookingId } from '../utils/appStorage'
 
 export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
-  const room = getSelectedRoom()
+  const { showToast } = useToast()
+  const [room, setRoom] = useState<Room>(defaultRooms[0])
+  const [, setDataError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const stay = getSelectedStay()
-  const nights = getStayNights(stay)
   const { user } = useAuth()
+  const selectedRoomId = getSelectedRoomId()
 
-  const handleBookingSubmit = (event: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (!selectedRoomId) {
+      const message = 'Please select a room before continuing.'
+      setDataError(message)
+      showToast({ title: 'Room selection required', message, variant: 'warning' })
+      return
+    }
+
+    let isMounted = true
+    fetchRoom(selectedRoomId)
+      .then((nextRoom) => {
+        if (!isMounted) return
+        setRoom(nextRoom)
+        setDataError('')
+      })
+      .catch((error) => {
+        if (!isMounted) return
+        const message = error instanceof Error ? error.message : 'Could not load selected room.'
+        setDataError(message)
+        showToast({ title: 'Could not load room', message, variant: 'error' })
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedRoomId])
+
+  const handleBookingSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!selectedRoomId) {
+      const message = 'Please select a room before continuing.'
+      setDataError(message)
+      showToast({ title: 'Room selection required', message, variant: 'warning' })
+      return
+    }
+
     const formData = new FormData(event.currentTarget)
     const firstName = String(formData.get('firstName') ?? '').trim()
     const lastName = String(formData.get('lastName') ?? '').trim()
     const email = String(formData.get('email') ?? user?.email ?? '').trim()
     const guestName = `${firstName} ${lastName}`.trim() || email || 'Guest'
+    const specialRequest = String(formData.get('specialRequest') ?? '').trim()
 
-    const bookingId = `${Date.now()}`
-    saveBooking({
-      id: bookingId,
-      ownerEmail: user?.email ?? email,
-      guest: guestName,
-      email,
-      room: room.name,
-      checkIn: formatStayRange(stay),
-      checkOut: stay.checkOut,
-      amount: formatCurrency(room.price * nights),
-      status: 'Pending',
-    })
-    setActiveBookingId(bookingId)
+    setIsSubmitting(true)
+    setDataError('')
 
-    navigate('confirm')
+    try {
+      const booking = await createBooking({
+        roomId: selectedRoomId,
+        checkInDate: stay.checkIn,
+        checkOutDate: stay.checkOut,
+        guestCount: Number.parseInt(stay.guests, 10) || 1,
+        specialRequest: [guestName, specialRequest].filter(Boolean).join(' - '),
+      })
+      showToast({ title: 'Booking created', message: booking.apiMessage, variant: 'success' })
+      setActiveBookingId(booking.id)
+      navigate('confirm')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not create booking.'
+      setDataError(message)
+      showToast({ title: 'Could not create booking', message, variant: 'error' })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -81,14 +125,18 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
           </div>
 
           <h2>Stay Preferences</h2>
-          <textarea defaultValue="High floor, quiet room, and champagne on arrival." rows={5} />
+          <textarea
+            defaultValue="High floor, quiet room, and champagne on arrival."
+            name="specialRequest"
+            rows={5}
+          />
           <label className="check-row consent-row">
             <input type="checkbox" />
             <span>I require accessible room assistance.</span>
           </label>
 
-          <button className="primary-button full-width" type="submit">
-            Continue to Review
+          <button className="primary-button full-width" disabled={isSubmitting} type="submit">
+            {isSubmitting ? 'Creating booking...' : 'Continue to Review'}
           </button>
         </section>
 

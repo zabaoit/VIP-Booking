@@ -1,18 +1,46 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import {
+  createUserWithApi,
+  deleteUserWithApi,
+  fetchRoles,
+  fetchUsers,
+  updateUserWithApi,
+} from '../../api/vipBookingApi'
 import { Icon } from '../../components/icons/Icon'
+import { useToast } from '../../context/ToastContext'
 import type { RegisteredUser } from '../../types'
-import { readRegisteredUsers, registeredUsersStorageKey } from '../../utils/appStorage'
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase()
 }
 
 export function AdminUsersPage() {
-  const [users, setUsers] = useState<RegisteredUser[]>(() => readRegisteredUsers())
+  const { confirmToast, showToast } = useToast()
+  const [users, setUsers] = useState<RegisteredUser[]>([])
   const [activeUser, setActiveUser] = useState<RegisteredUser | null>(null)
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<'All' | RegisteredUser['role']>('All')
+  const [roleIds, setRoleIds] = useState<Record<RegisteredUser['role'], string>>({ admin: '', guest: '' })
+  const [, setDataError] = useState('')
+
+  const reloadUsers = async () => {
+    const [nextUsers, nextRoles] = await Promise.all([fetchUsers(), fetchRoles()])
+    setUsers(nextUsers)
+    setRoleIds({
+      admin: nextRoles.find((role) => role.name === 'admin')?.id ?? '',
+      guest: nextRoles.find((role) => role.name === 'customer')?.id ?? '',
+    })
+    setDataError('')
+  }
+
+  useEffect(() => {
+    reloadUsers().catch((error) => {
+      const message = error instanceof Error ? error.message : 'Could not load users.'
+      setDataError(message)
+      showToast({ title: 'Could not load users', message, variant: 'error' })
+    })
+  }, [showToast])
 
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -23,11 +51,6 @@ export function AdminUsersPage() {
       return roleMatch && textMatch
     })
   }, [roleFilter, search, users])
-
-  const persistUsers = (nextUsers: RegisteredUser[]) => {
-    setUsers(nextUsers)
-    localStorage.setItem(registeredUsersStorageKey, JSON.stringify(nextUsers))
-  }
 
   const openAddUserModal = () => {
     setActiveUser(null)
@@ -44,7 +67,7 @@ export function AdminUsersPage() {
     setIsUserModalOpen(false)
   }
 
-  const handleUserSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleUserSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const email = activeUser
@@ -52,71 +75,119 @@ export function AdminUsersPage() {
       : normalizeEmail(String(formData.get('email') ?? ''))
     const password = String(formData.get('password') ?? '').trim()
     const role = String(formData.get('role') ?? 'guest') as RegisteredUser['role']
+    const fullName = String(formData.get('fullName') ?? '').trim() || email
 
-    if (!email || !email.includes('@') || !password) {
+    if (!email || !email.includes('@') || (!activeUser && !password)) {
       return
     }
 
     const duplicateUser = users.find((user) => normalizeEmail(user.email) === email)
     if (duplicateUser && normalizeEmail(activeUser?.email ?? '') !== email) {
-      window.alert('This email already exists.')
+      showToast({
+        title: 'Email already exists',
+        message: 'This email already exists.',
+        variant: 'error',
+      })
       return
     }
 
     const adminCount = users.filter((user) => user.role === 'admin').length
     if (activeUser?.role === 'admin' && role === 'guest' && adminCount <= 1) {
-      window.alert('At least one admin account must remain active.')
+      showToast({
+        title: 'Admin account required',
+        message: 'At least one admin account must remain active.',
+        variant: 'warning',
+      })
       return
     }
 
-    const nextUser: RegisteredUser = {
-      email,
-      password,
-      role,
+    try {
+      let message = ''
+      if (activeUser?.id) {
+        const user = await updateUserWithApi(activeUser.id, {
+          password: password || undefined,
+          fullName,
+          roleId: roleIds[role],
+          status: activeUser.status ?? 'active',
+        })
+        message = user.apiMessage
+      } else {
+        const user = await createUserWithApi({
+          email,
+          password,
+          fullName,
+          roleId: roleIds[role],
+        })
+        message = user.apiMessage
+      }
+      await reloadUsers()
+      closeUserModal()
+      showToast({ title: 'Account saved', message, variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not save account.'
+      setDataError(message)
+      showToast({ title: 'Could not save account', message, variant: 'error' })
     }
-
-    persistUsers(
-      activeUser
-        ? users.map((user) => (normalizeEmail(user.email) === normalizeEmail(activeUser.email) ? nextUser : user))
-        : [nextUser, ...users],
-    )
-    closeUserModal()
   }
 
-  const handleRoleChange = (email: string, role: RegisteredUser['role']) => {
+  const handleRoleChange = async (email: string, role: RegisteredUser['role']) => {
     const adminCount = users.filter((user) => user.role === 'admin').length
     const activeUser = users.find((user) => normalizeEmail(user.email) === normalizeEmail(email))
 
     if (activeUser?.role === 'admin' && role === 'guest' && adminCount <= 1) {
-      window.alert('At least one admin account must remain active.')
+      showToast({
+        title: 'Admin account required',
+        message: 'At least one admin account must remain active.',
+        variant: 'warning',
+      })
       return
     }
 
-    persistUsers(
-      users.map((user) =>
-        normalizeEmail(user.email) === normalizeEmail(email)
-          ? {
-              ...user,
-              role,
-            }
-          : user,
-      ),
-    )
+    if (!activeUser?.id || !roleIds[role]) return
+
+    try {
+      const user = await updateUserWithApi(activeUser.id, { roleId: roleIds[role], status: activeUser.status ?? 'active' })
+      await reloadUsers()
+      showToast({ title: 'Role updated', message: user.apiMessage, variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not update role.'
+      setDataError(message)
+      showToast({ title: 'Could not update role', message, variant: 'error' })
+    }
   }
 
-  const handleDeleteUser = (user: RegisteredUser) => {
+  const handleDeleteUser = async (user: RegisteredUser) => {
     const adminCount = users.filter((item) => item.role === 'admin').length
     if (user.role === 'admin' && adminCount <= 1) {
-      window.alert('At least one admin account must remain active.')
+      showToast({
+        title: 'Admin account required',
+        message: 'At least one admin account must remain active.',
+        variant: 'warning',
+      })
       return
     }
 
-    const shouldDelete = window.confirm(`Delete account "${user.email}"?`)
+    const shouldDelete = await confirmToast({
+      title: 'Delete account?',
+      message: `Delete account "${user.email}"?`,
+      confirmLabel: 'Delete',
+      variant: 'warning',
+    })
     if (!shouldDelete) {
       return
     }
 
-    persistUsers(users.filter((item) => normalizeEmail(item.email) !== normalizeEmail(user.email)))
+    if (!user.id) return
+
+    try {
+      const message = await deleteUserWithApi(user.id)
+      await reloadUsers()
+      showToast({ title: 'Account deleted', message, variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not delete account.'
+      setDataError(message)
+      showToast({ title: 'Could not delete account', message, variant: 'error' })
+    }
   }
 
   return (
@@ -253,12 +324,21 @@ export function AdminUsersPage() {
                 />
               </label>
               <label>
+                Full name
+                <input
+                  name="fullName"
+                  defaultValue={activeUser?.fullName}
+                  placeholder="Account owner"
+                  required
+                />
+              </label>
+              <label>
                 Password
                 <input
                   name="password"
                   defaultValue={activeUser?.password}
                   placeholder="Temporary password"
-                  required
+                  required={!activeUser}
                   type="text"
                 />
               </label>

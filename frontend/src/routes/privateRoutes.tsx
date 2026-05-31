@@ -1,7 +1,9 @@
 import { AdminLayout } from '../components/layout/AdminLayout'
 import { AdminBookingsPage } from '../pages/admin/AdminBookingsPage'
+import { AdminBillingPage } from '../pages/admin/AdminBillingPage'
 import { AdminCustomersPage } from '../pages/admin/AdminCustomersPage'
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage'
+import { AdminOperationsPage } from '../pages/admin/AdminOperationsPage'
 import { AdminPricingPage } from '../pages/admin/AdminPricingPage'
 import { AdminRoomTypesPage } from '../pages/admin/AdminRoomTypesPage'
 import { AdminServicesPage } from '../pages/admin/AdminServicesPage'
@@ -22,6 +24,22 @@ export const privateRoutes: AppRoute[] = [
     element: () => (
       <AdminLayout currentRoute="adminBookings">
         <AdminBookingsPage />
+      </AdminLayout>
+    ),
+  },
+  {
+    key: 'adminOperations',
+    element: () => (
+      <AdminLayout currentRoute="adminOperations">
+        <AdminOperationsPage />
+      </AdminLayout>
+    ),
+  },
+  {
+    key: 'adminBilling',
+    element: () => (
+      <AdminLayout currentRoute="adminBilling">
+        <AdminBillingPage />
       </AdminLayout>
     ),
   },

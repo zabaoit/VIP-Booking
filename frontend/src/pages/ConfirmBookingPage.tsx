@@ -1,33 +1,66 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { fetchRoom, fetchServices } from '../api/vipBookingApi'
 import { BookingSummary } from '../components/booking/BookingSummary'
 import { PriceDetails } from '../components/booking/PriceDetails'
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
-import type { Navigate } from '../types'
+import { useToast } from '../context/ToastContext'
+import { rooms as defaultRooms } from '../data/rooms'
+import type { Navigate, Room, Service } from '../types'
 import {
   formatStayRange,
-  getSelectedRoom,
+  getSelectedRoomId,
   getSelectedStay,
   getStayNights,
 } from '../utils/bookingSelections'
 import { formatCurrency } from '../utils/currency'
-import { readServices } from '../utils/appStorage'
 
 function parseServicePrice(price: string) {
   return Number(price.replace(/[^0-9.]/g, '')) || 0
 }
 
 export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
-  const room = getSelectedRoom()
+  const { showToast } = useToast()
+  const [room, setRoom] = useState<Room>(defaultRooms[0])
+  const [services, setServices] = useState<Service[]>([])
+  const [, setDataError] = useState('')
   const stay = getSelectedStay()
   const nights = getStayNights(stay)
-  const services = readServices()
+  const selectedRoomId = getSelectedRoomId()
   const availableServices = services.filter((service) => service.status === 'Active').slice(0, 3)
   const [selectedServices, setSelectedServices] = useState<string[]>([])
   const addOnTotal = selectedServices.reduce((total, serviceName) => {
     const service = services.find((item) => item.name === serviceName)
     return total + (service ? parseServicePrice(service.price) : 0)
   }, 0)
+
+  useEffect(() => {
+    if (!selectedRoomId) {
+      const message = 'Please select a room before reviewing the booking.'
+      setDataError(message)
+      showToast({ title: 'Room selection required', message, variant: 'warning' })
+      return
+    }
+
+    let isMounted = true
+    Promise.all([fetchRoom(selectedRoomId), fetchServices()])
+      .then(([nextRoom, nextServices]) => {
+        if (!isMounted) return
+        setRoom(nextRoom)
+        setServices(nextServices)
+        setDataError('')
+      })
+      .catch((error) => {
+        if (!isMounted) return
+        const message = error instanceof Error ? error.message : 'Could not load booking review data.'
+        setDataError(message)
+        showToast({ title: 'Could not load booking review', message, variant: 'error' })
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedRoomId])
 
   return (
     <main className="page-shell">

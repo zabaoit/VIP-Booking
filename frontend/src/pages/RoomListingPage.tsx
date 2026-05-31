@@ -1,24 +1,47 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { fetchRooms } from '../api/vipBookingApi'
 import { Icon } from '../components/icons/Icon'
 import { FilterGroup } from '../components/rooms/FilterGroup'
 import { RoomCard } from '../components/rooms/RoomCard'
 import { PageIntro } from '../components/ui/PageIntro'
-import type { Navigate } from '../types'
+import { useToast } from '../context/ToastContext'
+import type { Navigate, Room } from '../types'
 import { getRoomSearchQuery, saveRoomSearchQuery } from '../utils/bookingSelections'
-import { readPricingRules, readRooms } from '../utils/appStorage'
-import { applyPricingToRooms } from '../utils/pricing'
 
-const priceOptions = ['$250 - $350', '$350 - $500', '$500+'] as const
+const priceOptions = ['Dưới 1.000.000 đ', '1.000.000 - 2.000.000 đ', 'Trên 2.000.000 đ'] as const
 const roomClassOptions = ['Suite', 'Business', 'Family', 'Residence'] as const
 const amenityOptions = ['Breakfast', 'Balcony', 'Spa access', 'Airport pickup'] as const
 
 export function RoomListingPage({ navigate }: { navigate: Navigate }) {
-  const rooms = applyPricingToRooms(readRooms(), readPricingRules())
+  const { showToast } = useToast()
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [, setDataError] = useState('')
   const [selectedPrices, setSelectedPrices] = useState<string[]>([])
   const [selectedRoomClasses, setSelectedRoomClasses] = useState<string[]>([])
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState(() => getRoomSearchQuery())
   const [sortBy, setSortBy] = useState<'recommended' | 'price-low' | 'rating'>('recommended')
+
+  useEffect(() => {
+    let isMounted = true
+
+    fetchRooms()
+      .then((nextRooms) => {
+        if (!isMounted) return
+        setRooms(nextRooms)
+        setDataError('')
+      })
+      .catch((error) => {
+        if (!isMounted) return
+        const message = error instanceof Error ? error.message : 'Could not load rooms.'
+        setDataError(message)
+        showToast({ title: 'Could not load rooms', message, variant: 'error' })
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const toggleOption = (
     option: string,
@@ -49,13 +72,13 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
       const matchPrice =
         selectedPrices.length === 0 ||
         selectedPrices.some((price) => {
-          if (price === '$250 - $350') {
-            return room.price >= 250 && room.price <= 350
+          if (price === 'Dưới 1.000.000 đ') {
+            return room.price < 1_000_000
           }
-          if (price === '$350 - $500') {
-            return room.price > 350 && room.price <= 500
+          if (price === '1.000.000 - 2.000.000 đ') {
+            return room.price >= 1_000_000 && room.price <= 2_000_000
           }
-          return room.price > 500
+          return room.price > 2_000_000
         })
 
       const roomInfo = `${room.category} ${room.name}`.toLowerCase()
@@ -103,7 +126,7 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
   }, [rooms, searchQuery, selectedAmenities, selectedPrices, selectedRoomClasses, sortBy])
 
   return (
-    <main className="mx-auto w-full max-w-[1180px] px-5 py-12">
+    <main className="w-full px-4 py-12 sm:px-6 lg:px-8">
       <PageIntro
         eyebrow="Room listing"
         title="Available Rooms"
@@ -187,7 +210,7 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
             {filteredRooms.map((room) => (
               <RoomCard key={room.id} room={room} navigate={navigate} />
             ))}

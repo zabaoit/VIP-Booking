@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { fetchBookings, fetchRooms, fetchServices, fetchUsers } from '../../api/vipBookingApi'
 import { useAuth } from '../../hooks/useAuth'
 import { adminNavItems } from '../../data/navigation'
 import { routeTitles } from '../../data/routes'
-import type { BookingRecord, RouteKey } from '../../types'
+import type { BookingRecord, RegisteredUser, Room, RouteKey, Service } from '../../types'
 import {
   readContactMessages,
-  readBookings,
   readPricingRules,
-  readRegisteredUsers,
-  readRooms,
-  readServices,
 } from '../../utils/appStorage'
 import { getRouteHref, setAppRoute } from '../../utils/router'
 import { Icon } from '../icons/Icon'
@@ -73,12 +70,33 @@ export function AdminLayout({
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>(() =>
     readSeenNotifications(),
   )
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [bookings, setBookings] = useState<BookingRecord[]>([])
+  const [services, setServices] = useState<Service[]>([])
+  const [users, setUsers] = useState<RegisteredUser[]>([])
   const topbarActionsRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    let isMounted = true
+
+    Promise.all([fetchRooms(), fetchBookings(), fetchServices(), fetchUsers()])
+      .then(([nextRooms, nextBookings, nextServices, nextUsers]) => {
+        if (!isMounted) return
+        setRooms(nextRooms)
+        setBookings(nextBookings)
+        setServices(nextServices)
+        setUsers(nextUsers)
+      })
+      .catch(() => undefined)
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   const notifications = useMemo<AdminNotification[]>(() => {
-    const bookings = readBookings()
     const contactMessages = readContactMessages()
-    const users = readRegisteredUsers().filter((item) => item.role === 'guest')
+    const guestUsers = users.filter((item) => item.role === 'guest')
     const pendingBookings = bookings.filter((booking) => booking.status === 'Pending').length
     const newContactMessages = contactMessages.filter((message) => message.status === 'New').length
     const latestBookings = bookings.slice(0, 4)
@@ -98,7 +116,7 @@ export function AdminLayout({
       },
       {
         id: 'summary-users',
-        title: `${users.length} registered guests`,
+        title: `${guestUsers.length} registered guests`,
         detail: 'Guest list is synced with customer management.',
         time: 'Now',
         route: 'adminCustomers',
@@ -160,7 +178,7 @@ export function AdminLayout({
     })
 
     return [...baseNotifications, ...contactNotifications, ...bookingNotifications]
-  }, [])
+  }, [bookings, users])
 
   const unreadNotifications = notifications.filter(
     (notification) => !seenNotificationIds.includes(notification.id),
@@ -173,7 +191,7 @@ export function AdminLayout({
       return []
     }
 
-    const roomResults: SearchResult[] = readRooms()
+    const roomResults: SearchResult[] = rooms
       .filter((room) =>
         `${room.name} ${room.category} ${room.location}`.toLowerCase().includes(query),
       )
@@ -185,7 +203,7 @@ export function AdminLayout({
         route: 'adminRooms',
       }))
 
-    const bookingResults: SearchResult[] = readBookings()
+    const bookingResults: SearchResult[] = bookings
       .filter((booking) =>
         `${booking.guest} ${booking.room} ${booking.email} ${booking.id}`
           .toLowerCase()
@@ -199,7 +217,7 @@ export function AdminLayout({
         route: 'adminBookings',
       }))
 
-    const billingResults: SearchResult[] = readBookings()
+    const billingResults: SearchResult[] = bookings
       .filter((booking) =>
         `${booking.guest} ${booking.room} ${booking.email} ${booking.id} invoice payment`
           .toLowerCase()
@@ -213,7 +231,7 @@ export function AdminLayout({
         route: 'adminBookings',
       }))
 
-    const serviceResults: SearchResult[] = readServices()
+    const serviceResults: SearchResult[] = services
       .filter((service) => `${service.name} ${service.note}`.toLowerCase().includes(query))
       .slice(0, 2)
       .map((service) => ({
@@ -235,7 +253,7 @@ export function AdminLayout({
         route: 'adminPricing',
       }))
 
-    const userResults: SearchResult[] = readRegisteredUsers()
+    const userResults: SearchResult[] = users
       .filter((item) => item.email.toLowerCase().includes(query))
       .slice(0, 2)
       .map((item) => ({
@@ -253,7 +271,7 @@ export function AdminLayout({
       ...pricingResults,
       ...userResults,
     ].slice(0, 8)
-  }, [searchQuery])
+  }, [bookings, rooms, searchQuery, services, users])
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {

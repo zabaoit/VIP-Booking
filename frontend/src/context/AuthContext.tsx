@@ -1,230 +1,97 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { getCurrentUser, loginWithApi, registerWithApi } from '../api/vipBookingApi'
+import {
+  clearAuthSession,
+  readAuthSession,
+  saveAuthSession,
+  type AuthSession,
+} from '../api/httpClient'
 import {
   AuthContext,
   type AuthContextValue,
   type AuthUser,
 } from './authStore'
-import type { RegisteredUser } from '../types'
-import { registeredUsersStorageKey } from '../utils/appStorage'
 
-const authStorageKey = 'vip-booking-auth-user'
-const defaultRegisteredUsers: RegisteredUser[] = [
-  {
-    email: 'admin@vipbooking.vn',
-    password: 'vipbooking',
-    role: 'admin',
-  },
-  {
-    email: 'guest@vipbooking.vn',
-    password: 'vipbooking',
-    role: 'guest',
-  },
-]
-const socialLoginProfiles: Record<'google' | 'apple', { email: string; password: string }> = {
-  google: {
-    email: 'google.guest@vipbooking.vn',
-    password: 'oauth-google',
-  },
-  apple: {
-    email: 'apple.guest@vipbooking.vn',
-    password: 'oauth-apple',
-  },
-}
-
-function normalizeEmail(email: string) {
-  return email.trim().toLowerCase()
-}
-
-function getUserRole(email: string) {
-  return normalizeEmail(email).startsWith('admin') ? 'admin' : 'guest'
-}
-
-function readStoredUser(): AuthUser | null {
-  const rawUser = localStorage.getItem(authStorageKey)
-
-  if (!rawUser) {
-    return null
+function toAuthUser(sessionUser: AuthSession['user']): AuthUser {
+  return {
+    id: sessionUser.id,
+    email: sessionUser.email,
+    fullName: sessionUser.fullName,
+    phone: sessionUser.phone,
+    role: sessionUser.role,
   }
-
-  try {
-    const storedUser = JSON.parse(rawUser) as AuthUser
-    const isRegistered = readRegisteredUsers().some(
-      (registeredUser) => normalizeEmail(registeredUser.email) === normalizeEmail(storedUser.email),
-    )
-
-    if (!isRegistered) {
-      localStorage.removeItem(authStorageKey)
-      return null
-    }
-
-    return storedUser
-  } catch {
-    localStorage.removeItem(authStorageKey)
-    return null
-  }
-}
-
-function readRegisteredUsers(): RegisteredUser[] {
-  const rawUsers = localStorage.getItem(registeredUsersStorageKey)
-
-  if (!rawUsers) {
-    saveRegisteredUsers(defaultRegisteredUsers)
-    return defaultRegisteredUsers
-  }
-
-  try {
-    const users = JSON.parse(rawUsers) as RegisteredUser[]
-    if (!Array.isArray(users)) {
-      saveRegisteredUsers(defaultRegisteredUsers)
-      return defaultRegisteredUsers
-    }
-
-    const usersWithDefaults = [...users]
-    let hasMissingDefaultUser = false
-    let hasPatchedAdminPassword = false
-
-    defaultRegisteredUsers.forEach((defaultUser) => {
-      const existingUserIndex = usersWithDefaults.findIndex(
-        (user) => normalizeEmail(user.email) === normalizeEmail(defaultUser.email),
-      )
-      const exists = existingUserIndex >= 0
-
-      if (!exists) {
-        usersWithDefaults.push(defaultUser)
-        hasMissingDefaultUser = true
-        return
-      }
-
-      if (normalizeEmail(defaultUser.email) === normalizeEmail('admin@vipbooking.vn')) {
-        const existingUser = usersWithDefaults[existingUserIndex]
-        if (existingUser.password !== defaultUser.password || existingUser.role !== 'admin') {
-          usersWithDefaults[existingUserIndex] = {
-            ...existingUser,
-            password: defaultUser.password,
-            role: 'admin',
-          }
-          hasPatchedAdminPassword = true
-        }
-      }
-    })
-
-    if (hasMissingDefaultUser || hasPatchedAdminPassword) {
-      saveRegisteredUsers(usersWithDefaults)
-    }
-
-    return usersWithDefaults
-  } catch {
-    saveRegisteredUsers(defaultRegisteredUsers)
-    return defaultRegisteredUsers
-  }
-}
-
-function saveRegisteredUsers(users: RegisteredUser[]) {
-  localStorage.setItem(registeredUsersStorageKey, JSON.stringify(users))
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => readStoredUser())
-  const [, setRegisteredUsers] = useState<RegisteredUser[]>(() =>
-    readRegisteredUsers(),
-  )
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    const session = readAuthSession()
+    return session ? toAuthUser(session.user) : null
+  })
+
+  useEffect(() => {
+    if (!readAuthSession()) {
+      return
+    }
+
+    getCurrentUser()
+      .then((currentUser) => setUser(toAuthUser(currentUser)))
+      .catch(() => {
+        clearAuthSession()
+        setUser(null)
+      })
+  }, [])
 
   const value = useMemo<AuthContextValue>(
     () => ({
       isAuthenticated: Boolean(user),
       user,
-      login: (email, password) => {
-        const normalizedEmail = normalizeEmail(email)
-        const users = readRegisteredUsers()
-        setRegisteredUsers(users)
-        const registeredUser = users.find(
-          (item) => normalizeEmail(item.email) === normalizedEmail,
-        )
-
-        if (!registeredUser || registeredUser.password !== password) {
-          return false
+      login: async (email, password) => {
+        try {
+          const session = await loginWithApi(email, password)
+          saveAuthSession(session)
+          setUser(toAuthUser(session.user))
+          return { ok: true, message: session.apiMessage }
+        } catch (error) {
+          return {
+            ok: false,
+            message: error instanceof Error ? error.message : 'Dang nhap khong thanh cong',
+          }
         }
-
-        const nextUser: AuthUser = {
-          email: registeredUser.email,
-          role: registeredUser.role,
-        }
-
-        localStorage.setItem(authStorageKey, JSON.stringify(nextUser))
-        setUser(nextUser)
-        return true
       },
-      socialLogin: (provider, emailOverride) => {
-        const profile = socialLoginProfiles[provider]
-        const resolvedEmail = emailOverride?.trim() || profile.email
-        const users = readRegisteredUsers()
-        const normalizedEmail = normalizeEmail(resolvedEmail)
-        const existingUser = users.find(
-          (item) => normalizeEmail(item.email) === normalizedEmail,
-        )
-
-        if (!existingUser) {
-          users.push({
-            email: resolvedEmail,
-            password: profile.password,
-            role: getUserRole(resolvedEmail),
-          })
-          saveRegisteredUsers(users)
-        }
-
-        setRegisteredUsers(users)
-        const nextUser: AuthUser = {
-          email: resolvedEmail,
-          role: getUserRole(resolvedEmail),
-        }
-        localStorage.setItem(authStorageKey, JSON.stringify(nextUser))
+      socialLogin: async (_provider, emailOverride) => {
+        const email = emailOverride?.trim() || `google-${Date.now()}@vipbooking.local`
+        const password = `Oauth${Date.now()}`
+        const session = await registerWithApi({
+          email,
+          password,
+          fullName: email.split('@')[0],
+        })
+        saveAuthSession(session)
+        const nextUser = toAuthUser(session.user)
         setUser(nextUser)
         return nextUser
       },
-      register: (email, password) => {
-        const normalizedEmail = normalizeEmail(email)
-        const users = readRegisteredUsers()
-        const existingIndex = users.findIndex((item) => normalizeEmail(item.email) === normalizedEmail)
-        const registeredUser: RegisteredUser = {
-          email: email.trim(),
-          password,
-          role: getUserRole(email),
+      register: async (email, password, fullName, phone) => {
+        try {
+          const session = await registerWithApi({
+            email,
+            password,
+            fullName: fullName || email.split('@')[0],
+            phone,
+          })
+          return { ok: true, message: session.apiMessage }
+        } catch (error) {
+          return {
+            ok: false,
+            message: error instanceof Error ? error.message : 'Dang ky khong thanh cong',
+          }
         }
-
-        if (existingIndex >= 0) {
-          users[existingIndex] = registeredUser
-        } else {
-          users.push(registeredUser)
-        }
-
-        saveRegisteredUsers(users)
-        setRegisteredUsers(users)
       },
-      changePassword: (currentPassword, nextPassword) => {
-        if (!user) {
-          return false
-        }
-
-        const users = readRegisteredUsers()
-        const userIndex = users.findIndex(
-          (item) => normalizeEmail(item.email) === normalizeEmail(user.email),
-        )
-
-        if (userIndex < 0 || users[userIndex].password !== currentPassword) {
-          return false
-        }
-
-        users[userIndex] = {
-          ...users[userIndex],
-          password: nextPassword,
-        }
-
-        saveRegisteredUsers(users)
-        setRegisteredUsers(users)
-        return true
+      changePassword: async () => {
+        return false
       },
       logout: () => {
-        localStorage.removeItem(authStorageKey)
+        clearAuthSession()
         setUser(null)
       },
     }),

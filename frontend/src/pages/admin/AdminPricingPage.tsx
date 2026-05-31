@@ -1,9 +1,11 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Icon } from '../../components/icons/Icon'
+import { useToast } from '../../context/ToastContext'
 import type { PricingRule } from '../../types'
 import { readPricingRules, savePricingRules } from '../../utils/appStorage'
 
 export function AdminPricingPage() {
+  const { confirmToast, showToast } = useToast()
   const [rules, setRules] = useState<PricingRule[]>(() => readPricingRules())
   const [activeTab, setActiveTab] = useState<'dynamic' | 'seasonal' | 'discounts'>('dynamic')
   const [activeRule, setActiveRule] = useState<PricingRule | null>(null)
@@ -42,6 +44,11 @@ export function AdminPricingPage() {
     const endDate = String(formData.get('endDate') ?? '')
 
     if (!name || !roomType || !trigger || !startDate || !endDate || actionValue <= 0) {
+      showToast({
+        title: 'Pricing rule is incomplete',
+        message: 'Please complete the rule name, date range, and a valid adjustment value.',
+        variant: 'error',
+      })
       return
     }
 
@@ -65,8 +72,13 @@ export function AdminPricingPage() {
     event.currentTarget.reset()
   }
 
-  const handleDeleteRule = (rule: PricingRule) => {
-    const shouldDelete = window.confirm(`Delete pricing rule "${rule.name}"?`)
+  const handleDeleteRule = async (rule: PricingRule) => {
+    const shouldDelete = await confirmToast({
+      title: 'Delete pricing rule?',
+      message: `Delete pricing rule "${rule.name}"?`,
+      confirmLabel: 'Delete',
+      variant: 'warning',
+    })
     if (!shouldDelete) {
       return
     }

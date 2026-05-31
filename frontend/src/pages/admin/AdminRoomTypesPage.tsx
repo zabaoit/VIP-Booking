@@ -1,42 +1,43 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { deleteRoomWithApi, fetchRooms, updateRoomWithApi } from '../../api/vipBookingApi'
 import { Icon } from '../../components/icons/Icon'
+import { useToast } from '../../context/ToastContext'
 import { rooms as defaultRooms } from '../../data/rooms'
 import type { Room } from '../../types'
-import { readRooms, saveRooms } from '../../utils/appStorage'
 import { formatCurrency } from '../../utils/currency'
 
-function createRoomId(name: string) {
-  return (
-    name
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '') || `room-${Date.now()}`
-  )
-}
-
 export function AdminRoomTypesPage() {
-  const [roomTypes, setRoomTypes] = useState<Room[]>(() => readRooms())
+  const { confirmToast, showToast } = useToast()
+  const [roomTypes, setRoomTypes] = useState<Room[]>([])
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
   const [search, setSearch] = useState('')
   const [classFilter, setClassFilter] = useState<'All' | 'Available' | 'Occupied' | 'Maintenance'>(
     'All',
   )
+  const [, setDataError] = useState('')
   const activeRoom = editingRoom
   const isModalOpen = isAddModalOpen || Boolean(editingRoom)
 
-  const persistRoomTypes = (nextRoomTypes: Room[]) => {
-    setRoomTypes(nextRoomTypes)
-    saveRooms(nextRoomTypes)
+  const reloadRooms = async () => {
+    setRoomTypes(await fetchRooms())
+    setDataError('')
   }
+
+  useEffect(() => {
+    reloadRooms().catch((error) => {
+      const message = error instanceof Error ? error.message : 'Could not load rooms.'
+      setDataError(message)
+      showToast({ title: 'Could not load rooms', message, variant: 'error' })
+    })
+  }, [showToast])
 
   const closeRoomModal = () => {
     setIsAddModalOpen(false)
     setEditingRoom(null)
   }
 
-  const handleRoomTypeSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleRoomTypeSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     const formData = new FormData(event.currentTarget)
@@ -50,8 +51,19 @@ export function AdminRoomTypesPage() {
 
     const image =
       String(formData.get('image') ?? '').trim() || activeRoom?.image || defaultRooms[0].image
+    if (!activeRoom) {
+      setDataError('Please create new rooms from the backend room inventory API with a valid room type id.')
+      showToast({
+        title: 'Cannot create room here',
+        message: 'Please create new rooms from the backend room inventory API with a valid room type id.',
+        variant: 'warning',
+      })
+      return
+    }
+
     const nextRoom: Room = {
-      id: activeRoom?.id ?? createRoomId(name),
+      ...activeRoom,
+      id: activeRoom.id,
       name,
       category,
       location:
@@ -73,23 +85,41 @@ export function AdminRoomTypesPage() {
       availability: activeRoom?.availability ?? defaultRooms[0].availability,
     }
 
-    const nextRoomTypes = activeRoom
-      ? roomTypes.map((room) => (room.id === activeRoom.id ? nextRoom : room))
-      : [nextRoom, ...roomTypes]
-    persistRoomTypes(nextRoomTypes)
-    closeRoomModal()
-    event.currentTarget.reset()
-  }
-
-  const handleDeleteRoomType = (room: Room) => {
-    const shouldDelete = window.confirm(`Delete room type "${room.name}"?`)
-
-    if (shouldDelete) {
-      persistRoomTypes(roomTypes.filter((item) => item.id !== room.id))
+    try {
+      const savedRoom = await updateRoomWithApi(nextRoom)
+      await reloadRooms()
+      closeRoomModal()
+      event.currentTarget.reset()
+      showToast({ title: 'Room updated', message: savedRoom.apiMessage, variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not update room.'
+      setDataError(message)
+      showToast({ title: 'Could not update room', message, variant: 'error' })
     }
   }
 
-  const filteredRooms = roomTypes.filter((room, index) => {
+  const handleDeleteRoomType = async (room: Room) => {
+    const shouldDelete = await confirmToast({
+      title: 'Delete room type?',
+      message: `Delete room type "${room.name}"?`,
+      confirmLabel: 'Delete',
+      variant: 'warning',
+    })
+
+    if (!shouldDelete) return
+
+    try {
+      const message = await deleteRoomWithApi(room.id)
+      await reloadRooms()
+      showToast({ title: 'Room deleted', message, variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not delete room.'
+      setDataError(message)
+      showToast({ title: 'Could not delete room', message, variant: 'error' })
+    }
+  }
+
+  const filteredRooms = roomTypes.filter((room) => {
     const searchTerm = search.trim().toLowerCase()
     const textMatch =
       !searchTerm ||
@@ -98,7 +128,7 @@ export function AdminRoomTypesPage() {
       room.category.toLowerCase().includes(searchTerm) ||
       room.location.toLowerCase().includes(searchTerm)
 
-    const status = index % 4 === 0 ? 'Available' : index % 4 === 1 ? 'Occupied' : index % 4 === 2 ? 'Maintenance' : 'Available'
+    const status = room.status === 'maintenance' ? 'Maintenance' : room.status === 'available' ? 'Available' : 'Occupied'
     const statusMatch = classFilter === 'All' || classFilter === status
 
     return textMatch && statusMatch
@@ -156,7 +186,7 @@ export function AdminRoomTypesPage() {
             </thead>
             <tbody>
               {filteredRooms.map((room, index) => {
-                const status = index % 4 === 0 ? 'Available' : index % 4 === 1 ? 'Occupied' : index % 4 === 2 ? 'Maintenance' : 'Reserved'
+                const status = room.status === 'maintenance' ? 'Maintenance' : room.status === 'available' ? 'Available' : 'Occupied'
                 const statusClass = status === 'Available' ? 'success' : status === 'Maintenance' ? 'failed' : 'pending'
                 const housekeeping = index % 3 === 0 ? 'Clean' : index % 3 === 1 ? 'Dirty' : 'Blocked'
 
