@@ -1,10 +1,12 @@
 import type { Navigate } from '../../types'
+import { useLanguage } from '../../context/LanguageContext'
 import { readSupportInfo } from '../../utils/appStorage'
 import { getRouteHref } from '../../utils/router'
 
 export function SiteFooter({ navigate }: { navigate: Navigate }) {
   const currentYear = new Date().getFullYear()
   const supportInfo = readSupportInfo()
+  const { t } = useLanguage()
 
   return (
     <footer className="site-footer">
@@ -21,60 +23,61 @@ export function SiteFooter({ navigate }: { navigate: Navigate }) {
             <span className="brand-mark">VIP</span>
             <span>VIP Booking</span>
           </a>
-          <strong>VIP Hospitality Booking Company</strong>
+          <strong>{t('footer.companyName')}</strong>
           <p>{supportInfo.address}</p>
           <p>{supportInfo.email}</p>
           <button className="footer-hotline" type="button" onClick={() => navigate('contact')}>
             {supportInfo.hotline}
           </button>
-          <small>24/7 concierge and guest assistance</small>
+          <small>{t('footer.supportNote')}</small>
         </section>
 
         <section className="footer-column">
-          <h4>Information</h4>
+          <h4>{t('footer.information')}</h4>
           <div className="footer-links">
             <button type="button" onClick={() => navigate('about')}>
-              About us
+              {t('footer.aboutUs')}
             </button>
             <button type="button" onClick={() => navigate('rooms')}>
-              Rooms
+              {t('footer.rooms')}
             </button>
             <button type="button" onClick={() => navigate('booking')}>
-              Booking guide
+              {t('footer.bookingGuide')}
             </button>
             <button type="button" onClick={() => navigate('profile')}>
-              Guest profile
+              {t('footer.guestProfile')}
             </button>
             <button type="button" onClick={() => navigate('contact')}>
-              Help center
+              {t('footer.helpCenter')}
             </button>
           </div>
         </section>
 
         <section className="footer-column">
-          <h4>Terms</h4>
+          <h4>{t('footer.terms')}</h4>
           <div className="footer-links">
             <button type="button" onClick={() => navigate('contact')}>
-              Privacy policy
+              {t('footer.privacy')}
             </button>
             <button type="button" onClick={() => navigate('contact')}>
-              Terms of use
+              {t('footer.termsOfUse')}
             </button>
             <button type="button" onClick={() => navigate('contact')}>
-              Data protection
+              {t('footer.dataProtection')}
             </button>
             <button type="button" onClick={() => navigate('admin')}>
-              Admin portal
+              {t('footer.adminPortal')}
             </button>
           </div>
         </section>
       </div>
 
       <div className="footer-legal">
-        <p>© {currentYear} VIP Booking. All rights reserved.</p>
-        <p>Premium room reservations, curated services, and secure payment for every stay.</p>
+        <p>{t('footer.legalLine', { year: currentYear })}</p>
+        <p>{t('footer.legalSub')}</p>
       </div>
     </footer>
   )
 }
+
 

@@ -167,6 +167,33 @@ img {
   gap: 10px;
 }
 
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.language-switch button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted-strong);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.language-switch button.active {
+  background: rgba(59, 130, 246, 0.24);
+  color: white;
+}
+
 .primary-button,
 .secondary-button,
 .ghost-button,

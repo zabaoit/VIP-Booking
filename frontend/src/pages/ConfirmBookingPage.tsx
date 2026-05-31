@@ -9,14 +9,18 @@ import { rooms as defaultRooms } from '../data/rooms'
 import type { Navigate, Room, Service } from '../types'
 import {
   formatStayRange,
+  getSelectedAddOns,
   getSelectedRoomId,
   getSelectedStay,
   getStayNights,
+  saveSelectedAddOns,
 } from '../utils/bookingSelections'
 import { formatCurrency } from '../utils/currency'
 
 function parseServicePrice(price: string) {
-  return Number(price.replace(/[^0-9.]/g, '')) || 0
+  // Keep only digits so formats like "120.000 ₫", "120,000 VND", or "$120"
+  // are parsed consistently as full numeric amounts.
+  return Number(price.replace(/[^0-9]/g, '')) || 0
 }
 
 export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
@@ -28,11 +32,15 @@ export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
   const nights = getStayNights(stay)
   const selectedRoomId = getSelectedRoomId()
   const availableServices = services.filter((service) => service.status === 'Active').slice(0, 3)
-  const [selectedServices, setSelectedServices] = useState<string[]>([])
+  const [selectedServices, setSelectedServices] = useState<string[]>(() => getSelectedAddOns().selectedServices)
   const addOnTotal = selectedServices.reduce((total, serviceName) => {
     const service = services.find((item) => item.name === serviceName)
     return total + (service ? parseServicePrice(service.price) : 0)
   }, 0)
+
+  useEffect(() => {
+    saveSelectedAddOns({ selectedServices, addOnTotal })
+  }, [addOnTotal, selectedServices])
 
   useEffect(() => {
     if (!selectedRoomId) {

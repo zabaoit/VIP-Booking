@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { fetchRoom } from '../api/vipBookingApi'
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
+import { useLanguage } from '../context/LanguageContext'
 import { useToast } from '../context/ToastContext'
 import { rooms as defaultRooms } from '../data/rooms'
 import { useAuth } from '../hooks/useAuth'
@@ -80,6 +81,7 @@ function getMonthCells(monthDate: Date) {
 
 export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
   const { showToast } = useToast()
+  const { language, t } = useLanguage()
   const [room, setRoom] = useState<Room>(defaultRooms[0])
   const [, setDataError] = useState('')
   const selectedStay = getSelectedStay()
@@ -101,7 +103,10 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
   const checkOutPickerRef = useRef<HTMLInputElement>(null)
   const { isAuthenticated } = useAuth()
   const monthCells = getMonthCells(visibleMonth)
-  const monthLabel = new Intl.DateTimeFormat('vi-VN', {
+  const weekdayLabels = language === 'vi'
+    ? ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
+    : ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+  const monthLabel = new Intl.DateTimeFormat(language === 'vi' ? 'vi-VN' : 'en-US', {
     month: 'long',
     year: 'numeric',
   }).format(visibleMonth)
@@ -180,9 +185,9 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
     }
 
     if (date <= selectedCheckIn) {
-      const message = 'Ngay tra phong phai sau ngay nhan phong.'
+      const message = t('roomDetail.invalidDatesMessage')
       setDateError(message)
-      showToast({ title: 'Ngay dat phong khong hop le', message, variant: 'error' })
+      showToast({ title: t('roomDetail.invalidDates'), message, variant: 'error' })
       return
     }
 
@@ -243,9 +248,9 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
     event.preventDefault()
 
     if (!checkIn || !checkOut) {
-      const message = 'Vui long chon ca ngay nhan phong va tra phong.'
+      const message = t('roomDetail.missingDatesMessage')
       setDateError(message)
-      showToast({ title: 'Thieu ngay dat phong', message, variant: 'error' })
+      showToast({ title: t('roomDetail.missingDates'), message, variant: 'error' })
       return
     }
 
@@ -253,9 +258,9 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
     const checkOutDate = new Date(`${checkOut}T00:00:00`)
 
     if (checkOutDate <= checkInDate) {
-      const message = 'Ngay tra phong phai sau ngay nhan phong.'
+      const message = t('roomDetail.invalidDatesMessage')
       setDateError(message)
-      showToast({ title: 'Ngay dat phong khong hop le', message, variant: 'error' })
+      showToast({ title: t('roomDetail.invalidDates'), message, variant: 'error' })
       return
     }
 
@@ -326,7 +331,7 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
                 </button>
               </div>
               <div className="calendar-weekdays">
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                {weekdayLabels.map((day, index) => (
                   <span key={`${day}-${index}`}>{day}</span>
                 ))}
               </div>
@@ -386,7 +391,7 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
                 <button
                   className="calendar-picker-button"
                   type="button"
-                  aria-label="Chon ngay nhan phong"
+                  aria-label={t('roomDetail.chooseCheckInAria')}
                   onClick={() => openNativePicker('checkIn')}
                 >
                   <Icon name="calendar" size={18} />
@@ -416,7 +421,7 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
                 <button
                   className="calendar-picker-button"
                   type="button"
-                  aria-label="Chon ngay tra phong"
+                  aria-label={t('roomDetail.chooseCheckOutAria')}
                   onClick={() => openNativePicker('checkOut')}
                 >
                   <Icon name="calendar" size={18} />
@@ -443,10 +448,10 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
           </div>
           <p className="stay-length">
             {selectedNights > 0
-              ? `Dang chon ${selectedNights} dem. Tong tien phong se tinh theo so dem nay.`
+              ? t('roomDetail.staySelected', { nights: selectedNights })
               : activeDateField === 'checkIn'
-                ? 'Bam ngay tren lich de chon ngay nhan phong.'
-                : 'Bam ngay tren lich de chon ngay tra phong.'}
+                ? t('roomDetail.clickCheckIn')
+                : t('roomDetail.clickCheckOut')}
           </p>
           <ul className="highlight-list">
             {room.highlights.map((item) => (

@@ -1,4 +1,5 @@
 import type { Room } from '../../types'
+import { useLanguage } from '../../context/LanguageContext'
 import { formatCurrency } from '../../utils/currency'
 
 export function PriceDetails({
@@ -10,33 +11,30 @@ export function PriceDetails({
   addOnTotal?: number
   nights?: number
 }) {
+  const { t } = useLanguage()
   const subtotal = room.price * nights
-  const serviceFee = 145
   const tax = 88
-  const total = subtotal + serviceFee + addOnTotal + tax
+  const total = subtotal + addOnTotal + tax
+  const nightLabel = nights === 1 ? t('bookingSummary.night') : t('bookingSummary.nights')
 
   return (
     <div className="price-details">
       <div>
-        <span>Room subtotal ({nights} {nights === 1 ? 'night' : 'nights'})</span>
+        <span>{t('priceDetails.roomSubtotal', { nights, nightLabel })}</span>
         <strong>{formatCurrency(subtotal)}</strong>
-      </div>
-      <div>
-        <span>Service package</span>
-        <strong>{formatCurrency(serviceFee)}</strong>
       </div>
       {addOnTotal > 0 && (
         <div>
-          <span>Selected add-ons</span>
+          <span>{t('priceDetails.selectedAddOns')}</span>
           <strong>{formatCurrency(addOnTotal)}</strong>
         </div>
       )}
       <div>
-        <span>Tax and fees</span>
+        <span>{t('priceDetails.taxAndFees')}</span>
         <strong>{formatCurrency(tax)}</strong>
       </div>
       <div className="total">
-        <span>Total</span>
+        <span>{t('priceDetails.total')}</span>
         <strong>{formatCurrency(total)}</strong>
       </div>
     </div>
