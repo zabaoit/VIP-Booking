@@ -1,11 +1,17 @@
 const selectedRoomKey = 'vip-booking:selected-room-id'
 const selectedStayKey = 'vip-booking:selected-stay'
 const roomSearchQueryKey = 'vip-booking:room-search-query'
+const selectedAddOnsKey = 'vip-booking:selected-add-ons'
 
 export type BookingStay = {
   checkIn: string
   checkOut: string
   guests: string
+}
+
+export type BookingAddOns = {
+  selectedServices: string[]
+  addOnTotal: number
 }
 
 export const defaultBookingStay: BookingStay = {
@@ -79,4 +85,36 @@ export function getSelectedStay(): BookingStay {
     window.sessionStorage.removeItem(selectedStayKey)
     return defaultBookingStay
   }
+}
+
+export function saveSelectedAddOns(addOns: BookingAddOns) {
+  window.sessionStorage.setItem(selectedAddOnsKey, JSON.stringify(addOns))
+}
+
+export function getSelectedAddOns(): BookingAddOns {
+  const rawAddOns = window.sessionStorage.getItem(selectedAddOnsKey)
+
+  if (!rawAddOns) {
+    return { selectedServices: [], addOnTotal: 0 }
+  }
+
+  try {
+    const parsedAddOns = JSON.parse(rawAddOns) as Partial<BookingAddOns>
+    const selectedServices = Array.isArray(parsedAddOns.selectedServices)
+      ? parsedAddOns.selectedServices.filter((item): item is string => typeof item === 'string')
+      : []
+    const addOnTotal = Number(parsedAddOns.addOnTotal ?? 0)
+
+    return {
+      selectedServices,
+      addOnTotal: Number.isFinite(addOnTotal) ? Math.max(0, addOnTotal) : 0,
+    }
+  } catch {
+    window.sessionStorage.removeItem(selectedAddOnsKey)
+    return { selectedServices: [], addOnTotal: 0 }
+  }
+}
+
+export function clearSelectedAddOns() {
+  window.sessionStorage.removeItem(selectedAddOnsKey)
 }

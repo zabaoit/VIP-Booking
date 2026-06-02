@@ -11,6 +11,7 @@ import {
   type AuthContextValue,
   type AuthUser,
 } from './authStore'
+import { useLanguage } from './LanguageContext'
 
 function toAuthUser(sessionUser: AuthSession['user']): AuthUser {
   return {
@@ -23,6 +24,7 @@ function toAuthUser(sessionUser: AuthSession['user']): AuthUser {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { t } = useLanguage()
   const [user, setUser] = useState<AuthUser | null>(() => {
     const session = readAuthSession()
     return session ? toAuthUser(session.user) : null
@@ -54,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
           return {
             ok: false,
-            message: error instanceof Error ? error.message : 'Dang nhap khong thanh cong',
+            message: error instanceof Error ? error.message : t('auth.signInFailed'),
           }
         }
       },
@@ -83,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
           return {
             ok: false,
-            message: error instanceof Error ? error.message : 'Dang ky khong thanh cong',
+            message: error instanceof Error ? error.message : t('auth.registerFailed'),
           }
         }
       },
@@ -95,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null)
       },
     }),
-    [user],
+    [t, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

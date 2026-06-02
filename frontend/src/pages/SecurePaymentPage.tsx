@@ -6,7 +6,7 @@ import { PageIntro } from '../components/ui/PageIntro'
 import { useToast } from '../context/ToastContext'
 import { rooms as defaultRooms } from '../data/rooms'
 import type { Navigate, Room } from '../types'
-import { getSelectedRoomId } from '../utils/bookingSelections'
+import { getSelectedAddOns, getSelectedRoomId } from '../utils/bookingSelections'
 import { updateActiveBookingStatus } from '../utils/appStorage'
 
 const paymentMethods = [
@@ -38,6 +38,7 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
   const [room, setRoom] = useState<Room>(defaultRooms[0])
   const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0])
   const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(true)
+  const { addOnTotal } = getSelectedAddOns()
 
   useEffect(() => {
     const roomId = getSelectedRoomId()
@@ -117,7 +118,7 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
             Confirm Payment
           </button>
         </section>
-        <BookingSummary room={room} buttonLabel="Confirm Payment" />
+        <BookingSummary room={room} buttonLabel="Confirm Payment" addOnTotal={addOnTotal} />
       </form>
     </main>
   )

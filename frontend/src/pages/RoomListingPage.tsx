@@ -8,7 +8,7 @@ import { useToast } from '../context/ToastContext'
 import type { Navigate, Room } from '../types'
 import { getRoomSearchQuery, saveRoomSearchQuery } from '../utils/bookingSelections'
 
-const priceOptions = ['Dưới 1.000.000 đ', '1.000.000 - 2.000.000 đ', 'Trên 2.000.000 đ'] as const
+const priceOptions = ['Under 1,000,000 VND', '1,000,000 - 2,000,000 VND', 'Over 2,000,000 VND'] as const
 const roomClassOptions = ['Suite', 'Business', 'Family', 'Residence'] as const
 const amenityOptions = ['Breakfast', 'Balcony', 'Spa access', 'Airport pickup'] as const
 
@@ -72,10 +72,10 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
       const matchPrice =
         selectedPrices.length === 0 ||
         selectedPrices.some((price) => {
-          if (price === 'Dưới 1.000.000 đ') {
+          if (price === 'Under 1,000,000 VND') {
             return room.price < 1_000_000
           }
-          if (price === '1.000.000 - 2.000.000 đ') {
+          if (price === '1,000,000 - 2,000,000 VND') {
             return room.price >= 1_000_000 && room.price <= 2_000_000
           }
           return room.price > 2_000_000
@@ -225,3 +225,5 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
     </main>
   )
 }
+
+

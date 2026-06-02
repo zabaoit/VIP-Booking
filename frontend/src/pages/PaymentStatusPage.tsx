@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { fetchRoom } from '../api/vipBookingApi'
 import { PriceDetails } from '../components/booking/PriceDetails'
 import { Icon } from '../components/icons/Icon'
+import { useLanguage } from '../context/LanguageContext'
 import { rooms as defaultRooms } from '../data/rooms'
 import type { Navigate, Room } from '../types'
-import { getSelectedRoomId, getSelectedStay, getStayNights } from '../utils/bookingSelections'
+import { getSelectedAddOns, getSelectedRoomId, getSelectedStay, getStayNights } from '../utils/bookingSelections'
 import { clearActiveBookingId, updateActiveBookingStatus } from '../utils/appStorage'
 
 export function PaymentStatusPage({
@@ -15,8 +16,10 @@ export function PaymentStatusPage({
   navigate: Navigate
 }) {
   const isSuccess = variant === 'success'
+  const { t } = useLanguage()
   const [room, setRoom] = useState<Room>(defaultRooms[0])
   const nights = getStayNights(getSelectedStay())
+  const { addOnTotal } = getSelectedAddOns()
 
   useEffect(() => {
     const roomId = getSelectedRoomId()
@@ -39,15 +42,15 @@ export function PaymentStatusPage({
         <span className={`status-icon ${isSuccess ? 'success' : 'failed'}`}>
           <Icon name={isSuccess ? 'check' : 'close'} size={28} />
         </span>
-        <h1>{isSuccess ? 'Payment Successful' : 'Payment Failed'}</h1>
+        <h1>{isSuccess ? t('paymentStatus.successTitle') : t('paymentStatus.failedTitle')}</h1>
         <p>
           {isSuccess
-            ? 'Your VIP Booking reservation is confirmed. A receipt has been prepared for the guest profile.'
-            : 'The payment could not be authorized. Review the details or try another payment method.'}
+            ? t('paymentStatus.successMessage')
+            : t('paymentStatus.failedMessage')}
         </p>
         <div className="receipt-card">
           <img src={room.image} alt={room.name} />
-          <PriceDetails room={room} nights={nights} />
+          <PriceDetails room={room} nights={nights} addOnTotal={addOnTotal} />
         </div>
         <div className="status-actions">
           <button
@@ -55,10 +58,10 @@ export function PaymentStatusPage({
             type="button"
             onClick={() => navigate(isSuccess ? 'home' : 'payment')}
           >
-            {isSuccess ? 'Back to Home' : 'Try Again'}
+            {isSuccess ? t('paymentStatus.backHome') : t('paymentStatus.tryAgain')}
           </button>
           <button className="ghost-button" type="button" onClick={() => navigate('rooms')}>
-            View Rooms
+            {t('paymentStatus.viewRooms')}
           </button>
         </div>
       </section>

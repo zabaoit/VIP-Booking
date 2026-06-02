@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { Icon } from '../components/icons/Icon'
+import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
 
@@ -37,24 +38,23 @@ export function PrivateRoute({
 }
 
 function AccessDeniedNotice({ navigate }: { navigate: Navigate }) {
+  const { t } = useLanguage()
+
   return (
     <main className="access-denied-page">
       <section className="access-denied-panel">
         <span className="status-icon failed">
           <Icon name="lock" size={28} />
         </span>
-        <p className="eyebrow">Admin access</p>
-        <h1>Khong co quyen truy cap</h1>
-        <p>
-          Tai khoan hien tai khong phai tai khoan admin. Vui long dang nhap bang tai khoan
-          co role admin de vao trang quan tri.
-        </p>
+        <p className="eyebrow">{t('access.adminAccess')}</p>
+        <h1>{t('access.deniedTitle')}</h1>
+        <p>{t('access.deniedBody')}</p>
         <div>
           <button className="primary-button" type="button" onClick={() => navigate('login')}>
-            Dang nhap admin
+            {t('access.signInAdmin')}
           </button>
           <button className="ghost-button" type="button" onClick={() => navigate('home')}>
-            Ve trang chu
+            {t('access.goHome')}
           </button>
         </div>
       </section>
