@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useLanguage } from '../../context/LanguageContext'
 import { useToast } from '../../context/ToastContext'
 import type { Navigate } from '../../types'
 import {
@@ -7,6 +8,7 @@ import {
   saveRoomSearchQuery,
   saveSelectedStay,
 } from '../../utils/bookingSelections'
+import { formatGuestLabel } from '../../utils/roomLocalization'
 import { Icon } from '../icons/Icon'
 
 export type SearchPayload = BookingStay & {
@@ -22,11 +24,12 @@ export function SearchPanel({
   mode?: 'navigate' | 'inline'
   onSearch?: (payload: SearchPayload) => void
 }) {
+  const { language } = useLanguage()
   const { showToast } = useToast()
   const [destination, setDestination] = useState(() => getRoomSearchQuery() || 'Da Nang Oceanfront')
   const [checkIn, setCheckIn] = useState('2026-10-10')
   const [checkOut, setCheckOut] = useState('2026-10-13')
-  const [guests, setGuests] = useState('2 guests')
+  const [guests, setGuests] = useState('2')
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -86,10 +89,10 @@ export function SearchPanel({
       <label>
         <span>Guests</span>
         <select value={guests} onChange={(event) => setGuests(event.target.value)}>
-          <option>1 guest</option>
-          <option>2 guests</option>
-          <option>3 guests</option>
-          <option>4 guests</option>
+          <option value="1">{formatGuestLabel('1', language)}</option>
+          <option value="2">{formatGuestLabel('2', language)}</option>
+          <option value="3">{formatGuestLabel('3', language)}</option>
+          <option value="4">{formatGuestLabel('4', language)}</option>
         </select>
       </label>
       <button className="primary-button search-button" type="submit">

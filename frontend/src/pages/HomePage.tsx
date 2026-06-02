@@ -8,12 +8,14 @@ import { useToast } from '../context/ToastContext'
 import { images } from '../data/images'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate, Room, Service } from '../types'
+import { useLocalizedServices } from '../utils/serviceLocalization'
 
 export function HomePage({ navigate }: { navigate: Navigate }) {
   const { showToast } = useToast()
   const { isAuthenticated } = useAuth()
   const [rooms, setRooms] = useState<Room[]>([])
   const [services, setServices] = useState<Service[]>([])
+  const localizedServices = useLocalizedServices(services)
   const [, setDataError] = useState('')
   const [homeSearchTerm, setHomeSearchTerm] = useState('')
   const [hasSearched, setHasSearched] = useState(false)
@@ -142,7 +144,7 @@ export function HomePage({ navigate }: { navigate: Navigate }) {
       <section className="section-shell service-band">
         <SectionHeading eyebrow="Services" title="World-class amenities" />
         <div className="service-grid">
-          {services.slice(0, 4).map((service) => (
+          {localizedServices.slice(0, 4).map((service) => (
             <article className="service-card" key={service.name}>
               <span className="icon-tile">
                 <Icon name={service.icon} />

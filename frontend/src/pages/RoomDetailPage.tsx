@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext'
 import { rooms as defaultRooms } from '../data/rooms'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate, Room } from '../types'
+import { formatGuestLabel, getGuestCount, useLocalizedRoom } from '../utils/roomLocalization'
 import { defaultBookingStay, getSelectedStay, saveSelectedRoom } from '../utils/bookingSelections'
 import { formatCurrency } from '../utils/currency'
 import { getCurrentRoomSlug } from '../utils/router'
@@ -93,7 +94,7 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
   const [checkOutText, setCheckOutText] = useState(() =>
     formatDisplayDate(selectedStay.checkOut || defaultBookingStay.checkOut),
   )
-  const [guests, setGuests] = useState(selectedStay.guests || room.guests)
+  const [guests, setGuests] = useState(() => getGuestCount(selectedStay.guests || room.guests))
   const [, setDateError] = useState('')
   const [visibleMonth, setVisibleMonth] = useState(() =>
     parseInputDate(selectedStay.checkIn || defaultBookingStay.checkIn),
@@ -102,6 +103,7 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
   const checkInPickerRef = useRef<HTMLInputElement>(null)
   const checkOutPickerRef = useRef<HTMLInputElement>(null)
   const { isAuthenticated } = useAuth()
+  const localizedRoom = useLocalizedRoom(room)
   const monthCells = getMonthCells(visibleMonth)
   const weekdayLabels = language === 'vi'
     ? ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
@@ -129,7 +131,7 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
       .then((nextRoom) => {
         if (!isMounted) return
         setRoom(nextRoom)
-        setGuests((currentGuests) => currentGuests || nextRoom.guests)
+        setGuests((currentGuests) => currentGuests || getGuestCount(nextRoom.guests))
         setDataError('')
       })
       .catch((error) => {
@@ -279,18 +281,18 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
   return (
     <main className="page-shell room-detail-page">
       <PageIntro
-        eyebrow={room.category}
-        title={room.name}
+        eyebrow={localizedRoom.category}
+        title={localizedRoom.name}
         copy="A detailed room view with gallery, amenities, price summary, and availability picker."
       />
 
       <section className="detail-grid">
         <div>
           <div className="gallery-layout">
-            <img className="gallery-main" src={room.gallery[0]} alt={room.name} />
+            <img className="gallery-main" src={room.gallery[0]} alt={localizedRoom.name} />
             <div className="gallery-side">
               {room.gallery.slice(1).map((image) => (
-                <img src={image} alt={`${room.name} preview`} key={image} loading="lazy" />
+                <img src={image} alt={`${localizedRoom.name} preview`} key={image} loading="lazy" />
               ))}
             </div>
           </div>
@@ -299,14 +301,14 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
             <div className="rating-line">
               <span>
                 <Icon name="star" />
-                {room.rating} rating
+                {room.rating.toFixed(1)} rating
               </span>
               <span>{room.reviews} verified reviews</span>
-              <span>{room.location}</span>
+              <span>{localizedRoom.location}</span>
             </div>
-            <p>{room.description}</p>
+            <p>{localizedRoom.description}</p>
             <div className="amenity-grid">
-              {room.amenities.map((amenity) => (
+              {localizedRoom.amenities.map((amenity) => (
                 <span key={amenity}>
                   <Icon name={amenity.includes('Wi') ? 'wifi' : 'check'} size={15} />
                   {amenity}
@@ -440,9 +442,9 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
             <label>
               Guests
               <select value={guests} onChange={(event) => setGuests(event.target.value)}>
-                <option>2 guests</option>
-                <option>3 guests</option>
-                <option>4 guests</option>
+                <option value="2">{formatGuestLabel('2', language)}</option>
+                <option value="3">{formatGuestLabel('3', language)}</option>
+                <option value="4">{formatGuestLabel('4', language)}</option>
               </select>
             </label>
           </div>
@@ -454,7 +456,7 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
                 : t('roomDetail.clickCheckOut')}
           </p>
           <ul className="highlight-list">
-            {room.highlights.map((item) => (
+            {localizedRoom.highlights.map((item) => (
               <li key={item}>
                 <Icon name="check" />
                 {item}

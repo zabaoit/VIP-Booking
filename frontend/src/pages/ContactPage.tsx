@@ -37,7 +37,7 @@ export function ContactPage() {
   }
 
   return (
-    <main className="page-shell">
+    <main className="page-shell contact-page">
       <PageIntro
         eyebrow={t('contact.eyebrow')}
         title={t('contact.title')}

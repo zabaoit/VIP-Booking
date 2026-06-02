@@ -1,12 +1,15 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { deleteRoomWithApi, fetchRooms, updateRoomWithApi } from '../../api/vipBookingApi'
 import { Icon } from '../../components/icons/Icon'
+import { useLanguage } from '../../context/LanguageContext'
 import { useToast } from '../../context/ToastContext'
 import { rooms as defaultRooms } from '../../data/rooms'
 import type { Room } from '../../types'
 import { formatCurrency } from '../../utils/currency'
+import { localizeRoomText } from '../../utils/roomLocalization'
 
 export function AdminRoomTypesPage() {
+  const { language } = useLanguage()
   const { confirmToast, showToast } = useToast()
   const [roomTypes, setRoomTypes] = useState<Room[]>([])
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -134,6 +137,17 @@ export function AdminRoomTypesPage() {
     return textMatch && statusMatch
   })
 
+  const localizedRooms = useMemo(
+    () =>
+      filteredRooms.map((room) => ({
+        ...room,
+        name: localizeRoomText(room.name, language),
+        category: localizeRoomText(room.category, language),
+        location: localizeRoomText(room.location, language),
+      })),
+    [filteredRooms, language],
+  )
+
   return (
     <div className="admin-stack">
       <section className="admin-panel">
@@ -185,7 +199,7 @@ export function AdminRoomTypesPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredRooms.map((room, index) => {
+              {localizedRooms.map((room, index) => {
                 const status = room.status === 'maintenance' ? 'Maintenance' : room.status === 'available' ? 'Available' : 'Occupied'
                 const statusClass = status === 'Available' ? 'success' : status === 'Maintenance' ? 'failed' : 'pending'
                 const housekeeping = index % 3 === 0 ? 'Clean' : index % 3 === 1 ? 'Dirty' : 'Blocked'

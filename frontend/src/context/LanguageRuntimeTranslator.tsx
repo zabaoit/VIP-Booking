@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useLanguage } from './LanguageContext'
 
-type Language = 'en' | 'vi'
+export type Language = 'en' | 'vi'
 type Pair = readonly [string, string]
 
 const phrasePairs: readonly Pair[] = [
@@ -12,7 +12,7 @@ const phrasePairs: readonly Pair[] = [
     'Đặt phòng cao cấp, thêm dịch vụ cá nhân và đi từ tìm kiếm đến thanh toán an toàn với quy trình mượt mà của VIP Booking.',
   ],
   ['Explore Rooms', 'Khám phá phòng'],
-  ['Concierge', 'Hỗ trợ concierge'],
+  ['Concierge', 'Hỗ trợ khách hàng'],
   ['Search results on home', 'Kết quả tìm kiếm trên trang chủ'],
   ['Rooms built for premium travel', 'Phòng dành cho hành trình cao cấp'],
   ['Home search', 'Tìm kiếm tại trang chủ'],
@@ -55,6 +55,7 @@ const phrasePairs: readonly Pair[] = [
   ['Over 2,000,000 VND', 'Trên 2.000.000 VND'],
   ['Recommended', 'Đề xuất'],
   ['Price: low to high', 'Giá: thấp đến cao'],
+  ['Price: high to low', 'Giá: cao đến thấp'],
   ['Highest rating', 'Đánh giá cao nhất'],
   ['curated rooms found', 'phòng được chọn lọc'],
   ['No rooms match the current filter set. Try removing one or more filters.', 'Không có phòng phù hợp bộ lọc hiện tại. Hãy bớt một hoặc nhiều bộ lọc.'],
@@ -130,7 +131,7 @@ const phrasePairs: readonly Pair[] = [
   ['Admin portal', 'Cổng quản trị'],
   ['Booking guide', 'Hướng dẫn đặt phòng'],
   ['Guest profile', 'Hồ sơ khách'],
-  ['24/7 concierge and guest assistance', 'Hỗ trợ concierge và khách hàng 24/7'],
+  ['24/7 concierge and guest assistance', 'Hỗ trợ khách hàng 24/7'],
   ['VIP Hospitality Booking Company', 'Công ty đặt phòng VIP Hospitality'],
   ['All rights reserved.', 'Đã đăng ký bản quyền.'],
   ['Ocean View Grand Suite', 'Suite Grand View Biển'],
@@ -206,10 +207,10 @@ const phrasePairs: readonly Pair[] = [
   ['Premium sound system', 'Hệ thống âm thanh cao cấp'],
   ['Airport pickup', 'Đưa đón sân bay'],
   ['Sunrise ocean view', 'View biển bình minh'],
-  ['Priority concierge', 'Concierge ưu tiên'],
+  ['Priority concierge', 'Hỗ trợ ưu tiên'],
   ['King bed + sofa bed', 'Giường king + sofa bed'],
   ['Panoramic balcony', 'Ban công toàn cảnh'],
-  ['Digital concierge', 'Concierge kỹ thuật số'],
+  ['Digital concierge', 'Hỗ trợ kỹ thuật số'],
   ['Daily sunset service', 'Dịch vụ hoàng hôn hằng ngày'],
   ['VIP host desk', 'Quầy lễ tân VIP'],
   ['Private pool access', 'Quyền dùng hồ bơi riêng'],
@@ -522,7 +523,7 @@ function replaceByPairs(input: string, pairs: readonly Pair[]) {
   return next
 }
 
-function translateText(input: string, language: Language) {
+export function translateText(input: string, language: Language) {
   const pairs = language === 'vi'
     ? [...phrasePairs, ...wordPairs]
     : [...phrasePairs.map(([en, vi]) => [vi, en] as const), ...wordPairs.map(([en, vi]) => [vi, en] as const)]

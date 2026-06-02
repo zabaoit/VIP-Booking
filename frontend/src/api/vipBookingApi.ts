@@ -201,6 +201,14 @@ export function mapRoom(apiRoom: ApiRoom, index = 0): Room {
   const image = apiRoom.image_url || roomImages[index % roomImages.length]
   const price = Number(roomType?.price ?? 0)
   const capacity = Number(roomType?.capacity ?? 2)
+  const roomTypeName = roomType?.room_type_name ?? ''
+  const normalizedRoomTypeName = roomTypeName.toLowerCase()
+  const rating =
+    normalizedRoomTypeName.includes('suite') || normalizedRoomTypeName.includes('vip')
+      ? 5
+      : normalizedRoomTypeName.includes('superior') || normalizedRoomTypeName.includes('deluxe')
+        ? 4.9
+        : 4.8
   const statusLabel =
     apiRoom.status === 'available'
       ? 'Available now'
@@ -214,11 +222,11 @@ export function mapRoom(apiRoom: ApiRoom, index = 0): Room {
     floor: apiRoom.floor,
     status: apiRoom.status,
     typeId: apiRoom.type_id,
-    name: roomType?.room_type_name || `Room ${apiRoom.room_number}`,
-    category: roomType?.room_type_name || 'Hotel Room',
+    name: roomTypeName || `Room ${apiRoom.room_number}`,
+    category: roomTypeName || 'Hotel Room',
     location: `Floor ${apiRoom.floor}, Room ${apiRoom.room_number}`,
     price,
-    rating: 4.8,
+    rating,
     reviews: 0,
     size: `${Math.max(capacity * 24, 36)} m2`,
     guests: `${capacity} guest${capacity > 1 ? 's' : ''}`,

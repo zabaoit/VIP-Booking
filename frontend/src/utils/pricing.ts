@@ -1,5 +1,7 @@
 import type { PricingRule, Room } from '../types'
 
+const defaultRoomTaxRate = 0.08
+
 function parseIsoDate(value: string) {
   const date = new Date(`${value}T00:00:00`)
   return Number.isNaN(date.getTime()) ? null : date
@@ -62,4 +64,9 @@ export function applyPricingToRooms(rooms: Room[], rules: PricingRule[], targetD
     ...room,
     price: getEffectiveRoomPrice(room, rules, targetDate),
   }))
+}
+
+export function getRoomTaxAmount(room: Room, nights = 1) {
+  const subtotal = room.price * Math.max(nights, 1)
+  return Math.round(subtotal * defaultRoomTaxRate)
 }

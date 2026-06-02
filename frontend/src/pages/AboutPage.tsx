@@ -17,7 +17,7 @@ export function AboutPage() {
         storyEyebrow: 'Câu chuyện của chúng tôi',
         storyTitle: 'Xây dựng từ trải nghiệm đón tiếp nhẹ nhàng và chăm sóc khách tỉ mỉ.',
         storyBody:
-          'VIP Booking kết hợp quản lý phòng, concierge, rà soát đặt phòng, thanh toán và vận hành quản trị trong một trải nghiệm thống nhất dành cho khách sạn cao cấp.',
+          'VIP Booking kết hợp quản lý phòng, hỗ trợ khách hàng, rà soát đặt phòng, thanh toán và vận hành quản trị trong một trải nghiệm thống nhất dành cho khách sạn cao cấp.',
         leadershipEyebrow: 'Lãnh đạo',
         leadershipTitle: 'Đội ngũ điều hành',
         ceo: 'Tổng giám đốc điều hành',

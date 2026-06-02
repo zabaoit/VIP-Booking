@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { fetchBookings } from '../api/vipBookingApi'
 import { Icon } from '../components/icons/Icon'
+import { useLanguage } from '../context/LanguageContext'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
@@ -10,18 +11,11 @@ import {
   setActiveBookingId,
 } from '../utils/appStorage'
 
-const sidebarSections = [
-  { id: 'profile-personal', label: 'Personal Information', hint: 'Profile details', icon: 'user' },
-  { id: 'profile-history', label: 'Booking History', hint: 'Reservation timeline', icon: 'calendar' },
-  { id: 'profile-payment', label: 'Invoices & Payments', hint: 'Billing and methods', icon: 'card' },
-  { id: 'profile-security', label: 'Security', hint: 'Password and sessions', icon: 'shield' },
-] as const
-
 const panelClass = 'profile-panel'
 const inputClass = 'profile-input'
 const textareaClass = 'profile-input profile-textarea'
 
-type ProfileSectionId = (typeof sidebarSections)[number]['id']
+type ProfileSectionId = 'profile-personal' | 'profile-history' | 'profile-payment' | 'profile-security'
 type BookingStatus = 'Pending' | 'Confirmed' | 'Cancelled'
 
 type ProfileBooking = {
@@ -44,11 +38,17 @@ type ProfileSettings = {
 }
 
 const profileSettingsStorageKey = 'vip-booking:profile-settings'
+const defaultStayNotesByLanguage = {
+  en: 'Quiet room, high floor, fast check-in preferred.',
+  vi: 'Ưu tiên phòng yên tĩnh, tầng cao và nhận phòng nhanh.',
+} as const
+
+const defaultStayNotesLegacyVi = 'Æ¯u tiÃªn phÃ²ng yÃªn tÄ©nh, táº§ng cao vÃ  nháº­n phÃ²ng nhanh.'
 const defaultProfileSettings: Omit<ProfileSettings, 'fullName'> = {
   phoneNumber: '+84 901 123 456',
   address: '12 Nguyen Hue',
   city: 'Ho Chi Minh City',
-  stayNotes: 'Quiet room, high floor, fast check-in preferred.',
+  stayNotes: defaultStayNotesByLanguage.en,
   emailUpdates: true,
   smsAlerts: false,
 }
@@ -68,8 +68,10 @@ function normalizeEmail(email: string) {
 }
 
 export function ProfilePage({ navigate }: { navigate: Navigate }) {
+  const { language } = useLanguage()
   const { showToast } = useToast()
   const { changePassword, logout, user } = useAuth()
+  const isVi = language === 'vi'
   const [activeSection, setActiveSection] = useState<ProfileSectionId>('profile-personal')
   const [paymentMethod, setPaymentMethod] = useState(
     () => window.localStorage.getItem('vip-booking:preferred-payment') ?? 'vietqr',
@@ -80,6 +82,88 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   >('all')
   const [bookingSort, setBookingSort] = useState<'latest' | 'oldest'>('latest')
   const [profileBookings, setProfileBookings] = useState<ProfileBooking[]>([])
+
+  const copy = {
+    sidebarSections: [
+      { id: 'profile-personal' as const, label: isVi ? 'Thông tin cá nhân' : 'Personal Information', hint: isVi ? 'Chi tiết hồ sơ' : 'Profile details', icon: 'user' as const },
+      { id: 'profile-history' as const, label: isVi ? 'Lịch sử đặt phòng' : 'Booking History', hint: isVi ? 'Dòng thời gian đặt phòng' : 'Reservation timeline', icon: 'calendar' as const },
+      { id: 'profile-payment' as const, label: isVi ? 'Hóa đơn và thanh toán' : 'Invoices & Payments', hint: isVi ? 'Thanh toán và phương thức' : 'Billing and methods', icon: 'card' as const },
+      { id: 'profile-security' as const, label: isVi ? 'Bảo mật' : 'Security', hint: isVi ? 'Mật khẩu và phiên đăng nhập' : 'Password and sessions', icon: 'shield' as const },
+    ],
+    loadBookingsTitle: isVi ? 'Không thể tải đặt phòng' : 'Could not load bookings',
+    loadBookingsMessage: isVi ? 'Không thể tải danh sách đặt phòng.' : 'Could not load bookings.',
+    profileUpdatedTitle: isVi ? 'Đã cập nhật hồ sơ' : 'Profile updated',
+    profileUpdatedMessage: isVi ? 'Thông tin cá nhân đã được lưu thành công.' : 'Personal information has been saved successfully.',
+    paymentSavedTitle: isVi ? 'Đã lưu phương thức thanh toán' : 'Payment method saved',
+    paymentSavedMessage: isVi ? 'Phương thức thanh toán ưu tiên đã được cập nhật.' : 'Preferred payment method updated successfully.',
+    noPendingBookingTitle: isVi ? 'Không có đặt phòng chờ thanh toán' : 'No pending booking',
+    noPendingBookingMessage: isVi ? 'Không tìm thấy đặt phòng chờ thanh toán. Vui lòng tạo đặt phòng trước.' : 'No pending booking found. Please create a booking first.',
+    passwordIncompleteTitle: isVi ? 'Thiếu thông tin mật khẩu' : 'Password form incomplete',
+    passwordIncompleteMessage: isVi ? 'Vui lòng điền đầy đủ các trường bắt buộc.' : 'Please complete all required fields.',
+    passwordMismatchTitle: isVi ? 'Mật khẩu không khớp' : 'Password mismatch',
+    passwordMismatchMessage: isVi ? 'Xác nhận mật khẩu không khớp.' : 'Password confirmation does not match.',
+    passwordFailedTitle: isVi ? 'Đổi mật khẩu thất bại' : 'Password update failed',
+    passwordFailedMessage: isVi ? 'Mật khẩu hiện tại không chính xác.' : 'Current password is incorrect.',
+    passwordUpdatedTitle: isVi ? 'Đã cập nhật mật khẩu' : 'Password updated',
+    passwordUpdatedMessage: isVi ? 'Mật khẩu đã được cập nhật thành công.' : 'Password updated successfully.',
+    personalTitle: isVi ? 'Thông tin cá nhân' : 'Personal Information',
+    personalSubtitle: isVi ? 'Quản lý danh tính và tùy chọn lưu trú của bạn.' : 'Manage identity details and in-stay preferences.',
+    fullName: isVi ? 'Họ và tên' : 'Full Name',
+    phoneNumber: isVi ? 'Số điện thoại' : 'Phone Number',
+    address: isVi ? 'Địa chỉ' : 'Address',
+    city: isVi ? 'Thành phố' : 'City',
+    stayNotes: isVi ? 'Ghi chú lưu trú' : 'Stay Notes',
+    notifications: isVi ? 'Thông báo' : 'Notifications',
+    emailUpdates: isVi ? 'Cập nhật qua email' : 'Email updates',
+    smsAlerts: isVi ? 'Nhắc nhở qua SMS' : 'SMS reminders',
+    saveInformation: isVi ? 'Lưu thông tin' : 'Save Information',
+    historyTitle: isVi ? 'Lịch sử đặt phòng' : 'Booking History',
+    historySubtitle: isVi ? 'Tìm kiếm và xem lại toàn bộ đặt phòng của bạn.' : 'Search and review all your reservations.',
+    historySearchPlaceholder: isVi ? 'Mã đặt phòng, tên phòng, ngày lưu trú...' : 'Booking ID, room name, stay dates...',
+    allStatus: isVi ? 'Tất cả trạng thái' : 'All status',
+    latest: isVi ? 'Mới nhất' : 'Latest',
+    oldest: isVi ? 'Cũ nhất' : 'Oldest',
+    bookingId: isVi ? 'Mã đặt phòng' : 'Booking ID',
+    room: isVi ? 'Phòng' : 'Room',
+    stay: isVi ? 'Lưu trú' : 'Stay',
+    total: isVi ? 'Tổng tiền' : 'Total',
+    payment: isVi ? 'Thanh toán' : 'Payment',
+    status: isVi ? 'Trạng thái' : 'Status',
+    emptyBookings: isVi ? 'Chưa có đặt phòng nào cho tài khoản này.' : 'No bookings found for this account yet.',
+    paymentTitle: isVi ? 'Hóa đơn và thanh toán' : 'Invoices & Payments',
+    paymentSubtitle: isVi ? 'Xem trạng thái hóa đơn và chọn phương thức thanh toán.' : 'Review billing status and choose a payment method.',
+    preferredMethod: isVi ? 'Phương thức ưu tiên' : 'Preferred Method',
+    pendingPayments: isVi ? 'Thanh toán chờ xử lý' : 'Pending Payments',
+    billingAccount: isVi ? 'Mã thanh toán' : 'Billing Account',
+    bookingUnit: isVi ? 'đặt phòng' : 'booking',
+    recentInvoice: isVi ? 'Hóa đơn gần nhất' : 'Recent Invoice',
+    recentInvoiceEmpty: isVi ? 'Tài khoản này chưa có hóa đơn nào được tạo.' : 'No invoice has been created for this account yet.',
+    bookingPrefix: isVi ? 'Đặt phòng:' : 'Booking:',
+    paymentStatus: isVi ? 'Tình trạng thanh toán' : 'Payment Status',
+    noPendingPaymentMessage: isVi ? 'Không có thanh toán chờ xử lý cho tài khoản này.' : 'No pending payment for this account.',
+    savePreferredMethod: isVi ? 'Lưu phương thức ưu tiên' : 'Save Preferred Method',
+    payCurrentBooking: isVi ? 'Thanh toán đặt phòng hiện tại' : 'Pay Current Booking',
+    securityTitle: isVi ? 'Bảo mật' : 'Security',
+    securitySubtitle: isVi ? 'Bảo vệ thông tin đăng nhập và các phiên hoạt động của tài khoản.' : 'Protect your account credentials and active sessions.',
+    currentPassword: isVi ? 'Mật khẩu hiện tại' : 'Current Password',
+    newPassword: isVi ? 'Mật khẩu mới' : 'New Password',
+    confirmNewPassword: isVi ? 'Xác nhận mật khẩu mới' : 'Confirm New Password',
+    updatePassword: isVi ? 'Cập nhật mật khẩu' : 'Update Password',
+    guestAccount: isVi ? 'Tài khoản khách' : 'Guest account',
+    adminAccount: isVi ? 'Quản trị viên' : 'Administrator',
+    bookNow: isVi ? 'Đặt ngay' : 'Book Now',
+    logout: isVi ? 'Đăng xuất' : 'Logout',
+    paymentMethods: {
+      vietqr: 'VietQR',
+      momo: 'MoMo',
+      card: isVi ? 'Thẻ tín dụng' : 'Credit Card',
+    },
+    statusLabels: {
+      Pending: isVi ? 'Chờ xử lý' : 'Pending',
+      Confirmed: isVi ? 'Đã xác nhận' : 'Confirmed',
+      Cancelled: isVi ? 'Đã hủy' : 'Cancelled',
+    } as Record<BookingStatus, string>,
+  }
 
   const userEmail = user?.email ?? 'guest@vipbooking.vn'
   const [customerProfiles, setCustomerProfiles] = useState(() => readCustomerProfiles())
@@ -107,7 +191,9 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
       phoneNumber: customerProfile?.phone ?? defaultProfileSettings.phoneNumber,
       address: customerProfile?.address ?? defaultProfileSettings.address,
       city: defaultProfileSettings.city,
-      stayNotes: defaultProfileSettings.stayNotes,
+      stayNotes: savedSettings.stayNotes ?? (language === 'vi'
+        ? 'Ưu tiên phòng yên tĩnh, tầng cao và nhận phòng nhanh.'
+        : defaultProfileSettings.stayNotes),
       emailUpdates: defaultProfileSettings.emailUpdates,
       smsAlerts: defaultProfileSettings.smsAlerts,
       ...savedSettings,
@@ -116,6 +202,32 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
 
   const displayName = profileSettings.fullName || toDisplayName(userEmail)
   const memberCode = `VIP-${String(userEmail.length * 173).slice(0, 4)}`
+  const accountRoleLabel = user?.role === 'admin' ? copy.adminAccount : copy.guestAccount
+
+  useEffect(() => {
+    setProfileSettings((previous) => {
+      const isUsingDefaultStayNotes =
+        previous.stayNotes === defaultStayNotesByLanguage.en ||
+        previous.stayNotes === defaultStayNotesByLanguage.vi ||
+        previous.stayNotes === defaultStayNotesLegacyVi
+
+      if (!isUsingDefaultStayNotes) {
+        return previous
+      }
+
+      const nextStayNotes =
+        language === 'vi' ? defaultStayNotesByLanguage.vi : defaultStayNotesByLanguage.en
+
+      if (previous.stayNotes === nextStayNotes) {
+        return previous
+      }
+
+      return {
+        ...previous,
+        stayNotes: nextStayNotes,
+      }
+    })
+  }, [language])
 
   useEffect(() => {
     let isMounted = true
@@ -139,8 +251,8 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
       })
       .catch((error) => {
         if (!isMounted) return
-        const message = error instanceof Error ? error.message : 'Could not load bookings.'
-        showToast({ title: 'Could not load bookings', message, variant: 'error' })
+        const message = error instanceof Error ? error.message : copy.loadBookingsMessage
+        showToast({ title: copy.loadBookingsTitle, message, variant: 'error' })
       })
 
     return () => {
@@ -177,8 +289,11 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   }, [bookingSearch, bookingSort, bookingStatusFilter, bookings])
 
   const pendingBookings = bookings.filter((booking) => booking.status === 'Pending').length
+  const pendingPaymentMessage = isVi
+    ? `${pendingBookings} đặt phòng cần xác nhận thanh toán.`
+    : `${pendingBookings} booking needs payment confirmation.`
   const paymentMethodLabel =
-    paymentMethod === 'momo' ? 'MoMo' : paymentMethod === 'card' ? 'Credit Card' : 'VietQR'
+    paymentMethod === 'momo' ? copy.paymentMethods.momo : paymentMethod === 'card' ? copy.paymentMethods.card : copy.paymentMethods.vietqr
 
   const persistProfileSettings = (nextSettings: ProfileSettings) => {
     const rawStoredSettings = window.localStorage.getItem(profileSettingsStorageKey)
@@ -220,14 +335,12 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
 
     saveCustomerProfiles(nextProfiles)
     setCustomerProfiles(nextProfiles)
-    const message = 'Personal information has been saved successfully.'
-    showToast({ title: 'Profile updated', message, variant: 'success' })
+    showToast({ title: copy.profileUpdatedTitle, message: copy.profileUpdatedMessage, variant: 'success' })
   }
 
   const handleSavePaymentMethod = () => {
     window.localStorage.setItem('vip-booking:preferred-payment', paymentMethod)
-    const message = 'Preferred payment method updated successfully.'
-    showToast({ title: 'Payment method saved', message, variant: 'success' })
+    showToast({ title: copy.paymentSavedTitle, message: copy.paymentSavedMessage, variant: 'success' })
   }
 
   const handlePayCurrentBooking = () => {
@@ -239,8 +352,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
       return
     }
 
-    const message = 'No pending booking found. Please create a booking first.'
-    showToast({ title: 'No pending booking', message, variant: 'warning' })
+    showToast({ title: copy.noPendingBookingTitle, message: copy.noPendingBookingMessage, variant: 'warning' })
   }
 
   const handleChangePassword = async (event: FormEvent<HTMLFormElement>) => {
@@ -251,25 +363,21 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     const confirmPassword = String(formData.get('confirmPassword') ?? '')
 
     if (!currentPassword || !nextPassword || !confirmPassword) {
-      const message = 'Please complete all required fields.'
-      showToast({ title: 'Password form incomplete', message, variant: 'error' })
+      showToast({ title: copy.passwordIncompleteTitle, message: copy.passwordIncompleteMessage, variant: 'error' })
       return
     }
 
     if (nextPassword !== confirmPassword) {
-      const message = 'Password confirmation does not match.'
-      showToast({ title: 'Password mismatch', message, variant: 'error' })
+      showToast({ title: copy.passwordMismatchTitle, message: copy.passwordMismatchMessage, variant: 'error' })
       return
     }
 
     if (!(await changePassword(currentPassword, nextPassword))) {
-      const message = 'Current password is incorrect.'
-      showToast({ title: 'Password update failed', message, variant: 'error' })
+      showToast({ title: copy.passwordFailedTitle, message: copy.passwordFailedMessage, variant: 'error' })
       return
     }
 
-    const message = 'Password updated successfully.'
-    showToast({ title: 'Password updated', message, variant: 'success' })
+    showToast({ title: copy.passwordUpdatedTitle, message: copy.passwordUpdatedMessage, variant: 'success' })
     event.currentTarget.reset()
   }
 
@@ -282,10 +390,10 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
 
   const renderPersonal = () => (
     <section className={panelClass}>
-      {sectionHeader('Personal Information', 'Manage identity details and in-stay preferences.')}
+      {sectionHeader(copy.personalTitle, copy.personalSubtitle)}
       <form className="profile-form-grid" onSubmit={handleSaveProfile}>
         <label>
-          Full Name
+          {copy.fullName}
           <input
             className={inputClass}
             value={profileSettings.fullName}
@@ -295,7 +403,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           />
         </label>
         <label>
-          Phone Number
+          {copy.phoneNumber}
           <input
             className={inputClass}
             value={profileSettings.phoneNumber}
@@ -305,7 +413,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           />
         </label>
         <label>
-          Address
+          {copy.address}
           <input
             className={inputClass}
             value={profileSettings.address}
@@ -315,7 +423,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           />
         </label>
         <label>
-          City
+          {copy.city}
           <input
             className={inputClass}
             value={profileSettings.city}
@@ -325,7 +433,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           />
         </label>
         <label className="profile-span-2">
-          Stay Notes
+          {copy.stayNotes}
           <textarea
             className={textareaClass}
             value={profileSettings.stayNotes}
@@ -335,7 +443,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           />
         </label>
         <div className="profile-notification-card profile-span-2">
-          <p>Notifications</p>
+          <p>{copy.notifications}</p>
           <div className="profile-checkbox-grid">
             <label className="check-row">
               <input
@@ -345,7 +453,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
                   setProfileSettings((previous) => ({ ...previous, emailUpdates: event.target.checked }))
                 }
               />
-              Email updates
+              {copy.emailUpdates}
             </label>
             <label className="check-row">
               <input
@@ -355,7 +463,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
                   setProfileSettings((previous) => ({ ...previous, smsAlerts: event.target.checked }))
                 }
               />
-              SMS reminders
+              {copy.smsAlerts}
             </label>
           </div>
         </div>
@@ -364,7 +472,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             className="primary-button"
             type="submit"
           >
-            Save Information
+            {copy.saveInformation}
           </button>
         </div>
       </form>
@@ -373,12 +481,12 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
 
   const renderHistory = () => (
     <section className={panelClass}>
-      {sectionHeader('Booking History', 'Search and review all your reservations.')}
+      {sectionHeader(copy.historyTitle, copy.historySubtitle)}
       <div className="profile-filter-grid">
         <input
           className={inputClass}
           value={bookingSearch}
-          placeholder="Booking ID, room name, stay dates..."
+          placeholder={copy.historySearchPlaceholder}
           onChange={(event) => setBookingSearch(event.target.value)}
         />
         <select
@@ -388,30 +496,30 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             setBookingStatusFilter(event.target.value as 'all' | 'pending' | 'confirmed' | 'cancelled')
           }
         >
-          <option value="all">All status</option>
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="cancelled">Cancelled</option>
+          <option value="all">{copy.allStatus}</option>
+          <option value="pending">{copy.statusLabels.Pending}</option>
+          <option value="confirmed">{copy.statusLabels.Confirmed}</option>
+          <option value="cancelled">{copy.statusLabels.Cancelled}</option>
         </select>
         <select
           className={inputClass}
           value={bookingSort}
           onChange={(event) => setBookingSort(event.target.value as 'latest' | 'oldest')}
         >
-          <option value="latest">Latest</option>
-          <option value="oldest">Oldest</option>
+          <option value="latest">{copy.latest}</option>
+          <option value="oldest">{copy.oldest}</option>
         </select>
       </div>
 
       <div className="profile-table-shell">
         <div className="profile-booking-table">
           <div className="profile-booking-row profile-booking-head">
-            <span>Booking ID</span>
-            <span>Room</span>
-            <span>Stay</span>
-            <span>Total</span>
-            <span>Payment</span>
-            <span>Status</span>
+            <span>{copy.bookingId}</span>
+            <span>{copy.room}</span>
+            <span>{copy.stay}</span>
+            <span>{copy.total}</span>
+            <span>{copy.payment}</span>
+            <span>{copy.status}</span>
           </div>
           {filteredBookings.map((booking) => (
             <div
@@ -432,12 +540,12 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
                       : 'profile-status failed'
                 }
               >
-                {booking.status}
+                {copy.statusLabels[booking.status]}
               </span>
             </div>
           ))}
           {filteredBookings.length === 0 && (
-            <p className="profile-empty-state">No bookings found for this account yet.</p>
+            <p className="profile-empty-state">{copy.emptyBookings}</p>
           )}
         </div>
       </div>
@@ -446,47 +554,47 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
 
   const renderPayment = () => (
     <section className={panelClass}>
-      {sectionHeader('Invoices & Payments', 'Review billing status and choose a payment method.')}
+      {sectionHeader(copy.paymentTitle, copy.paymentSubtitle)}
       <div className="profile-stat-grid">
         <article className="profile-stat-card">
-          <p>Preferred Method</p>
+          <p>{copy.preferredMethod}</p>
           <strong>{paymentMethodLabel}</strong>
         </article>
         <article className="profile-stat-card">
-          <p>Pending Payments</p>
-          <strong>{pendingBookings} booking</strong>
+          <p>{copy.pendingPayments}</p>
+          <strong>{pendingBookings} {copy.bookingUnit}</strong>
         </article>
         <article className="profile-stat-card">
-          <p>Billing Account</p>
+          <p>{copy.billingAccount}</p>
           <strong>{memberCode}</strong>
         </article>
       </div>
 
       <div className="profile-detail-grid">
         <article className="profile-mini-card">
-          <h3>Recent Invoice</h3>
+          <h3>{copy.recentInvoice}</h3>
           {bookings[0] ? (
             <div>
               <strong>{bookings[0].amount}</strong>
               <p>{bookings[0].room}</p>
-              <small>Booking: {bookings[0].id}</small>
+              <small>{copy.bookingPrefix} {bookings[0].id}</small>
             </div>
           ) : (
-            <p>No invoice has been created for this account yet.</p>
+            <p>{copy.recentInvoiceEmpty}</p>
           )}
         </article>
         <article className="profile-mini-card">
-          <h3>Payment Status</h3>
+          <h3>{copy.paymentStatus}</h3>
           <p>
             {pendingBookings > 0
-              ? `${pendingBookings} booking needs payment confirmation.`
-              : 'No pending payment for this account.'}
+              ? pendingPaymentMessage
+              : copy.noPendingPaymentMessage}
           </p>
         </article>
       </div>
 
       <label className="profile-field-block">
-        Preferred Method
+        {copy.preferredMethod}
         <select
           className={inputClass}
           value={paymentMethod}
@@ -494,9 +602,9 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             setPaymentMethod(event.target.value)
           }}
         >
-          <option value="vietqr">VietQR</option>
-          <option value="momo">MoMo</option>
-          <option value="card">Credit Card</option>
+          <option value="vietqr">{copy.paymentMethods.vietqr}</option>
+          <option value="momo">{copy.paymentMethods.momo}</option>
+          <option value="card">{copy.paymentMethods.card}</option>
         </select>
       </label>
 
@@ -506,14 +614,14 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           type="button"
           onClick={handleSavePaymentMethod}
         >
-          Save Preferred Method
+          {copy.savePreferredMethod}
         </button>
         <button
           className="primary-button"
           type="button"
           onClick={handlePayCurrentBooking}
         >
-          Pay Current Booking
+          {copy.payCurrentBooking}
         </button>
       </div>
     </section>
@@ -521,19 +629,19 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
 
   const renderSecurity = () => (
     <section className={panelClass}>
-      {sectionHeader('Security', 'Protect your account credentials and active sessions.')}
+      {sectionHeader(copy.securityTitle, copy.securitySubtitle)}
 
       <form className="profile-form-grid" onSubmit={handleChangePassword}>
         <label className="profile-span-2">
-          Current Password
+          {copy.currentPassword}
           <input className={inputClass} name="currentPassword" type="password" required />
         </label>
         <label>
-          New Password
+          {copy.newPassword}
           <input className={inputClass} name="nextPassword" type="password" required />
         </label>
         <label>
-          Confirm New Password
+          {copy.confirmNewPassword}
           <input className={inputClass} name="confirmPassword" type="password" required />
         </label>
         <div className="profile-span-2">
@@ -541,7 +649,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             className="primary-button"
             type="submit"
           >
-            Update Password
+            {copy.updatePassword}
           </button>
         </div>
       </form>
@@ -565,11 +673,11 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             </div>
             <strong>{displayName}</strong>
             <p>{userEmail}</p>
-            <small>Guest account</small>
+            <small>{accountRoleLabel}</small>
           </div>
 
           <div className="profile-nav">
-            {sidebarSections.map((section) => {
+            {copy.sidebarSections.map((section) => {
               const isActive = activeSection === section.id
               return (
                 <button
@@ -593,7 +701,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
             type="button"
             onClick={() => navigate('rooms')}
           >
-            Book Now
+            {copy.bookNow}
           </button>
           <button
             className="ghost-button full-width"
@@ -603,7 +711,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
               navigate('home')
             }}
           >
-            Logout
+            {copy.logout}
           </button>
         </aside>
 
