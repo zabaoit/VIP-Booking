@@ -1,12 +1,13 @@
 import type { Navigate } from '../../types'
 import { useLanguage } from '../../context/LanguageContext'
-import { readSupportInfo } from '../../utils/appStorage'
+import { localizeSupportAddress, readSupportInfo } from '../../utils/appStorage'
 import { getRouteHref } from '../../utils/router'
 
 export function SiteFooter({ navigate }: { navigate: Navigate }) {
   const currentYear = new Date().getFullYear()
   const supportInfo = readSupportInfo()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const localizedAddress = localizeSupportAddress(supportInfo.address, language)
 
   return (
     <footer className="site-footer">
@@ -24,7 +25,7 @@ export function SiteFooter({ navigate }: { navigate: Navigate }) {
             <span>VIP Booking</span>
           </a>
           <strong>{t('footer.companyName')}</strong>
-          <p>{supportInfo.address}</p>
+          <p>{localizedAddress}</p>
           <p>{supportInfo.email}</p>
           <button className="footer-hotline" type="button" onClick={() => navigate('contact')}>
             {supportInfo.hotline}

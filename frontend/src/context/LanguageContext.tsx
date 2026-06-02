@@ -23,7 +23,7 @@ const messages = {
     'nav.rooms': 'Rooms',
     'nav.contact': 'Contact',
     'nav.about': 'About',
-    'footer.companyName': 'VIP Hospitality Booking Company',
+    'footer.companyName': 'VIP Booking Company',
     'footer.supportNote': '24/7 concierge and guest assistance',
     'footer.information': 'Information',
     'footer.aboutUs': 'About us',

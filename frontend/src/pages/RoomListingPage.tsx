@@ -26,7 +26,7 @@ const amenityOptions = [
   { value: 'balcony', label: { en: 'Balcony / Terrace', vi: 'Ban công / sân hiên' } },
   { value: 'city-view', label: { en: 'City / Street view', vi: 'Hướng nhìn thành phố / đường phố' } },
   { value: 'no-window', label: { en: 'No window', vi: 'Không có cửa sổ' } },
-  { value: 'non-smoking', label: { en: 'Non-smoking', vi: 'Không hút thuốc' } },
+  { value: 'private-bathroom', label: { en: 'Private bathroom', vi: 'Phòng tắm riêng' } },
 ] as const
 
 export function RoomListingPage({ navigate }: { navigate: Navigate }) {
@@ -152,7 +152,12 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
           if (amenity === 'no-window') {
             return roomFeatures.includes('no window') || roomFeatures.includes('không có cửa sổ')
           }
-          return roomFeatures.includes('smoking: no') || roomFeatures.includes('hút thuốc: không')
+          return (
+            roomFeatures.includes('separate toilet') ||
+            roomFeatures.includes('private bathroom') ||
+            roomFeatures.includes('toilet riêng') ||
+            roomFeatures.includes('phòng tắm riêng')
+          )
         })
 
       return matchSearchQuery && matchPrice && matchRoomClass && matchAmenities
@@ -211,7 +216,7 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
             onToggle={(option) => toggleOption(option, setSelectedRoomClasses)}
           />
           <FilterGroup
-            title={language === 'vi' ? 'Tiện ích' : 'Amenities'}
+            title={language === 'vi' ? 'Đặc điểm phòng' : 'Room features'}
             options={amenityOptions.map((option) => ({ value: option.value, label: option.label[language] }))}
             selectedOptions={selectedAmenities}
             onToggle={(option) => toggleOption(option, setSelectedAmenities)}
@@ -272,7 +277,7 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
             </p>
           </div>
 
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
+          <div className="grid justify-start gap-5 [grid-template-columns:repeat(auto-fill,minmax(300px,360px))]">
             {filteredRooms.map((room) => (
               <RoomCard key={room.id} room={room} navigate={navigate} />
             ))}
