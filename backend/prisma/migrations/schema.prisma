@@ -112,6 +112,8 @@ model User {
   checkins      CheckInOut[]
   payments      Payment[]
 
+  reset_code         String?
+  reset_code_expires DateTime?
   @@index([role_id], map: "User_role_id_fkey")
   @@map("USER")
 }
