@@ -8,7 +8,41 @@ import {
 } from '../models/payment.model.js';
 import { findPublicUserById } from '../models/user.model.js';
 import { createHttpError } from '../utils/response.js';
+import {
+  createMomoPayment,
+  createZaloPay,
+  createVietQR,
+} from './payment.gateway.js';
+export const createPaymentGateway = async (payload) => {
+  const { provider, invoiceId, amount } = payload;
 
+  let url = '';
+
+  if (provider === 'momo') {
+    url = await createMomoPayment({
+      orderId: invoiceId,
+      amount,
+    });
+  }
+
+  if (provider === 'zalopay') {
+    url = await createZaloPay({
+      orderId: invoiceId,
+      amount,
+    });
+  }
+
+  if (provider === 'vietqr') {
+    url = createVietQR({
+      bank: 'VCB',
+      account: '1234567890',
+      amount,
+      content: `Invoice ${invoiceId}`,
+    });
+  }
+
+  return url;
+};
 const ensureAdminUser = async (userId) => {
   const user = await findPublicUserById(userId);
 
@@ -39,7 +73,9 @@ export const addPayment = async (payload, actor) => {
   }
 
   const staffId = payload.staff_id || actor.id;
-  await ensureAdminUser(staffId);
+  if (payload.staff_id) {
+  await ensureAdminUser(payload.staff_id);
+}
 
   const payment = await createPaymentRecord({
     invoice_id: BigInt(payload.invoice_id),
