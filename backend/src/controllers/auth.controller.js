@@ -1,13 +1,26 @@
-import { z } from 'zod';
+import { email, success, z } from 'zod';
 import {
   getCurrentUser,
   loginUser,
   registerUser,
 } from '../services/auth.service.js';
 import { handleControllerError, sendSuccess } from '../utils/response.js';
+import { PrismaClient } from '@prisma/client';
+import nodemailer from 'nodemailer';
+import bcrypt from 'bcrypt';
+import 'dotenv/config'
+import prisma from '../config/db.js';
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+})
 
 const registerSchema = z.object({
-  email: z.email('Email không hợp lệ'),
+  email: z.string().email('Email không hợp lệ'),
   password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
   fullName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự'),
   phone: z.string().trim().min(8, 'Số điện thoại không hợp lệ').optional(),
@@ -64,3 +77,100 @@ export const logout = async (req, res) => {
     message: 'Đăng xuất thành công',
   });
 };
+
+const forgotPasswordSchema = z.object({
+  email : z.string().email('Email không hợp lệ')
+})
+
+const resetPasswordSchema = z.object({
+  email : z.string().email('Email không hợp lệ'),
+  code : z.string().length(6, 'Mã xác thực phải gồm đúng 6 chữ số'),
+  newPassword : z.string().min(6, 'Mật khẩu mới phải có ít nhất 6 kí tự'),
+})
+
+export const forgotPassword = async(req, res) => {
+  try{
+    const payload = forgotPasswordSchema.parse(req.body);
+
+    const user = prisma.user.findUnique({ where : { email : payload.email }});
+    
+    if(!user){
+      return res.status(400).json({success: false, message: "Email này không tồn tại "});
+    }
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 5 * 60 * 1000);
+
+    await prisma.user.update({
+      where: {email: payload.email},
+      data:{
+        reset_code: resetCode,
+        reset_code_expires: expires
+      }
+    })
+
+    const mailOptions = {
+      from : '"VIP Hotel Booking" <no-reply@hotel.com>',
+      to: payload.email,
+      subject: 'Mã xác thực khôi phục mật khẩu',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; border: 1px solid #eee;">
+          <h2>Yêu cầu thay đổi mật khẩu</h2>
+          <p>Chào bạn,</p>
+          <p>Mã xác thực để đặt lại mật khẩu cho tài khoản của bạn là:</p>
+          <div style="font-size: 26px; font-weight: bold; color: #1a73e8; background: #f1f3f4; padding: 15px; text-align: center; letter-spacing: 5px; margin: 15px 0;">
+            ${resetCode}
+          </div>
+          <p style="color: #d93025;">Mã này có hiệu lực trong vòng <b>5 phút</b> và chỉ sử dụng được 1 lần. Vui lòng không chia sẻ mã này cho bất kỳ ai.</p>
+        </div>
+      `
+    }
+
+    await transporter.sendMail(mailOptions);
+    // console.log(`\n🔑 [DATABASE OTP] User: ${payload.email} | Code: ${resetCode} \n`);
+    
+    return sendSuccess(res, {
+      message: 'Mã xác thực đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư!',
+    })
+
+  }catch(error){
+    return handleControllerError(res, error);
+  }
+}
+
+export const resetPassword = async(req, res) =>{
+  try{
+    const payload  = resetPasswordSchema.parse(req.body);
+    const user = await prisma.user.findUnique({ where: { email : payload.email } });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Người dùng không tồn tại' });
+    }
+
+    if (!user.reset_code || user.reset_code !== payload.code) {
+      return res.status(400).json({ success: false, message: 'Mã xác thực không chính xác' });
+    }
+
+    if (new Date() > new Date(user.reset_code_expires)) {
+      return res.status(400).json({ success: false, message: 'Mã xác thực đã hết hạn, vui lòng lấy mã mới' });
+    }
+    const hashedPassword = await bcrypt.hash(payload.newPassword, 10);
+
+    await prisma.user.update({
+      where: { email: payload.email },
+      data: {
+        password_hash: hashedPassword,
+        reset_code: null,
+        reset_code_expires: null
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Đặt lại mật khẩu thành công! Bạn có thể dùng mật khẩu mới để đăng nhập.'
+    })
+    
+  }catch(error){
+    return handleControllerError(res, error);
+  }
+}
+
