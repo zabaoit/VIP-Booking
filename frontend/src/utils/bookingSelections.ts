@@ -17,7 +17,12 @@ export type BookingAddOns = {
 export const defaultBookingStay: BookingStay = {
   checkIn: '2026-10-10',
   checkOut: '2026-10-13',
-  guests: '2 guests',
+  guests: '2',
+}
+
+function normalizeGuestCount(value: string | number | null | undefined) {
+  const matchedValue = String(value ?? '').match(/\d+/)
+  return matchedValue?.[0] ?? defaultBookingStay.guests
 }
 
 function parseStayDate(value: string) {
@@ -45,7 +50,13 @@ export function formatStayRange(stay: BookingStay = getSelectedStay()) {
 }
 
 export function saveSelectedStay(stay: BookingStay) {
-  window.sessionStorage.setItem(selectedStayKey, JSON.stringify(stay))
+  window.sessionStorage.setItem(
+    selectedStayKey,
+    JSON.stringify({
+      ...stay,
+      guests: normalizeGuestCount(stay.guests),
+    }),
+  )
 }
 
 export function saveSelectedRoom(roomId: string, stay: BookingStay = getSelectedStay()) {
@@ -80,7 +91,11 @@ export function getSelectedStay(): BookingStay {
   }
 
   try {
-    return { ...defaultBookingStay, ...(JSON.parse(rawStay) as Partial<BookingStay>) }
+    const parsedStay = { ...defaultBookingStay, ...(JSON.parse(rawStay) as Partial<BookingStay>) }
+    return {
+      ...parsedStay,
+      guests: normalizeGuestCount(parsedStay.guests),
+    }
   } catch {
     window.sessionStorage.removeItem(selectedStayKey)
     return defaultBookingStay

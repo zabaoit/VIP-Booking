@@ -1,5 +1,6 @@
 import { rooms as defaultRooms } from '../data/rooms'
 import { services as defaultServices } from '../data/services'
+import type { AppLanguage } from '../context/LanguageContext'
 import type {
   BookingRecord,
   ContactMessage,
@@ -24,12 +25,24 @@ export const supportInfoStorageKey = 'vip-booking-support-info'
 export const contactMessagesStorageKey = 'vip-booking-contact-messages'
 
 const roomsDataVersion = 'home-room-data-2026-05-23'
+const legacySupportAddress = '12 Nguyen Hue, Ho Chi Minh City'
+const legacySupportEmail = 'guest@vipbooking.vn'
+const supportAddressVi = '180 Cao Lỗ, Phường Chánh Hưng, Tp. Hồ Chí Minh'
+const supportAddressEn = '180 Cao Lo Street, Chanh Hung Ward, Ho Chi Minh City'
 
 const defaultSupportInfo: SupportInfo = {
   hotline: '+84 901 123 456',
-  email: 'guest@vipbooking.vn',
-  address: '12 Nguyen Hue, Ho Chi Minh City',
+  email: 'admin@vipbooking.local',
+  address: supportAddressVi,
   badges: ['Luxury Stays', 'Secure Checkout', 'Priority Service'],
+}
+
+export function localizeSupportAddress(address: string, language: AppLanguage) {
+  if (address === supportAddressVi || address === supportAddressEn || address === legacySupportAddress) {
+    return language === 'vi' ? supportAddressVi : supportAddressEn
+  }
+
+  return address
 }
 
 const defaultPricingRules: PricingRule[] = [
@@ -203,9 +216,16 @@ export function readSupportInfo(): SupportInfo {
 
   try {
     const parsedSupportInfo = JSON.parse(rawSupportInfo) as Partial<SupportInfo>
+    const normalizedAddress =
+      parsedSupportInfo.address === legacySupportAddress ? supportAddressVi : parsedSupportInfo.address
+    const normalizedEmail =
+      parsedSupportInfo.email === legacySupportEmail ? defaultSupportInfo.email : parsedSupportInfo.email
+
     return {
       ...defaultSupportInfo,
       ...parsedSupportInfo,
+      email: normalizedEmail ?? defaultSupportInfo.email,
+      address: normalizedAddress ?? defaultSupportInfo.address,
       badges: Array.isArray(parsedSupportInfo.badges)
         ? parsedSupportInfo.badges.filter(Boolean).slice(0, 6)
         : defaultSupportInfo.badges,

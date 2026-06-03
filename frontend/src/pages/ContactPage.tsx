@@ -4,12 +4,13 @@ import { PageIntro } from '../components/ui/PageIntro'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { useLanguage } from '../context/LanguageContext'
 import { useToast } from '../context/ToastContext'
-import { readSupportInfo, saveContactMessage } from '../utils/appStorage'
+import { localizeSupportAddress, readSupportInfo, saveContactMessage } from '../utils/appStorage'
 
 export function ContactPage() {
   const { showToast } = useToast()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const supportInfo = readSupportInfo()
+  const localizedAddress = localizeSupportAddress(supportInfo.address, language)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -37,7 +38,7 @@ export function ContactPage() {
   }
 
   return (
-    <main className="page-shell">
+    <main className="page-shell contact-page">
       <PageIntro
         eyebrow={t('contact.eyebrow')}
         title={t('contact.title')}
@@ -48,7 +49,7 @@ export function ContactPage() {
         <aside className="contact-cards">
           <ContactCard icon="phone" title={t('contact.callConcierge')} copy={supportInfo.hotline} />
           <ContactCard icon="mail" title={t('contact.emailReservations')} copy={supportInfo.email} />
-          <ContactCard icon="mapPin" title={t('contact.visitUs')} copy={supportInfo.address} />
+          <ContactCard icon="mapPin" title={t('contact.visitUs')} copy={localizedAddress} />
         </aside>
 
         <form className="form-panel contact-form" onSubmit={handleSubmit}>

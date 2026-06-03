@@ -458,6 +458,7 @@ img {
   z-index: 2;
   display: grid;
   grid-template-columns: 1.25fr repeat(3, 1fr) auto;
+  align-items: end;
   gap: 12px;
   width: min(1180px, 100%);
   justify-self: center;
@@ -1517,6 +1518,20 @@ textarea:focus {
   grid-template-columns: 320px 1fr;
   gap: 22px;
   align-items: start;
+}
+
+.hero-section .search-panel {
+  max-width: 1180px;
+  justify-content: center;
+}
+
+.contact-page .page-intro .eyebrow {
+  margin-bottom: 4px;
+  transform: translateY(-4px);
+}
+
+.contact-page .page-intro h1 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
 }
 
 .contact-cards {
@@ -2919,10 +2934,15 @@ body::selection {
 }
 
 .hero-content {
-  justify-items: start;
+  justify-items: center;
   max-width: 980px;
-  margin-inline: 0;
-  text-align: left;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.hero-content .eyebrow {
+  margin-bottom: 18px;
+  transform: translateY(-18px);
 }
 
 .hero-content h1,
@@ -2935,17 +2955,18 @@ body::selection {
 }
 
 .hero-content h1 {
-  max-width: 900px;
+  max-width: 980px;
   font-size: clamp(2.75rem, 6vw, 5.4rem);
 }
 
 .hero-content p {
-  margin-left: 0;
+  margin-left: auto;
+  margin-right: auto;
   color: #cbd5e1;
 }
 
 .hero-actions {
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .eyebrow {

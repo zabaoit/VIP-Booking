@@ -1,6 +1,7 @@
 import type { Room } from '../../types'
 import { useLanguage } from '../../context/LanguageContext'
 import { formatCurrency } from '../../utils/currency'
+import { getRoomTaxAmount } from '../../utils/pricing'
 
 export function PriceDetails({
   addOnTotal = 0,
@@ -13,7 +14,7 @@ export function PriceDetails({
 }) {
   const { t } = useLanguage()
   const subtotal = room.price * nights
-  const tax = 88
+  const tax = getRoomTaxAmount(room, nights)
   const total = subtotal + addOnTotal + tax
   const nightLabel = nights === 1 ? t('bookingSummary.night') : t('bookingSummary.nights')
 

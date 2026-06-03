@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { fetchBookings, fetchRooms, fetchServices, fetchUsers } from '../../api/vipBookingApi'
+import { useLanguage } from '../../context/LanguageContext'
 import { useAuth } from '../../hooks/useAuth'
 import { adminNavItems } from '../../data/navigation'
 import { routeTitles } from '../../data/routes'
@@ -59,6 +60,7 @@ export function AdminLayout({
   currentRoute: RouteKey
   children: ReactNode
 }) {
+  const { language } = useLanguage()
   const { user, logout } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -75,6 +77,14 @@ export function AdminLayout({
   const [services, setServices] = useState<Service[]>([])
   const [users, setUsers] = useState<RegisteredUser[]>([])
   const topbarActionsRef = useRef<HTMLDivElement>(null)
+  const accountRoleLabel =
+    user?.role === 'admin'
+      ? language === 'vi'
+        ? 'Quản trị viên'
+        : 'Administrator'
+      : language === 'vi'
+        ? 'Tài khoản khách'
+        : 'Guest account'
 
   useEffect(() => {
     let isMounted = true
@@ -510,7 +520,7 @@ export function AdminLayout({
             {isAccountOpen && (
               <div className="admin-account-popover">
                 <strong>{user?.email ?? 'admin@vipbooking.vn'}</strong>
-                <small>Administrator</small>
+                <small>{accountRoleLabel}</small>
                 <div>
                   <a
                     className="ghost-button compact"
