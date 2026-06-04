@@ -12,6 +12,7 @@ export const registeredUsersStorageKey = 'vip-booking-registered-users'
 export const customerProfilesStorageKey = 'vip-booking-customer-profiles'
 export const bookingsStorageKey = 'vip-booking-bookings'
 export const activeBookingIdStorageKey = 'vip-booking-active-booking-id'
+export const activePaymentIdStorageKey = 'vip-booking-active-payment-id'
 export const supportInfoStorageKey = 'vip-booking-support-info'
 export const contactMessagesStorageKey = 'vip-booking-contact-messages'
 
@@ -110,6 +111,18 @@ export function getActiveBookingId() {
 
 export function clearActiveBookingId() {
   window.sessionStorage.removeItem(activeBookingIdStorageKey)
+}
+
+export function setActivePaymentId(paymentId: string) {
+  window.localStorage.setItem(activePaymentIdStorageKey, paymentId)
+}
+
+export function getActivePaymentId() {
+  return window.localStorage.getItem(activePaymentIdStorageKey)
+}
+
+export function clearActivePaymentId() {
+  window.localStorage.removeItem(activePaymentIdStorageKey)
 }
 
 export function updateActiveBookingStatus(status: BookingRecord['status']) {

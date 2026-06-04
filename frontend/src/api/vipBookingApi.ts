@@ -904,6 +904,54 @@ export async function createPaymentWithApi(payload: {
   return attachApiMessage(mapPayment(response.data.payment), response, 'Payment created successfully.')
 }
 
+type GatewayPaymentResponse = {
+  payment: ApiPayment
+  provider: 'vietqr'
+  amount: number
+  qrImageUrl?: string
+  bank?: string
+  account?: string
+  accountName?: string
+  transferContent?: string
+  providerResponse?: unknown
+}
+
+function mapGatewayPayment(response: ApiEnvelope<GatewayPaymentResponse>) {
+  return {
+    ...response.data,
+    payment: mapPayment(response.data.payment),
+    apiMessage: response.message || 'Payment request created successfully.',
+  }
+}
+
+export async function createVietQrPaymentWithApi(payload: {
+  bookingId?: string
+  invoiceId?: string
+  amount?: string
+}) {
+  const response = await apiRequest<ApiEnvelope<GatewayPaymentResponse>>('/api/payments/vietqr/create', {
+    method: 'POST',
+    body: JSON.stringify({
+      booking_id: payload.bookingId,
+      invoice_id: payload.invoiceId,
+      amount: payload.amount,
+    }),
+  })
+
+  return mapGatewayPayment(response)
+}
+
+export async function verifyVietQrPaymentWithApi(paymentId: string) {
+  const response = await apiRequest<ApiEnvelope<{ payment: ApiPayment }>>(
+    `/api/payments/${paymentId}/verify-vietqr`,
+    {
+      method: 'POST',
+    },
+  )
+
+  return attachApiMessage(mapPayment(response.data.payment), response, 'Payment status checked successfully.')
+}
+
 export async function updatePaymentWithApi(
   paymentId: string,
   payload: Partial<{
