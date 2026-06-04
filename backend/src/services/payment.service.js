@@ -18,29 +18,32 @@ export const createPaymentGateway = async (payload) => {
 
   let url = '';
 
-  if (provider === 'momo') {
-    url = await createMomoPayment({
-      orderId: invoiceId,
-      amount,
-    });
-  }
+ if (provider === 'momo') {
+  url = createVietQR({
+    bank: process.env.VIETQR_ACCOUNT,
+    account: process.env.VIETQR_ACCOUNT,
+    amount,
+    content: `Vipboking-MOMO-${invoiceId}`,
+  });
+}
 
-  if (provider === 'zalopay') {
-    url = await createZaloPay({
-      orderId: invoiceId,
-      amount,
-    });
-  }
+if (provider === 'zalopay') {
+  url = createVietQR({
+    bank: process.env.VIETQR_ACCOUNT,
+    account: process.env.VIETQR_ACCOUNT,
+    amount,
+    content: `Vipboking-ZALO-${invoiceId}`,
+  });
+}
 
-  if (provider === 'vietqr') {
-    url = createVietQR({
-      bank: 'VCB',
-      account: '1234567890',
-      amount,
-      content: `Invoice ${invoiceId}`,
-    });
-  }
-
+if (provider === 'vietqr') {
+  url = createVietQR({
+    bank: process.env.VIETQR_ACCOUNT,
+    account: process.env.VIETQR_ACCOUNT,
+    amount,
+    content: `VIETQR-${invoiceId}`,
+  });
+}
   return url;
 };
 const ensureAdminUser = async (userId) => {
