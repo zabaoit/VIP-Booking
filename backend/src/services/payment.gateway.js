@@ -42,7 +42,17 @@ export const createMomoPayment = async ({ orderId, amount }) => {
   // ZALOPAY
 
 export const createZaloPay = async ({ orderId, amount }) => {
-  const app_trans_id = `${Date.now()}_${orderId}`;
+const app_time = Date.now();
+  const app_trans_id = `${new Date()
+    .toISOString()
+    .slice(2, 10)
+    .replace(/-/g, '')}_${orderId}`;
+
+  const embed_data = JSON.stringify({
+    redirecturl: 'http://localhost:5173/payment-result',
+  });
+
+  const item = '[]';
 
   const data =
     process.env.ZALOPAY_APP_ID +
@@ -51,8 +61,11 @@ export const createZaloPay = async ({ orderId, amount }) => {
     '|user123|' +
     amount +
     '|' +
-    Date.now() +
-    '||';
+    app_time +
+    '|' +
+    embed_data +
+    '|' +
+    item;
 
   const mac = crypto
     .createHmac('sha256', process.env.ZALOPAY_KEY1)
@@ -61,19 +74,35 @@ export const createZaloPay = async ({ orderId, amount }) => {
 
   const params = {
     app_id: process.env.ZALOPAY_APP_ID,
-    app_trans_id,
     app_user: 'user123',
-    app_time: Date.now(),
+    app_time,
     amount,
-    description: `VIP Booking ${orderId}`,
+    app_trans_id,
+    embed_data,
+    item,
+    description: `VIP Booking #${orderId}`,
+    callback_url: process.env.ZALOPAY_CALLBACK,
     mac,
   };
 
-  const res = await axios.post(process.env.ZALOPAY_ENDPOINT, null, {
-    params,
-  });
+  try {
+    const res = await axios.post(
+      process.env.ZALOPAY_ENDPOINT,
+      null,
+      { params }
+    );
 
-  return res.data.order_url;
+    console.log('ZaloPay:', res.data);
+
+    return res.data.order_url;
+  } catch (err) {
+    console.error(
+      'ZaloPay Error:',
+      err.response?.data || err.message
+    );
+
+    throw err;
+  }
 };
 
 
