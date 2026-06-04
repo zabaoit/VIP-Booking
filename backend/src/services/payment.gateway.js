@@ -3,18 +3,19 @@ import crypto from 'crypto';
 
   // MOMO
 export const createMomoPayment = async ({ orderId, amount }) => {
-  const requestId = orderId;
+  const requestId = orderId.toString();
 
   const rawSignature =
     `accessKey=${process.env.MOMO_ACCESS_KEY}` +
     `&amount=${amount}` +
+    `&extraData=` +
     `&ipnUrl=${process.env.MOMO_IPN}` +
     `&orderId=${orderId}` +
-    `&orderInfo=Thanh toan ${orderId}` +
+    `&orderInfo=Thanh toan VIP Booking` +
     `&partnerCode=${process.env.MOMO_PARTNER_CODE}` +
     `&redirectUrl=${process.env.MOMO_REDIRECT}` +
     `&requestId=${requestId}` +
-    `&requestType=captureWallet`;
+    `&requestType=payWithMethod`;
 
   const signature = crypto
     .createHmac('sha256', process.env.MOMO_SECRET_KEY)
@@ -23,18 +24,30 @@ export const createMomoPayment = async ({ orderId, amount }) => {
 
   const body = {
     partnerCode: process.env.MOMO_PARTNER_CODE,
+    partnerName: 'VIP Booking',
+    storeId: 'VIPBookingStore',
     requestId,
-    orderId,
-    amount,
-    orderInfo: `Thanh toán ${orderId}`,
+    amount: Number(amount),
+    orderId: orderId.toString(),
+    orderInfo: 'Thanh toan VIP Booking',
     redirectUrl: process.env.MOMO_REDIRECT,
     ipnUrl: process.env.MOMO_IPN,
-    requestType: 'captureWallet',
-    signature,
     lang: 'vi',
+    requestType: 'payWithMethod',
+    autoCapture: true,
+    extraData: '',
+    signature,
   };
 
-  const res = await axios.post(process.env.MOMO_ENDPOINT, body);
+  const res = await axios.post(
+    process.env.MOMO_ENDPOINT,
+    body
+  );
+
+  console.log('MOMO RESPONSE:', res.data);
+if (!res.data.payUrl) {
+  throw new Error(JSON.stringify(res.data));
+}
   return res.data.payUrl;
 };
 
@@ -86,22 +99,27 @@ const app_time = Date.now();
   };
 
   try {
-    const res = await axios.post(
-      process.env.ZALOPAY_ENDPOINT,
-      null,
-      { params }
-    );
+  const res = await axios.post(
+    process.env.ZALOPAY_ENDPOINT,
+    null,
+    { params }
+  );
 
-    console.log('ZaloPay:', res.data);
+  console.log('ZaloPay:', res.data);
 
-    return res.data.order_url;
-  } catch (err) {
-    console.error(
-      'ZaloPay Error:',
-      err.response?.data || err.message
-    );
+  if (!res.data.order_url) {
+    throw new Error(JSON.stringify(res.data));
+  }
 
-    throw err;
+  return res.data.order_url;
+
+} catch (err) {
+  console.error(
+    'ZaloPay Error:',
+    err.response?.data || err.message
+  );
+
+  throw err;
   }
 };
 
