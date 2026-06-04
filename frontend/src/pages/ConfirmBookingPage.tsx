@@ -34,7 +34,7 @@ export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
   const stay = getSelectedStay()
   const nights = getStayNights(stay)
   const selectedRoomId = getSelectedRoomId()
-  const availableServices = services.filter((service) => service.status === 'Active').slice(0, 3)
+  const availableServices = services.filter((service) => service.status === 'Active')
   const localizedAvailableServices = useLocalizedServices(availableServices)
   const localizedRoom = useLocalizedRoom(room)
   const [selectedServices, setSelectedServices] = useState<string[]>(() => getSelectedAddOns().selectedServices)
