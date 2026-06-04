@@ -15,30 +15,32 @@ import {
 } from './payment.gateway.js';
 export const createPaymentGateway = async (payload) => {
   const { provider, invoiceId, amount } = payload;
+  if (!invoiceId) {
+ throw createHttpError(400,'invoiceId missing');
+}
 
+  if (!['momo', 'zalopay', 'vietqr'].includes(provider)) {
+ throw createHttpError(400, 'Provider không hợp lệ');
+  }
   let url = '';
 
- if (provider === 'momo') {
-  url = createVietQR({
-    bank: process.env.VIETQR_ACCOUNT,
-    account: process.env.VIETQR_ACCOUNT,
+if (provider === 'momo') {
+  url = await createMomoPayment({
+    orderId: invoiceId,
     amount,
-    content: `Vipboking-MOMO-${invoiceId}`,
   });
 }
 
 if (provider === 'zalopay') {
-  url = createVietQR({
-    bank: process.env.VIETQR_ACCOUNT,
-    account: process.env.VIETQR_ACCOUNT,
+  url = await createZaloPay({
+    orderId: invoiceId,
     amount,
-    content: `Vipboking-ZALO-${invoiceId}`,
   });
 }
 
 if (provider === 'vietqr') {
   url = createVietQR({
-    bank: process.env.VIETQR_ACCOUNT,
+    bank: process.env.VIETQR_BANK,
     account: process.env.VIETQR_ACCOUNT,
     amount,
     content: `VIETQR-${invoiceId}`,
