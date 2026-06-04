@@ -1,25 +1,23 @@
-import { email, success, z } from 'zod';
+import { z } from 'zod';
 import {
   getCurrentUser,
   loginUser,
   registerUser,
 } from '../services/auth.service.js';
 import { handleControllerError, sendSuccess } from '../utils/response.js';
-import { PrismaClient } from '@prisma/client';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcrypt';
-import 'dotenv/config'
 import prisma from '../config/db.js';
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: Number(process.env.EMAIL_PORT),
+  secure: process.env.EMAIL_SECURE === 'true' || Number(process.env.EMAIL_PORT) === 465,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
-console.log("=== CHECK ENV MAILTRAP ===", process.env.EMAIL_USER, process.env.EMAIL_PASS);
 
 const registerSchema = z.object({
   email: z.string().email('Email không hợp lệ'),
@@ -90,6 +88,29 @@ const resetPasswordSchema = z.object({
   newPassword : z.string().min(6, 'Mật khẩu mới phải có ít nhất 6 kí tự'),
 })
 
+const verifyResetCodeSchema = resetPasswordSchema.pick({
+  email: true,
+  code: true,
+})
+
+const findResetCodeError = async ({ email, code }) => {
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    return { statusCode: 404, message: 'Nguoi dung khong ton tai' };
+  }
+
+  if (!user.reset_code || user.reset_code !== code) {
+    return { statusCode: 400, message: 'Ma xac thuc khong chinh xac' };
+  }
+
+  if (!user.reset_code_expires || new Date() > new Date(user.reset_code_expires)) {
+    return { statusCode: 400, message: 'Ma xac thuc da het han, vui long lay ma moi' };
+  }
+
+  return null;
+}
+
 export const forgotPassword = async(req, res) => {
   try{
     const payload = forgotPasswordSchema.parse(req.body);
@@ -134,6 +155,27 @@ export const forgotPassword = async(req, res) => {
       message: 'Mã xác thực đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư!',
     })
 
+  }catch(error){
+    return handleControllerError(res, error);
+  }
+}
+
+export const verifyResetCode = async(req, res) =>{
+  try{
+    const payload  = verifyResetCodeSchema.parse(req.body);
+    const resetCodeError = await findResetCodeError(payload);
+
+    if (resetCodeError) {
+      return res.status(resetCodeError.statusCode).json({
+        success: false,
+        message: resetCodeError.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      message: 'Ma xac thuc hop le',
+    })
+    
   }catch(error){
     return handleControllerError(res, error);
   }

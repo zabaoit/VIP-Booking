@@ -402,6 +402,40 @@ export async function registerWithApi(payload: {
   }
 }
 
+export async function requestPasswordResetOtp(email: string): Promise<string> {
+  const response = await apiRequest<ApiEnvelope<undefined>>('/api/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+
+  return response.message || 'Verification code has been sent to your email.'
+}
+
+export async function verifyPasswordResetOtp(payload: {
+  email: string
+  code: string
+}): Promise<string> {
+  const response = await apiRequest<ApiEnvelope<undefined>>('/api/auth/verify-reset-code', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+
+  return response.message || 'Verification code is valid.'
+}
+
+export async function resetPasswordWithOtp(payload: {
+  email: string
+  code: string
+  newPassword: string
+}): Promise<string> {
+  const response = await apiRequest<ApiEnvelope<undefined>>('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+
+  return response.message || 'Password reset successfully.'
+}
+
 export async function getCurrentUser() {
   const response = await apiRequest<ApiEnvelope<{ user: ApiUser }>>('/api/auth/me')
   return mapApiUser(response.data.user)
