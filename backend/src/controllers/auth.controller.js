@@ -12,14 +12,14 @@ import 'dotenv/config'
 import prisma from '../config/db.js';
 
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT),
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: Number(process.env.EMAIL_PORT) || 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
-console.log("=== CHECK ENV MAILTRAP ===", process.env.EMAIL_USER, process.env.EMAIL_PASS);
 
 const registerSchema = z.object({
   email: z.string().email('Email không hợp lệ'),
