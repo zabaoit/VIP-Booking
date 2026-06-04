@@ -46,7 +46,9 @@ const paymentStatusSchema = z.enum([
   'refunded',
 ]);
 
-const decimalSchema = z.union([z.string(), z.number()]);
+const decimalSchema = z.coerce
+ .number()
+ .positive();
 
 const schema = z.object({
   invoice_id: idSchema,
