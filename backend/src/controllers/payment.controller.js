@@ -1,10 +1,13 @@
 import { z } from 'zod';
 import {
   addPayment,
+  confirmLocalPayment,
+  createVietQrPayment,
   editPayment,
   getPayment,
   listPayments,
   removePayment,
+  verifyVietQrPayment,
 } from '../services/payment.service.js';
 import { handleControllerError, sendSuccess } from '../utils/response.js';
 
@@ -25,6 +28,14 @@ const querySchema = z.object({
   invoiceId: idSchema.optional(),
   staffId: idSchema.optional(),
   status: paymentStatusSchema.optional(),
+});
+const gatewaySchema = z.object({
+  invoice_id: idSchema.optional(),
+  booking_id: idSchema.optional(),
+  amount: decimalSchema.optional(),
+  transferContent: z.string().trim().optional(),
+}).refine((payload) => payload.invoice_id || payload.booking_id, {
+  message: 'Can truyen invoice_id hoac booking_id',
 });
 
 export const index = async (req, res) => {
@@ -51,6 +62,45 @@ export const store = async (req, res) => {
     return sendSuccess(res, {
       statusCode: 201,
       message: 'Tạo thanh toán thành công',
+      data: { payment },
+    });
+  } catch (error) {
+    return handleControllerError(res, error);
+  }
+};
+
+export const createVietQr = async (req, res) => {
+  try {
+    const paymentRequest = await createVietQrPayment(gatewaySchema.parse(req.body), req.user);
+    return sendSuccess(res, {
+      statusCode: 201,
+      message: 'Tao ma VietQR thanh cong',
+      data: paymentRequest,
+    });
+  } catch (error) {
+    return handleControllerError(res, error);
+  }
+};
+
+export const confirmLocal = async (req, res) => {
+  try {
+    const payment = await confirmLocalPayment(idSchema.parse(req.params.id), req.user);
+    return sendSuccess(res, {
+      message: 'Xac nhan thanh toan local thanh cong',
+      data: { payment },
+    });
+  } catch (error) {
+    return handleControllerError(res, error);
+  }
+};
+
+export const verifyVietQr = async (req, res) => {
+  try {
+    const payment = await verifyVietQrPayment(idSchema.parse(req.params.id), req.user);
+    return sendSuccess(res, {
+      message: payment.status === 'success'
+        ? 'Da ghi nhan tien VietQR'
+        : 'Chua ghi nhan tien VietQR',
       data: { payment },
     });
   } catch (error) {

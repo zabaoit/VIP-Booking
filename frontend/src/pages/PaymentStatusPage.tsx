@@ -6,7 +6,11 @@ import { useLanguage } from '../context/LanguageContext'
 import { rooms as defaultRooms } from '../data/rooms'
 import type { Navigate, Room } from '../types'
 import { getSelectedAddOns, getSelectedRoomId, getSelectedStay, getStayNights } from '../utils/bookingSelections'
-import { clearActiveBookingId, updateActiveBookingStatus } from '../utils/appStorage'
+import {
+  clearActiveBookingId,
+  clearActivePaymentId,
+  updateActiveBookingStatus,
+} from '../utils/appStorage'
 
 export function PaymentStatusPage({
   variant,
@@ -29,6 +33,7 @@ export function PaymentStatusPage({
 
     if (isSuccess) {
       updateActiveBookingStatus('Confirmed')
+      clearActivePaymentId()
       clearActiveBookingId()
       return
     }

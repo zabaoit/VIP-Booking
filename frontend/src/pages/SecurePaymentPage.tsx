@@ -1,75 +1,127 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { fetchRoom } from '../api/vipBookingApi'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import {
+  createVietQrPaymentWithApi,
+  fetchRoom,
+  updateBookingWithApi,
+  verifyVietQrPaymentWithApi,
+} from '../api/vipBookingApi'
 import { BookingSummary } from '../components/booking/BookingSummary'
 import { Icon } from '../components/icons/Icon'
 import { PageIntro } from '../components/ui/PageIntro'
+import { useLanguage } from '../context/LanguageContext'
 import { useToast } from '../context/ToastContext'
 import { rooms as defaultRooms } from '../data/rooms'
 import type { Navigate, Room } from '../types'
-import { getSelectedAddOns, getSelectedRoomId } from '../utils/bookingSelections'
-import { getActiveBookingId, updateActiveBookingStatus } from '../utils/appStorage'
-import { updateBookingWithApi } from '../api/vipBookingApi'
+import { getSelectedAddOns, getSelectedRoomId, getSelectedStay, getStayNights } from '../utils/bookingSelections'
+import { clearActivePaymentId, getActiveBookingId, setActivePaymentId, updateActiveBookingStatus } from '../utils/appStorage'
+import { getRoomTaxAmount } from '../utils/pricing'
 
-const paymentMethods = [
-  {
-    id: 'vietqr',
-    label: 'VietQR',
-    icon: 'card' as const,
-    title: 'Scan VietQR to complete bank transfer',
-    detail: 'Account: VIP Booking JSC - 9704 36 123456789',
-  },
-  {
-    id: 'zalopay',
-    label: 'ZaloPay',
-    icon: 'shield' as const,
-    title: 'Pay with ZaloPay wallet',
-    detail: 'Use the ZaloPay app to approve this secure booking payment.',
-  },
-  {
-    id: 'momo',
-    label: 'MoMo',
-    icon: 'lock' as const,
-    title: 'Pay with MoMo wallet',
-    detail: 'Use the MoMo app to confirm and return to VIP Booking.',
-  },
-]
+const vietQrMethod = {
+  id: 'vietqr',
+  label: 'VietQR',
+  icon: 'card' as const,
+}
 
 export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
+  const { t } = useLanguage()
   const { showToast } = useToast()
   const [room, setRoom] = useState<Room>(defaultRooms[0])
-  const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0])
-  const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(true)
+  const [isRoomReady, setIsRoomReady] = useState(false)
+  const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isCreatingPayment, setIsCreatingPayment] = useState(false)
+  const [gatewayPayment, setGatewayPayment] = useState<{
+    paymentId: string
+    qrImageUrl?: string
+    transferContent?: string
+    bank?: string
+    account?: string
+    amount?: number
+  } | null>(null)
   const { addOnTotal } = getSelectedAddOns()
+  const nights = getStayNights(getSelectedStay())
+  const displayTotal = room.price * nights + addOnTotal + getRoomTaxAmount(room, nights)
+
+  const createGatewayPayment = useCallback(async () => {
+    const activeBookingId = getActiveBookingId()
+
+    if (!activeBookingId) {
+      return null
+    }
+
+    setIsCreatingPayment(true)
+
+    try {
+      const payload = { bookingId: activeBookingId, amount: String(displayTotal) }
+      const paymentRequest = await createVietQrPaymentWithApi(payload)
+      const nextGatewayPayment = {
+        paymentId: paymentRequest.payment.id,
+        qrImageUrl: paymentRequest.qrImageUrl,
+        transferContent: paymentRequest.transferContent,
+        bank: paymentRequest.bank,
+        account: paymentRequest.account,
+        amount: paymentRequest.amount,
+      }
+
+      setGatewayPayment(nextGatewayPayment)
+      setActivePaymentId(paymentRequest.payment.id)
+      return nextGatewayPayment
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('payment.createFailedMessage')
+      showToast({ title: t('payment.createFailedTitle'), message, variant: 'error' })
+      return null
+    } finally {
+      setIsCreatingPayment(false)
+    }
+  }, [displayTotal, showToast, t])
 
   useEffect(() => {
     const roomId = getSelectedRoomId()
-    if (!roomId) return
+    if (!roomId) {
+      setIsRoomReady(true)
+      return
+    }
 
     fetchRoom(roomId)
-      .then(setRoom)
-      .catch((loadError) => {
-        const message = loadError instanceof Error ? loadError.message : 'Could not load payment room.'
-        showToast({ title: 'Could not load payment room', message, variant: 'error' })
+      .then((nextRoom) => {
+        setRoom(nextRoom)
+        setIsRoomReady(true)
       })
-  }, [showToast])
+      .catch((loadError) => {
+        const message = loadError instanceof Error ? loadError.message : t('bookingInfo.couldNotLoadRoom')
+        showToast({ title: t('bookingInfo.couldNotLoadRoomTitle'), message, variant: 'error' })
+        setIsRoomReady(true)
+      })
+  }, [showToast, t])
+
+  useEffect(() => {
+    if (!isRoomReady) {
+      return
+    }
+
+    setGatewayPayment(null)
+    void createGatewayPayment()
+  }, [createGatewayPayment, isRoomReady])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (!isPaymentConfirmed) {
-      const message = 'Please confirm that payment is completed before continuing.'
-      showToast({ title: 'Payment confirmation required', message, variant: 'warning' })
+      showToast({
+        title: t('payment.confirmRequiredTitle'),
+        message: t('payment.confirmRequiredMessage'),
+        variant: 'warning',
+      })
       return
     }
 
-    window.localStorage.setItem('vip-booking:preferred-payment', paymentMethod.id)
+    window.localStorage.setItem('vip-booking:preferred-payment', vietQrMethod.id)
     const activeBookingId = getActiveBookingId()
 
     if (!activeBookingId) {
       showToast({
-        title: 'Booking is missing',
-        message: 'Please create a booking before confirming payment.',
+        title: t('payment.missingBookingTitle'),
+        message: t('payment.missingBookingMessage'),
         variant: 'warning',
       })
       return
@@ -78,12 +130,37 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
     setIsSubmitting(true)
 
     try {
+      if (!gatewayPayment) {
+        await createGatewayPayment()
+        return
+      }
+
+      const checkedPayment = await verifyVietQrPaymentWithApi(gatewayPayment.paymentId)
+
+      if (checkedPayment.status !== 'success') {
+        updateActiveBookingStatus('Pending')
+        showToast({
+          title: t('payment.notReceivedTitle'),
+          message: t('payment.notReceivedMessage'),
+          variant: 'warning',
+        })
+        navigate('failed')
+        return
+      }
+
       await updateBookingWithApi(activeBookingId, { status: 'Confirmed' })
       updateActiveBookingStatus('Confirmed')
+      clearActivePaymentId()
+      showToast({
+        title: t('payment.receivedTitle'),
+        message: t('payment.receivedMessage'),
+        variant: 'success',
+      })
       navigate('success')
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not confirm booking payment.'
-      showToast({ title: 'Could not confirm payment', message, variant: 'error' })
+      const message = error instanceof Error ? error.message : t('payment.checkFailedMessage')
+      showToast({ title: t('payment.checkFailedTitle'), message, variant: 'error' })
+      navigate('failed')
     } finally {
       setIsSubmitting(false)
     }
@@ -92,9 +169,9 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
   return (
     <main className="page-shell">
       <PageIntro
-        eyebrow="Checkout"
-        title="Secure Payment"
-        copy="A payment form with booking context and invoice summary, ready for backend payment APIs."
+        eyebrow={t('payment.eyebrow')}
+        title={t('payment.title')}
+        copy={t('payment.copy')}
       />
 
       <form
@@ -102,28 +179,40 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
         onSubmit={handleSubmit}
       >
         <section className="form-panel">
-          <h2>Payment Method</h2>
+          <h2>{t('payment.methodTitle')}</h2>
           <div className="payment-tabs">
-            {paymentMethods.map((method) => (
-              <button
-                className={paymentMethod.id === method.id ? 'active' : ''}
-                key={method.id}
-                type="button"
-                onClick={() => setPaymentMethod(method)}
-              >
-                <Icon name={method.icon} />
-                {method.label}
-              </button>
-            ))}
+            <button className="active" type="button">
+              <Icon name={vietQrMethod.icon} />
+              {vietQrMethod.label}
+            </button>
           </div>
           <div className="wallet-panel">
             <div className="qr-box">
-              <span>QR</span>
+              {gatewayPayment?.qrImageUrl ? (
+                <img src={gatewayPayment.qrImageUrl} alt="VietQR" />
+              ) : isCreatingPayment ? (
+                <span>{t('payment.loading')}</span>
+              ) : (
+                <span>QR</span>
+              )}
             </div>
             <div>
-              <h3>{paymentMethod.title}</h3>
-              <p>{paymentMethod.detail}</p>
-              <small>Payment status will come from the payment gateway when backend APIs are connected.</small>
+              <h3>{t('payment.vietQrTitle')}</h3>
+              <p>{t('payment.vietQrDetail')}</p>
+              {gatewayPayment ? (
+                <small>
+                  {gatewayPayment.bank && gatewayPayment.account
+                    ? `${t('payment.bank')}: ${gatewayPayment.bank} - ${t('payment.account')}: ${gatewayPayment.account}. `
+                    : ''}
+                  {gatewayPayment.transferContent ? `${t('payment.transferContent')}: ${gatewayPayment.transferContent}` : ''}
+                </small>
+              ) : (
+                <small>
+                  {isCreatingPayment
+                    ? t('payment.loadingData')
+                    : t('payment.dataMissing')}
+                </small>
+              )}
             </div>
           </div>
           <label className="check-row consent-row">
@@ -135,14 +224,20 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
                 setIsPaymentConfirmed(event.target.checked)
               }}
             />
-            <span>I have completed the payment in {paymentMethod.label}.</span>
+            <span>{t('payment.completedLabel')}</span>
           </label>
           <button className="primary-button full-width" disabled={isSubmitting} type="submit">
             <Icon name="lock" />
-            {isSubmitting ? 'Confirming...' : 'Confirm Payment'}
+            {isSubmitting
+              ? t('payment.processing')
+              : gatewayPayment
+                ? t('payment.checkButton')
+                : isCreatingPayment
+                  ? t('payment.loadingButton')
+                  : t('payment.retryButton')}
           </button>
         </section>
-        <BookingSummary room={room} buttonLabel="Confirm Payment" addOnTotal={addOnTotal} />
+        <BookingSummary room={room} buttonLabel={t('payment.summaryButton')} addOnTotal={addOnTotal} />
       </form>
     </main>
   )

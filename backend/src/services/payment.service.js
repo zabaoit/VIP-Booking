@@ -1,4 +1,5 @@
-import { findInvoiceById, updateInvoiceRecord } from '../models/invoice.model.js';
+import { findBookingById } from '../models/booking.model.js';
+import { findInvoiceById, findInvoices, updateInvoiceRecord } from '../models/invoice.model.js';
 import {
   createPaymentRecord,
   deletePaymentRecord,
@@ -7,6 +8,7 @@ import {
   updatePaymentRecord,
 } from '../models/payment.model.js';
 import { findPublicUserById } from '../models/user.model.js';
+import { addInvoice } from './invoice.service.js';
 import { createHttpError } from '../utils/response.js';
 
 const ensureAdminUser = async (userId) => {
@@ -19,6 +21,180 @@ const ensureAdminUser = async (userId) => {
 
 export const listPayments = (filters) => {
   return findPayments(filters);
+};
+
+const getRequiredEnv = (key) => {
+  const value = process.env[key];
+
+  if (!value) {
+    throw createHttpError(500, `${key} is not configured`);
+  }
+
+  return value;
+};
+
+const getInvoicePayableAmount = (invoice, payloadAmount) => {
+  if (payloadAmount !== undefined) {
+    const amount = Number(payloadAmount);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw createHttpError(400, 'So tien thanh toan khong hop le');
+    }
+
+    return Math.round(amount);
+  }
+
+  const paidAmount = invoice.payments.reduce((total, item) => {
+    return item.status === 'success' ? total + Number(item.amount) : total;
+  }, 0);
+  const remainingAmount = Number(invoice.total_amount) - paidAmount;
+
+  if (!Number.isFinite(remainingAmount) || remainingAmount <= 0) {
+    throw createHttpError(400, 'Hoa don da duoc thanh toan');
+  }
+
+  return Math.round(remainingAmount);
+};
+
+const ensureInvoiceCanBePaid = async (invoiceId, actor) => {
+  const invoice = await findInvoiceById(invoiceId);
+
+  if (!invoice) {
+    throw createHttpError(400, 'Hoa don khong ton tai');
+  }
+
+  const invoiceUserId = invoice.booking?.user_id?.toString();
+  const isOwner = invoiceUserId && invoiceUserId === actor.id;
+  const isAdmin = actor.role === 'admin';
+
+  if (!isOwner && !isAdmin) {
+    throw createHttpError(403, 'Ban khong co quyen thanh toan hoa don nay');
+  }
+
+  return invoice;
+};
+
+const ensureBookingCanBePaid = async (bookingId, actor) => {
+  const booking = await findBookingById(bookingId);
+
+  if (!booking) {
+    throw createHttpError(400, 'Dat phong khong ton tai');
+  }
+
+  const isOwner = booking.user_id?.toString() === actor.id;
+  const isAdmin = actor.role === 'admin';
+
+  if (!isOwner && !isAdmin) {
+    throw createHttpError(403, 'Ban khong co quyen thanh toan dat phong nay');
+  }
+
+  return booking;
+};
+
+const resolvePayableInvoice = async (payload, actor) => {
+  if (payload.invoice_id) {
+    return ensureInvoiceCanBePaid(payload.invoice_id, actor);
+  }
+
+  if (!payload.booking_id) {
+    throw createHttpError(400, 'Can truyen invoice_id hoac booking_id');
+  }
+
+  await ensureBookingCanBePaid(payload.booking_id, actor);
+
+  const existingInvoices = await findInvoices({ bookingId: payload.booking_id });
+  const existingInvoice = existingInvoices.find((invoice) => invoice.invoice_status !== 'cancelled');
+
+  if (existingInvoice) {
+    return existingInvoice;
+  }
+
+  const invoice = await addInvoice({
+    booking_id: payload.booking_id,
+  });
+
+  return invoice;
+};
+
+const createPendingGatewayPayment = async ({ invoiceId, amount, method, actor }) => {
+  return createPaymentRecord({
+    invoice_id: BigInt(invoiceId),
+    amount: amount.toString(),
+    payment_method: method,
+    status: 'pending',
+    paid_at: new Date(),
+    staff_id: BigInt(actor.id),
+  });
+};
+
+const refreshInvoicePaymentStatus = async (invoiceId) => {
+  const invoice = await findInvoiceById(invoiceId);
+
+  if (!invoice) {
+    return null;
+  }
+
+  const paidAmount = invoice.payments.reduce((total, item) => {
+    return item.status === 'success' ? total + Number(item.amount) : total;
+  }, 0);
+  const totalAmount = Number(invoice.total_amount);
+
+  if (paidAmount <= 0) {
+    return invoice;
+  }
+
+  return updateInvoiceRecord(invoice.invoice_id, {
+    invoice_status: paidAmount >= totalAmount ? 'paid' : 'partial_paid',
+    updated_at: new Date(),
+  });
+};
+
+const ensurePaymentBelongsToActor = async (payment, actor) => {
+  const invoice = await findInvoiceById(payment.invoice_id);
+  const invoiceUserId = invoice?.booking?.user_id?.toString();
+  const isOwner = invoiceUserId && invoiceUserId === actor.id;
+  const isAdmin = actor.role === 'admin';
+
+  if (!isOwner && !isAdmin) {
+    throw createHttpError(403, 'Ban khong co quyen kiem tra thanh toan nay');
+  }
+
+  return invoice;
+};
+
+const markPaymentStatus = async (paymentId, status) => {
+  const payment = await updatePaymentRecord(paymentId, {
+    status,
+    paid_at: new Date(),
+  });
+
+  if (status === 'success') {
+    await refreshInvoicePaymentStatus(payment.invoice_id);
+  }
+
+  return payment;
+};
+
+export const confirmLocalPayment = async (paymentId, actor) => {
+  if (process.env.PAYMENT_ALLOW_LOCAL_CONFIRM === 'false') {
+    throw createHttpError(403, 'Local payment confirm is disabled');
+  }
+
+  const payment = await getPayment(paymentId);
+  await ensurePaymentBelongsToActor(payment, actor);
+
+  return markPaymentStatus(paymentId, 'success');
+};
+
+export const verifyVietQrPayment = async (paymentId, actor) => {
+  const payment = await getPayment(paymentId);
+  await ensurePaymentBelongsToActor(payment, actor);
+
+  if (payment.payment_method !== 'bank_transfer') {
+    throw createHttpError(400, 'Thanh toan nay khong phai VietQR');
+  }
+
+  return payment;
 };
 
 export const getPayment = async (paymentId) => {
@@ -64,6 +240,38 @@ export const addPayment = async (payload, actor) => {
   }
 
   return payment;
+};
+
+export const createVietQrPayment = async (payload, actor) => {
+  const invoice = await resolvePayableInvoice(payload, actor);
+  const amount = getInvoicePayableAmount(invoice, payload.amount);
+  const payment = await createPendingGatewayPayment({
+    invoiceId: invoice.invoice_id.toString(),
+    amount,
+    method: 'bank_transfer',
+    actor,
+  });
+  const bank = getRequiredEnv('VIETQR_BANK');
+  const account = getRequiredEnv('VIETQR_ACCOUNT');
+  const transferContent = payload.transferContent || `VIP ${invoice.invoice_code} P${payment.payment_id}`;
+  const accountName = process.env.VIETQR_ACCOUNT_NAME || '';
+  const query = new URLSearchParams({
+    amount: String(amount),
+    addInfo: transferContent,
+    ...(accountName ? { accountName } : {}),
+  });
+  const qrImageUrl = `https://img.vietqr.io/image/${encodeURIComponent(bank)}-${encodeURIComponent(account)}-compact2.png?${query.toString()}`;
+
+  return {
+    payment,
+    provider: 'vietqr',
+    amount,
+    bank,
+    account,
+    accountName,
+    transferContent,
+    qrImageUrl,
+  };
 };
 
 export const editPayment = async (paymentId, payload) => {

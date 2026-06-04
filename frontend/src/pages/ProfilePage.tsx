@@ -73,9 +73,10 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   const { changePassword, logout, user } = useAuth()
   const isVi = language === 'vi'
   const [activeSection, setActiveSection] = useState<ProfileSectionId>('profile-personal')
-  const [paymentMethod, setPaymentMethod] = useState(
-    () => window.localStorage.getItem('vip-booking:preferred-payment') ?? 'vietqr',
-  )
+  const [paymentMethod, setPaymentMethod] = useState(() => {
+    const preferredPayment = window.localStorage.getItem('vip-booking:preferred-payment')
+    return preferredPayment === 'vietqr' ? preferredPayment : 'vietqr'
+  })
   const [bookingSearch, setBookingSearch] = useState('')
   const [bookingStatusFilter, setBookingStatusFilter] = useState<
     'all' | 'pending' | 'confirmed' | 'cancelled'
@@ -155,8 +156,6 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     logout: isVi ? 'Đăng xuất' : 'Logout',
     paymentMethods: {
       vietqr: 'VietQR',
-      momo: 'MoMo',
-      card: isVi ? 'Thẻ tín dụng' : 'Credit Card',
     },
     statusLabels: {
       Pending: isVi ? 'Chờ xử lý' : 'Pending',
@@ -240,7 +239,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
       room: booking.room,
       stay: `${booking.checkIn} - ${booking.checkOut}`,
       amount: booking.amount,
-      method: paymentMethod === 'momo' ? 'MoMo' : paymentMethod === 'card' ? 'Credit Card' : 'VietQR',
+      method: copy.paymentMethods.vietqr,
       status:
         booking.status === 'Cancelled'
           ? 'Cancelled'
@@ -258,7 +257,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     return () => {
       isMounted = false
     }
-  }, [copy.loadBookingsMessage, copy.loadBookingsTitle, paymentMethod, showToast])
+  }, [copy.loadBookingsMessage, copy.loadBookingsTitle, copy.paymentMethods.vietqr, paymentMethod, showToast])
 
   const bookings = profileBookings
 
@@ -292,8 +291,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
   const pendingPaymentMessage = isVi
     ? `${pendingBookings} đặt phòng cần xác nhận thanh toán.`
     : `${pendingBookings} booking needs payment confirmation.`
-  const paymentMethodLabel =
-    paymentMethod === 'momo' ? copy.paymentMethods.momo : paymentMethod === 'card' ? copy.paymentMethods.card : copy.paymentMethods.vietqr
+  const paymentMethodLabel = copy.paymentMethods.vietqr
 
   const persistProfileSettings = (nextSettings: ProfileSettings) => {
     const rawStoredSettings = window.localStorage.getItem(profileSettingsStorageKey)
@@ -603,8 +601,6 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
           }}
         >
           <option value="vietqr">{copy.paymentMethods.vietqr}</option>
-          <option value="momo">{copy.paymentMethods.momo}</option>
-          <option value="card">{copy.paymentMethods.card}</option>
         </select>
       </label>
 
