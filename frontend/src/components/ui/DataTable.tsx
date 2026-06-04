@@ -10,8 +10,8 @@ export function DataTable({ headers, rows }: { headers: string[]; rows: string[]
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.join('-')}>
+          {rows.map((row, rowIndex) => (
+            <tr key={`${rowIndex}-${row.join('-')}`}>
               {row.map((cell, index) => (
                 <td key={`${cell}-${index}`}>
                   {['Confirmed', 'Active'].includes(cell) && (

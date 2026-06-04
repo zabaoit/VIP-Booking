@@ -12,17 +12,7 @@ function normalizeQuery(value: string) {
 }
 
 function parseAmount(amount: string) {
-  return Number(amount.replace(/[^0-9.]/g, '')) || 0
-}
-
-function invoiceStatus(booking: BookingRecord) {
-  if (booking.status === 'Cancelled') return 'Cancelled'
-  if (booking.status === 'Pending') return 'Unpaid'
-  return 'Paid'
-}
-
-function invoiceCode(booking: BookingRecord) {
-  return `INV-${booking.id.replace(/[^a-z0-9]/gi, '').padStart(5, '0')}`
+  return Number(amount.replace(/\D/g, '')) || 0
 }
 
 function getOperationalStatus(booking: BookingRecord) {
@@ -41,8 +31,6 @@ export function AdminBookingsPage() {
   const { confirmToast, showToast } = useToast()
   const [activeBooking, setActiveBooking] = useState<BookingRecord | null>(null)
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
-  const [invoiceSearch, setInvoiceSearch] = useState('')
-  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<'All' | 'Paid' | 'Unpaid' | 'Cancelled'>('All')
   const [search, setSearch] = useState(() => {
     const value = window.sessionStorage.getItem(adminBookingsSearchKey) ?? ''
     window.sessionStorage.removeItem(adminBookingsSearchKey)
@@ -88,33 +76,8 @@ export function AdminBookingsPage() {
     })
   }, [bookings, search, statusFilter])
 
-  const invoices = useMemo(() => {
-    const query = normalizeQuery(invoiceSearch)
-
-    return bookings
-      .map((booking) => ({
-        ...booking,
-        invoiceCode: invoiceCode(booking),
-        invoiceStatus: invoiceStatus(booking),
-      }))
-      .filter((invoice) => {
-        const statusMatch = invoiceStatusFilter === 'All' || invoice.invoiceStatus === invoiceStatusFilter
-        const textMatch =
-          !query ||
-          invoice.invoiceCode.toLowerCase().includes(query) ||
-          invoice.id.toLowerCase().includes(query) ||
-          invoice.guest.toLowerCase().includes(query) ||
-          invoice.email.toLowerCase().includes(query) ||
-          invoice.room.toLowerCase().includes(query)
-        return statusMatch && textMatch
-      })
-  }, [bookings, invoiceSearch, invoiceStatusFilter])
-
-  const paidTotal = bookings
-    .filter((booking) => invoiceStatus(booking) === 'Paid')
-    .reduce((total, booking) => total + parseAmount(booking.amount), 0)
   const unpaidTotal = bookings
-    .filter((booking) => invoiceStatus(booking) === 'Unpaid')
+    .filter((booking) => booking.status === 'Pending')
     .reduce((total, booking) => total + parseAmount(booking.amount), 0)
 
   const handleStatusChange = async (bookingId: string, status: BookingRecord['status']) => {
@@ -225,19 +188,19 @@ export function AdminBookingsPage() {
         </article>
         <article className="metric-card">
           <span className="icon-tile">
-            <Icon name="card" />
+            <Icon name="bell" />
           </span>
-          <p>Paid Revenue</p>
-          <strong>${paidTotal.toLocaleString()}</strong>
-          <small>confirmed invoices</small>
+          <p>Pending</p>
+          <strong>{bookings.filter((booking) => booking.status === 'Pending').length}</strong>
+          <small>awaiting review</small>
         </article>
         <article className="metric-card">
           <span className="icon-tile">
-            <Icon name="bell" />
+            <Icon name="card" />
           </span>
-          <p>Unpaid Amount</p>
-          <strong>${unpaidTotal.toLocaleString()}</strong>
-          <small>pending payment</small>
+          <p>Pending Amount</p>
+          <strong>{unpaidTotal.toLocaleString('vi-VN')} VND</strong>
+          <small>from pending bookings</small>
         </article>
       </div>
 
@@ -327,82 +290,6 @@ export function AdminBookingsPage() {
               {filteredBookings.length === 0 && (
                 <tr>
                   <td colSpan={10}>No bookings found for this filter.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="admin-panel">
-        <div className="admin-panel-header">
-          <div className="panel-title">
-            <Icon name="card" />
-            <span>Invoice & Payment Management</span>
-          </div>
-        </div>
-
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <label className="flex-1 min-w-[240px]">
-            <input
-              value={invoiceSearch}
-              placeholder="Search invoice, booking, guest, room, or email..."
-              onChange={(event) => setInvoiceSearch(event.target.value)}
-            />
-          </label>
-          {(['All', 'Paid', 'Unpaid', 'Cancelled'] as const).map((status) => (
-            <button
-              key={status}
-              className={`ghost-button compact ${invoiceStatusFilter === status ? 'border-slate-500 text-white' : ''}`}
-              type="button"
-              onClick={() => setInvoiceStatusFilter(status)}
-            >
-              {status}
-            </button>
-          ))}
-        </div>
-
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Invoice</th>
-                <th>Booking</th>
-                <th>Guest</th>
-                <th>Room</th>
-                <th>Amount</th>
-                <th>Payment</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.map((invoice) => {
-                const statusClass =
-                  invoice.invoiceStatus === 'Paid'
-                    ? 'success'
-                    : invoice.invoiceStatus === 'Cancelled'
-                      ? 'failed'
-                      : 'pending'
-
-                return (
-                  <tr key={invoice.invoiceCode}>
-                    <td>
-                      <strong>{invoice.invoiceCode}</strong>
-                    </td>
-                    <td>#{invoice.id}</td>
-                    <td>{invoice.guest}</td>
-                    <td>{invoice.room}</td>
-                    <td>{invoice.amount}</td>
-                    <td>{invoice.invoiceStatus === 'Paid' ? 'Online / Bank transfer' : 'Awaiting payment'}</td>
-                    <td>
-                      <span className={`status-chip ${statusClass}`}>{invoice.invoiceStatus}</span>
-                    </td>
-                  </tr>
-                )
-              })}
-              {invoices.length === 0 && (
-                <tr>
-                  <td colSpan={7}>No invoices found for this filter.</td>
                 </tr>
               )}
             </tbody>

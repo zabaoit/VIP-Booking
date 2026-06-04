@@ -5,10 +5,6 @@ import { useAuth } from '../../hooks/useAuth'
 import { adminNavItems } from '../../data/navigation'
 import { routeTitles } from '../../data/routes'
 import type { BookingRecord, RegisteredUser, Room, RouteKey, Service } from '../../types'
-import {
-  readContactMessages,
-  readPricingRules,
-} from '../../utils/appStorage'
 import { getRouteHref, setAppRoute } from '../../utils/router'
 import { Icon } from '../icons/Icon'
 
@@ -105,12 +101,9 @@ export function AdminLayout({
   }, [])
 
   const notifications = useMemo<AdminNotification[]>(() => {
-    const contactMessages = readContactMessages()
     const guestUsers = users.filter((item) => item.role === 'guest')
     const pendingBookings = bookings.filter((booking) => booking.status === 'Pending').length
-    const newContactMessages = contactMessages.filter((message) => message.status === 'New').length
     const latestBookings = bookings.slice(0, 4)
-    const latestContactMessages = contactMessages.slice(0, 4)
 
     const baseNotifications: AdminNotification[] = [
       {
@@ -130,16 +123,6 @@ export function AdminLayout({
         detail: 'Guest list is synced with customer management.',
         time: 'Now',
         route: 'adminCustomers',
-      },
-      {
-        id: 'summary-contact-messages',
-        title: `${newContactMessages} new contact message${newContactMessages === 1 ? '' : 's'}`,
-        detail:
-          newContactMessages > 0
-            ? 'Guests are requesting support through contact form.'
-            : 'No new customer messages right now.',
-        time: 'Now',
-        route: 'adminServices',
       },
     ]
 
@@ -166,28 +149,7 @@ export function AdminLayout({
       }
     })
 
-    const contactNotifications: AdminNotification[] = latestContactMessages.map((message) => {
-      const createdAt = new Date(message.createdAt)
-      const hasValidDate = !Number.isNaN(createdAt.getTime())
-      const time = hasValidDate
-        ? new Intl.DateTimeFormat('en', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          }).format(createdAt)
-        : 'Recent'
-
-      return {
-        id: `contact-${message.id}`,
-        title: `Message from ${message.name}`,
-        detail: `${message.subject} - ${message.status}`,
-        time,
-        route: 'adminServices',
-      }
-    })
-
-    return [...baseNotifications, ...contactNotifications, ...bookingNotifications]
+    return [...baseNotifications, ...bookingNotifications]
   }, [bookings, users])
 
   const unreadNotifications = notifications.filter(
@@ -251,18 +213,6 @@ export function AdminLayout({
         route: 'adminServices',
       }))
 
-    const pricingResults: SearchResult[] = readPricingRules()
-      .filter((rule) =>
-        `${rule.name} ${rule.roomType} ${rule.trigger}`.toLowerCase().includes(query),
-      )
-      .slice(0, 2)
-      .map((rule) => ({
-        id: `rule-${rule.id}`,
-        title: rule.name,
-        meta: `${rule.roomType} - ${rule.adjustment}`,
-        route: 'adminPricing',
-      }))
-
     const userResults: SearchResult[] = users
       .filter((item) => item.email.toLowerCase().includes(query))
       .slice(0, 2)
@@ -278,7 +228,6 @@ export function AdminLayout({
       ...bookingResults,
       ...billingResults,
       ...serviceResults,
-      ...pricingResults,
       ...userResults,
     ].slice(0, 8)
   }, [bookings, rooms, searchQuery, services, users])
