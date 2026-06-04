@@ -7,7 +7,8 @@ import { useToast } from '../context/ToastContext'
 import { rooms as defaultRooms } from '../data/rooms'
 import type { Navigate, Room } from '../types'
 import { getSelectedAddOns, getSelectedRoomId } from '../utils/bookingSelections'
-import { updateActiveBookingStatus } from '../utils/appStorage'
+import { getActiveBookingId, updateActiveBookingStatus } from '../utils/appStorage'
+import { updateBookingWithApi } from '../api/vipBookingApi'
 
 const paymentMethods = [
   {
@@ -38,6 +39,7 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
   const [room, setRoom] = useState<Room>(defaultRooms[0])
   const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0])
   const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const { addOnTotal } = getSelectedAddOns()
 
   useEffect(() => {
@@ -50,9 +52,9 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
         const message = loadError instanceof Error ? loadError.message : 'Could not load payment room.'
         showToast({ title: 'Could not load payment room', message, variant: 'error' })
       })
-  }, [])
+  }, [showToast])
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (!isPaymentConfirmed) {
@@ -62,8 +64,29 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
     }
 
     window.localStorage.setItem('vip-booking:preferred-payment', paymentMethod.id)
-    updateActiveBookingStatus('Confirmed')
-    navigate('success')
+    const activeBookingId = getActiveBookingId()
+
+    if (!activeBookingId) {
+      showToast({
+        title: 'Booking is missing',
+        message: 'Please create a booking before confirming payment.',
+        variant: 'warning',
+      })
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      await updateBookingWithApi(activeBookingId, { status: 'Confirmed' })
+      updateActiveBookingStatus('Confirmed')
+      navigate('success')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not confirm booking payment.'
+      showToast({ title: 'Could not confirm payment', message, variant: 'error' })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -106,6 +129,7 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
           <label className="check-row consent-row">
             <input
               checked={isPaymentConfirmed}
+              disabled={isSubmitting}
               type="checkbox"
               onChange={(event) => {
                 setIsPaymentConfirmed(event.target.checked)
@@ -113,9 +137,9 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
             />
             <span>I have completed the payment in {paymentMethod.label}.</span>
           </label>
-          <button className="primary-button full-width" type="submit">
+          <button className="primary-button full-width" disabled={isSubmitting} type="submit">
             <Icon name="lock" />
-            Confirm Payment
+            {isSubmitting ? 'Confirming...' : 'Confirm Payment'}
           </button>
         </section>
         <BookingSummary room={room} buttonLabel="Confirm Payment" addOnTotal={addOnTotal} />

@@ -18,19 +18,16 @@ export function AdminRoomTypesPage() {
   const [classFilter, setClassFilter] = useState<'All' | 'Available' | 'Occupied' | 'Maintenance'>(
     'All',
   )
-  const [, setDataError] = useState('')
   const activeRoom = editingRoom
   const isModalOpen = isAddModalOpen || Boolean(editingRoom)
 
   const reloadRooms = async () => {
     setRoomTypes(await fetchRooms())
-    setDataError('')
   }
 
   useEffect(() => {
     reloadRooms().catch((error) => {
       const message = error instanceof Error ? error.message : 'Could not load rooms.'
-      setDataError(message)
       showToast({ title: 'Could not load rooms', message, variant: 'error' })
     })
   }, [showToast])
@@ -55,7 +52,6 @@ export function AdminRoomTypesPage() {
     const image =
       String(formData.get('image') ?? '').trim() || activeRoom?.image || defaultRooms[0].image
     if (!activeRoom) {
-      setDataError('Please create new rooms from the backend room inventory API with a valid room type id.')
       showToast({
         title: 'Cannot create room here',
         message: 'Please create new rooms from the backend room inventory API with a valid room type id.',
@@ -96,7 +92,6 @@ export function AdminRoomTypesPage() {
       showToast({ title: 'Room updated', message: savedRoom.apiMessage, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not update room.'
-      setDataError(message)
       showToast({ title: 'Could not update room', message, variant: 'error' })
     }
   }
@@ -117,7 +112,6 @@ export function AdminRoomTypesPage() {
       showToast({ title: 'Room deleted', message, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not delete room.'
-      setDataError(message)
       showToast({ title: 'Could not delete room', message, variant: 'error' })
     }
   }

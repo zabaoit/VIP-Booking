@@ -27,17 +27,14 @@ export function AdminServicesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'All' | Service['status']>('All')
-  const [, setDataError] = useState('')
 
   const reloadServices = async () => {
     setServiceItems(await fetchServices())
-    setDataError('')
   }
 
   useEffect(() => {
     reloadServices().catch((error) => {
       const message = error instanceof Error ? error.message : 'Could not load services.'
-      setDataError(message)
       showToast({ title: 'Could not load services', message, variant: 'error' })
     })
   }, [showToast])
@@ -64,7 +61,6 @@ export function AdminServicesPage() {
       showToast({ title: 'Service updated', message: updatedService.apiMessage, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not update service status.'
-      setDataError(message)
       showToast({ title: 'Could not update service', message, variant: 'error' })
     }
   }
@@ -104,7 +100,6 @@ export function AdminServicesPage() {
       setActiveService(null)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not save service.'
-      setDataError(message)
       showToast({ title: 'Could not save service', message, variant: 'error' })
     }
   }
@@ -125,7 +120,6 @@ export function AdminServicesPage() {
       showToast({ title: 'Service deleted', message, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not delete service.'
-      setDataError(message)
       showToast({ title: 'Could not delete service', message, variant: 'error' })
     }
   }

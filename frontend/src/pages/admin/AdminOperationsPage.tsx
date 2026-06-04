@@ -35,7 +35,6 @@ export function AdminOperationsPage() {
   const [checkInSearch, setCheckInSearch] = useState('')
   const [serviceSearch, setServiceSearch] = useState('')
   const [operationFilter, setOperationFilter] = useState<'All' | CheckInOutRecord['status']>('All')
-  const [, setDataError] = useState('')
   const [activeCheckInOut, setActiveCheckInOut] = useState<CheckInOutRecord | null>(null)
   const [activeServiceUsage, setActiveServiceUsage] = useState<ServiceUsageRecord | null>(null)
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false)
@@ -48,13 +47,11 @@ export function AdminOperationsPage() {
     ])
     setCheckInOuts(nextCheckInOuts)
     setServiceUsages(nextServiceUsages)
-    setDataError('')
   }
 
   useEffect(() => {
     reloadOperations().catch((error) => {
       const message = error instanceof Error ? error.message : 'Could not load hotel operations.'
-      setDataError(message)
       showToast({ title: 'Could not load hotel operations', message, variant: 'error' })
     })
   }, [showToast])
@@ -121,7 +118,6 @@ export function AdminOperationsPage() {
     const note = String(formData.get('note') ?? '').trim()
 
     if (!bookingId || !roomId) {
-      setDataError('Booking ID and Room ID are required for check-in/out records.')
       showToast({
         title: 'Operation is incomplete',
         message: 'Booking ID and Room ID are required for check-in/out records.',
@@ -160,7 +156,6 @@ export function AdminOperationsPage() {
       showToast({ title: 'Operation saved', message: apiMessage, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not save check-in/out record.'
-      setDataError(message)
       showToast({ title: 'Could not save operation', message, variant: 'error' })
     }
   }
@@ -176,7 +171,6 @@ export function AdminOperationsPage() {
     const note = String(formData.get('note') ?? '').trim()
 
     if (!serviceId || quantity <= 0) {
-      setDataError('Service ID and valid quantity are required for service usage.')
       showToast({
         title: 'Service usage is incomplete',
         message: 'Service ID and valid quantity are required for service usage.',
@@ -214,7 +208,6 @@ export function AdminOperationsPage() {
       showToast({ title: 'Service usage saved', message: apiMessage, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not save service usage.'
-      setDataError(message)
       showToast({ title: 'Could not save service usage', message, variant: 'error' })
     }
   }
@@ -234,7 +227,6 @@ export function AdminOperationsPage() {
       showToast({ title: 'Operation deleted', message, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not delete check-in/out record.'
-      setDataError(message)
       showToast({ title: 'Could not delete operation', message, variant: 'error' })
     }
   }
@@ -254,7 +246,6 @@ export function AdminOperationsPage() {
       showToast({ title: 'Service usage deleted', message, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not delete service usage.'
-      setDataError(message)
       showToast({ title: 'Could not delete service usage', message, variant: 'error' })
     }
   }

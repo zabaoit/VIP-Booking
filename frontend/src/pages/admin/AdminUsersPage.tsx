@@ -22,7 +22,6 @@ export function AdminUsersPage() {
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<'All' | RegisteredUser['role']>('All')
   const [roleIds, setRoleIds] = useState<Record<RegisteredUser['role'], string>>({ admin: '', guest: '' })
-  const [, setDataError] = useState('')
 
   const reloadUsers = async () => {
     const [nextUsers, nextRoles] = await Promise.all([fetchUsers(), fetchRoles()])
@@ -31,13 +30,11 @@ export function AdminUsersPage() {
       admin: nextRoles.find((role) => role.name === 'admin')?.id ?? '',
       guest: nextRoles.find((role) => role.name === 'customer')?.id ?? '',
     })
-    setDataError('')
   }
 
   useEffect(() => {
     reloadUsers().catch((error) => {
       const message = error instanceof Error ? error.message : 'Could not load users.'
-      setDataError(message)
       showToast({ title: 'Could not load users', message, variant: 'error' })
     })
   }, [showToast])
@@ -125,7 +122,6 @@ export function AdminUsersPage() {
       showToast({ title: 'Account saved', message, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not save account.'
-      setDataError(message)
       showToast({ title: 'Could not save account', message, variant: 'error' })
     }
   }
@@ -151,7 +147,6 @@ export function AdminUsersPage() {
       showToast({ title: 'Role updated', message: user.apiMessage, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not update role.'
-      setDataError(message)
       showToast({ title: 'Could not update role', message, variant: 'error' })
     }
   }
@@ -185,7 +180,6 @@ export function AdminUsersPage() {
       showToast({ title: 'Account deleted', message, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not delete account.'
-      setDataError(message)
       showToast({ title: 'Could not delete account', message, variant: 'error' })
     }
   }

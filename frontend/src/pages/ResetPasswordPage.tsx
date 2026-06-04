@@ -37,7 +37,6 @@ export function ResetPasswordPage({ navigate }: { navigate: Navigate }) {
         <label>
           New Password
           <input
-            defaultValue=""
             value={password}
             type="password"
             placeholder="Enter new password"
@@ -47,7 +46,6 @@ export function ResetPasswordPage({ navigate }: { navigate: Navigate }) {
         <label>
           Confirm Password
           <input
-            defaultValue=""
             value={confirmPassword}
             type="password"
             placeholder="Re-enter new password"

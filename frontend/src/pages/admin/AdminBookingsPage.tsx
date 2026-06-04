@@ -47,17 +47,14 @@ export function AdminBookingsPage() {
     return 'All'
   })
   const [bookings, setBookings] = useState<BookingRecord[]>([])
-  const [, setDataError] = useState('')
 
   const reloadBookings = async () => {
     setBookings(await fetchBookings())
-    setDataError('')
   }
 
   useEffect(() => {
     reloadBookings().catch((error) => {
       const message = error instanceof Error ? error.message : 'Could not load bookings.'
-      setDataError(message)
       showToast({ title: 'Could not load bookings', message, variant: 'error' })
     })
   }, [showToast])
@@ -87,7 +84,6 @@ export function AdminBookingsPage() {
       showToast({ title: 'Booking updated', message: booking.apiMessage, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not update booking status.'
-      setDataError(message)
       showToast({ title: 'Could not update booking', message, variant: 'error' })
     }
   }
@@ -115,7 +111,6 @@ export function AdminBookingsPage() {
     const status = String(formData.get('status') ?? 'Pending') as BookingRecord['status']
 
     if (!activeBooking) {
-      setDataError('Please create new bookings from the customer booking flow so room/user constraints stay valid.')
       showToast({
         title: 'Cannot create booking here',
         message: 'Please create new bookings from the customer booking flow so room/user constraints stay valid.',
@@ -140,7 +135,6 @@ export function AdminBookingsPage() {
       showToast({ title: 'Booking saved', message: booking.apiMessage, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not save booking.'
-      setDataError(message)
       showToast({ title: 'Could not save booking', message, variant: 'error' })
     }
   }
@@ -162,7 +156,6 @@ export function AdminBookingsPage() {
       showToast({ title: 'Booking deleted', message, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not delete booking.'
-      setDataError(message)
       showToast({ title: 'Could not delete booking', message, variant: 'error' })
     }
   }

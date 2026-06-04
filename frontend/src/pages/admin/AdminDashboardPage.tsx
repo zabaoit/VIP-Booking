@@ -93,7 +93,6 @@ export function AdminDashboardPage() {
   const [bookings, setBookings] = useState<BookingRecord[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [services, setServices] = useState<Service[]>([])
-  const [, setDataError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -105,12 +104,10 @@ export function AdminDashboardPage() {
         setBookings(nextBookings)
         setRooms(nextRooms)
         setServices(nextServices)
-        setDataError('')
       })
       .catch((error) => {
         if (!isMounted) return
         const message = error instanceof Error ? error.message : 'Could not load dashboard data.'
-        setDataError(message)
         showToast({ title: 'Could not load dashboard data', message, variant: 'error' })
       })
 

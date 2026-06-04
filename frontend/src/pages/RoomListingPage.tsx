@@ -33,7 +33,6 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
   const { language } = useLanguage()
   const { showToast } = useToast()
   const [rooms, setRooms] = useState<Room[]>([])
-  const [, setDataError] = useState('')
   const [selectedPrices, setSelectedPrices] = useState<string[]>([])
   const [selectedRoomClasses, setSelectedRoomClasses] = useState<string[]>([])
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
@@ -47,12 +46,10 @@ export function RoomListingPage({ navigate }: { navigate: Navigate }) {
       .then((nextRooms) => {
         if (!isMounted) return
         setRooms(nextRooms)
-        setDataError('')
       })
       .catch((error) => {
         if (!isMounted) return
         const message = error instanceof Error ? error.message : 'Could not load rooms.'
-        setDataError(message)
         showToast({ title: 'Could not load rooms', message, variant: 'error' })
       })
 
