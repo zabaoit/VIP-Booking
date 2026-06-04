@@ -12,12 +12,14 @@ import 'dotenv/config'
 import prisma from '../config/db.js';
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT),
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-})
+    pass: process.env.EMAIL_PASS,
+  },
+});
+console.log("=== CHECK ENV MAILTRAP ===", process.env.EMAIL_USER, process.env.EMAIL_PASS);
 
 const registerSchema = z.object({
   email: z.string().email('Email không hợp lệ'),
@@ -92,7 +94,7 @@ export const forgotPassword = async(req, res) => {
   try{
     const payload = forgotPasswordSchema.parse(req.body);
 
-    const user = prisma.user.findUnique({ where : { email : payload.email }});
+    const user = await prisma.user.findUnique({ where : { email : payload.email }});
     
     if(!user){
       return res.status(400).json({success: false, message: "Email này không tồn tại "});
@@ -110,24 +112,23 @@ export const forgotPassword = async(req, res) => {
     })
 
     const mailOptions = {
-      from : '"VIP Hotel Booking" <no-reply@hotel.com>',
+      from: process.env.EMAIL_FROM || '"VIP Hotel Booking" <no-reply@hotel.com>',
       to: payload.email,
-      subject: 'Mã xác thực khôi phục mật khẩu',
+      subject: '🔑 Mã xác thực khôi phục mật khẩu',
       html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; border: 1px solid #eee;">
-          <h2>Yêu cầu thay đổi mật khẩu</h2>
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; border: 1px solid #eee; border-radius: 8px; margin: 0 auto;">
+          <h2 style="color: #1a73e8; text-align: center;">Yêu cầu thay đổi mật khẩu</h2>
           <p>Chào bạn,</p>
           <p>Mã xác thực để đặt lại mật khẩu cho tài khoản của bạn là:</p>
-          <div style="font-size: 26px; font-weight: bold; color: #1a73e8; background: #f1f3f4; padding: 15px; text-align: center; letter-spacing: 5px; margin: 15px 0;">
+          <div style="font-size: 32px; font-weight: bold; color: #1a73e8; background: #f1f3f4; padding: 15px; text-align: center; letter-spacing: 6px; margin: 20px 0; border-radius: 4px;">
             ${resetCode}
           </div>
-          <p style="color: #d93025;">Mã này có hiệu lực trong vòng <b>5 phút</b> và chỉ sử dụng được 1 lần. Vui lòng không chia sẻ mã này cho bất kỳ ai.</p>
+          <p style="color: #d93025; font-size: 13px;">Mã này có hiệu lực trong vòng <b>5 phút</b> và chỉ sử dụng được 1 lần. Vui lòng không chia sẻ mã này cho bất kỳ ai.</p>
         </div>
-      `
-    }
+      `,
+    };
 
     await transporter.sendMail(mailOptions);
-    // console.log(`\n🔑 [DATABASE OTP] User: ${payload.email} | Code: ${resetCode} \n`);
     
     return sendSuccess(res, {
       message: 'Mã xác thực đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư!',
