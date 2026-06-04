@@ -258,7 +258,7 @@ export function ProfilePage({ navigate }: { navigate: Navigate }) {
     return () => {
       isMounted = false
     }
-  }, [paymentMethod])
+  }, [copy.loadBookingsMessage, copy.loadBookingsTitle, paymentMethod, showToast])
 
   const bookings = profileBookings
 

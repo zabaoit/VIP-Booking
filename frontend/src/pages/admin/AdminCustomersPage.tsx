@@ -43,19 +43,16 @@ export function AdminCustomersPage() {
   const [statusFilter, setStatusFilter] = useState<'All Customers' | NonNullable<RegisteredUser['status']>>('All Customers')
   const [users, setUsers] = useState<RegisteredUser[]>([])
   const [bookings, setBookings] = useState<BookingRecord[]>([])
-  const [, setDataError] = useState('')
 
   const reloadCustomers = async () => {
     const [nextUsers, nextBookings] = await Promise.all([fetchUsers(), fetchBookings()])
     setUsers(nextUsers)
     setBookings(nextBookings)
-    setDataError('')
   }
 
   useEffect(() => {
     reloadCustomers().catch((error) => {
       const message = error instanceof Error ? error.message : 'Could not load customers.'
-      setDataError(message)
       showToast({ title: 'Could not load customers', message, variant: 'error' })
     })
   }, [showToast])
@@ -121,7 +118,6 @@ export function AdminCustomersPage() {
       showToast({ title: 'Customer deleted', message, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not delete customer.'
-      setDataError(message)
       showToast({ title: 'Could not delete customer', message, variant: 'error' })
     }
   }

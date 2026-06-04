@@ -50,7 +50,7 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
         const message = loadError instanceof Error ? loadError.message : 'Could not load payment room.'
         showToast({ title: 'Could not load payment room', message, variant: 'error' })
       })
-  }, [])
+  }, [showToast])
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

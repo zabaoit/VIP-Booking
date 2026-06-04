@@ -31,7 +31,6 @@ export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
   const { showToast } = useToast()
   const [room, setRoom] = useState<Room>(defaultRooms[0])
   const [services, setServices] = useState<Service[]>([])
-  const [, setDataError] = useState('')
   const stay = getSelectedStay()
   const nights = getStayNights(stay)
   const selectedRoomId = getSelectedRoomId()
@@ -51,7 +50,6 @@ export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
   useEffect(() => {
     if (!selectedRoomId) {
       const message = 'Please select a room before reviewing the booking.'
-      setDataError(message)
       showToast({ title: 'Room selection required', message, variant: 'warning' })
       return
     }
@@ -62,19 +60,17 @@ export function ConfirmBookingPage({ navigate }: { navigate: Navigate }) {
         if (!isMounted) return
         setRoom(nextRoom)
         setServices(nextServices)
-        setDataError('')
       })
       .catch((error) => {
         if (!isMounted) return
         const message = error instanceof Error ? error.message : 'Could not load booking review data.'
-        setDataError(message)
         showToast({ title: 'Could not load booking review', message, variant: 'error' })
       })
 
     return () => {
       isMounted = false
     }
-  }, [selectedRoomId])
+  }, [selectedRoomId, showToast])
 
   return (
     <main className="page-shell">

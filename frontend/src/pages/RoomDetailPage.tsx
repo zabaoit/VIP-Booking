@@ -84,7 +84,6 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
   const { showToast } = useToast()
   const { language, t } = useLanguage()
   const [room, setRoom] = useState<Room>(defaultRooms[0])
-  const [, setDataError] = useState('')
   const selectedStay = getSelectedStay()
   const [checkIn, setCheckIn] = useState(selectedStay.checkIn || defaultBookingStay.checkIn)
   const [checkOut, setCheckOut] = useState(selectedStay.checkOut || defaultBookingStay.checkOut)
@@ -122,9 +121,18 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
 
     if (!roomId) {
       const message = 'Room id is missing.'
-      setDataError(message)
       showToast({ title: 'Room is missing', message, variant: 'error' })
       return
+    }
+
+    if (!/^\d+$/.test(roomId)) {
+      const staticRoom = defaultRooms.find((roomItem) => roomItem.id === roomId)
+
+      if (staticRoom) {
+        setRoom(staticRoom)
+        setGuests((currentGuests) => currentGuests || getGuestCount(staticRoom.guests))
+        return
+      }
     }
 
     fetchRoom(roomId)
@@ -132,19 +140,17 @@ export function RoomDetailPage({ navigate }: { navigate: Navigate }) {
         if (!isMounted) return
         setRoom(nextRoom)
         setGuests((currentGuests) => currentGuests || getGuestCount(nextRoom.guests))
-        setDataError('')
       })
       .catch((error) => {
         if (!isMounted) return
         const message = error instanceof Error ? error.message : 'Could not load room details.'
-        setDataError(message)
         showToast({ title: 'Could not load room details', message, variant: 'error' })
       })
 
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [showToast])
 
   const updateCheckIn = (value: string) => {
     setCheckIn(value)

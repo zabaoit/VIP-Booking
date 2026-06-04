@@ -40,7 +40,6 @@ export function AdminBillingPage() {
   const [paymentSearch, setPaymentSearch] = useState('')
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<'All' | InvoiceRecord['status']>('All')
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'All' | PaymentRecord['status']>('All')
-  const [, setDataError] = useState('')
   const [activeInvoice, setActiveInvoice] = useState<InvoiceRecord | null>(null)
   const [activePayment, setActivePayment] = useState<PaymentRecord | null>(null)
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false)
@@ -50,13 +49,11 @@ export function AdminBillingPage() {
     const [nextInvoices, nextPayments] = await Promise.all([fetchInvoices(), fetchPayments()])
     setInvoices(nextInvoices)
     setPayments(nextPayments)
-    setDataError('')
   }
 
   useEffect(() => {
     reloadBilling().catch((error) => {
       const message = error instanceof Error ? error.message : 'Could not load billing data.'
-      setDataError(message)
       showToast({ title: 'Could not load billing data', message, variant: 'error' })
     })
   }, [showToast])
@@ -133,7 +130,6 @@ export function AdminBillingPage() {
     const note = String(formData.get('note') ?? '').trim()
 
     if (!bookingId && !activeInvoice) {
-      setDataError('Booking ID is required to create an invoice.')
       showToast({
         title: 'Booking ID is required',
         message: 'Booking ID is required to create an invoice.',
@@ -169,7 +165,6 @@ export function AdminBillingPage() {
       showToast({ title: 'Invoice saved', message: apiMessage, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not save invoice.'
-      setDataError(message)
       showToast({ title: 'Could not save invoice', message, variant: 'error' })
     }
   }
@@ -185,7 +180,6 @@ export function AdminBillingPage() {
     const staffId = String(formData.get('staffId') ?? '').trim()
 
     if (!invoiceId && !activePayment) {
-      setDataError('Invoice ID is required to create a payment.')
       showToast({
         title: 'Invoice ID is required',
         message: 'Invoice ID is required to create a payment.',
@@ -195,7 +189,6 @@ export function AdminBillingPage() {
     }
 
     if (!amount) {
-      setDataError('Payment amount is required.')
       showToast({
         title: 'Payment amount is required',
         message: 'Please enter a payment amount before saving.',
@@ -232,7 +225,6 @@ export function AdminBillingPage() {
       showToast({ title: 'Payment saved', message: apiMessage, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not save payment.'
-      setDataError(message)
       showToast({ title: 'Could not save payment', message, variant: 'error' })
     }
   }
@@ -252,7 +244,6 @@ export function AdminBillingPage() {
       showToast({ title: 'Invoice deleted', message, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not delete invoice.'
-      setDataError(message)
       showToast({ title: 'Could not delete invoice', message, variant: 'error' })
     }
   }
@@ -272,7 +263,6 @@ export function AdminBillingPage() {
       showToast({ title: 'Payment deleted', message, variant: 'success' })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not delete payment.'
-      setDataError(message)
       showToast({ title: 'Could not delete payment', message, variant: 'error' })
     }
   }

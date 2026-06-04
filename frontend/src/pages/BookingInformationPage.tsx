@@ -17,7 +17,6 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
   const { showToast } = useToast()
   const { t } = useLanguage()
   const [room, setRoom] = useState<Room>(defaultRooms[0])
-  const [, setDataError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const stay = getSelectedStay()
   const { user } = useAuth()
@@ -26,7 +25,6 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
   useEffect(() => {
     if (!selectedRoomId) {
       const message = t('bookingInfo.selectRoomMessage')
-      setDataError(message)
       showToast({ title: t('bookingInfo.selectRoomTitle'), message, variant: 'warning' })
       return
     }
@@ -36,12 +34,10 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
       .then((nextRoom) => {
         if (!isMounted) return
         setRoom(nextRoom)
-        setDataError('')
       })
       .catch((error) => {
         if (!isMounted) return
         const message = error instanceof Error ? error.message : t('bookingInfo.couldNotLoadRoom')
-        setDataError(message)
         showToast({ title: t('bookingInfo.couldNotLoadRoomTitle'), message, variant: 'error' })
       })
 
@@ -54,7 +50,6 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
     event.preventDefault()
     if (!selectedRoomId) {
       const message = t('bookingInfo.selectRoomMessage')
-      setDataError(message)
       showToast({ title: t('bookingInfo.selectRoomTitle'), message, variant: 'warning' })
       return
     }
@@ -67,7 +62,6 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
     const specialRequest = String(formData.get('specialRequest') ?? '').trim()
 
     setIsSubmitting(true)
-    setDataError('')
 
     try {
       const booking = await createBooking({
@@ -82,7 +76,6 @@ export function BookingInformationPage({ navigate }: { navigate: Navigate }) {
       navigate('confirm')
     } catch (error) {
       const message = error instanceof Error ? error.message : t('bookingInfo.createFailed')
-      setDataError(message)
       showToast({ title: t('bookingInfo.createFailedTitle'), message, variant: 'error' })
     } finally {
       setIsSubmitting(false)

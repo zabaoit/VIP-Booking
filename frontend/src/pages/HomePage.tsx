@@ -16,7 +16,6 @@ export function HomePage({ navigate }: { navigate: Navigate }) {
   const [rooms, setRooms] = useState<Room[]>([])
   const [services, setServices] = useState<Service[]>([])
   const localizedServices = useLocalizedServices(services)
-  const [, setDataError] = useState('')
   const [homeSearchTerm, setHomeSearchTerm] = useState('')
   const [hasSearched, setHasSearched] = useState(false)
 
@@ -28,19 +27,17 @@ export function HomePage({ navigate }: { navigate: Navigate }) {
         if (!isMounted) return
         setRooms(nextRooms)
         setServices(nextServices.filter((service) => service.status === 'Active'))
-        setDataError('')
       })
       .catch((error) => {
         if (!isMounted) return
         const message = error instanceof Error ? error.message : 'Could not load booking data.'
-        setDataError(message)
         showToast({ title: 'Could not load booking data', message, variant: 'error' })
       })
 
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [showToast])
 
   const handleStartBooking = () => {
     if (!isAuthenticated) {
