@@ -23,7 +23,6 @@ export type RouteKey =
   | 'adminBookings'
   | 'adminOperations'
   | 'adminBilling'
-  | 'adminPricing'
   | 'adminCustomers'
   | 'adminUsers'
   | 'notFound'
@@ -152,6 +151,7 @@ export type BookingRecord = {
   guest: string
   email: string
   room: string
+  bookingDate: string
   checkIn: string
   checkOut: string
   amount: string

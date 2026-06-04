@@ -91,6 +91,8 @@ type ApiBookingDetail = {
 type ApiBooking = {
   booking_id: string
   user_id: string
+  booking_date?: string
+  created_at?: string
   check_in_date: string
   check_out_date: string
   guest_count: number
@@ -268,6 +270,7 @@ export function mapBooking(apiBooking: ApiBooking): BookingRecord {
     guest: apiBooking.user?.full_name ?? apiBooking.user?.fullName ?? apiBooking.user?.email ?? 'Guest',
     email: apiBooking.user?.email ?? '',
     room: roomName,
+    bookingDate: apiBooking.booking_date ?? apiBooking.created_at ?? apiBooking.check_in_date,
     checkIn: formatDate(apiBooking.check_in_date),
     checkOut: formatDate(apiBooking.check_out_date),
     amount: new Intl.NumberFormat('vi-VN', {

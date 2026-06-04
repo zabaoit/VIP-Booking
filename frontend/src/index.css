@@ -2058,7 +2058,13 @@ textarea:focus {
 
 .chart {
   width: 100%;
+  height: 300px;
   min-height: 260px;
+}
+
+.chart canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .bar-chart {

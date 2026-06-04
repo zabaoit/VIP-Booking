@@ -18,7 +18,7 @@ function normalizeQuery(value: string) {
 }
 
 function parseAmount(value: string) {
-  return Number(value.replace(/[^0-9.]/g, '')) || 0
+  return Number(value.replace(/\D/g, '')) || 0
 }
 
 function toDateTimeLocal(value: string) {
