@@ -73,9 +73,15 @@ export const store = async (req, res) => {
 
 export const update = async (req, res) => {
   try {
+    const payload = updateBookingSchema.parse(req.body);
+
+    if (req.user.role !== 'admin') {
+      delete payload.status;
+    }
+
     const booking = await editBooking(
       idSchema.parse(req.params.id),
-      updateBookingSchema.parse(req.body),
+      payload,
       req.user,
     );
     return sendSuccess(res, {

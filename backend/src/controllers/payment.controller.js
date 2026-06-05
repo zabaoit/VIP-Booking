@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   addPayment,
   confirmLocalPayment,
+  confirmVietQrWebhookPayment,
   createVietQrPayment,
   editPayment,
   getPayment,
@@ -9,6 +10,7 @@ import {
   removePayment,
   verifyVietQrPayment,
 } from '../services/payment.service.js';
+import { syncSepayTransactions } from '../services/sepay.service.js';
 import { handleControllerError, sendSuccess } from '../utils/response.js';
 
 const idSchema = z.string().regex(/^\d+$/, 'ID không hợp lệ');
@@ -37,6 +39,20 @@ const gatewaySchema = z.object({
 }).refine((payload) => payload.invoice_id || payload.booking_id, {
   message: 'Can truyen invoice_id hoac booking_id',
 });
+const webhookSchema = z.object({
+  payment_id: idSchema.optional(),
+  paymentId: idSchema.optional(),
+  amount: decimalSchema.optional(),
+  transferContent: z.string().trim().optional(),
+  content: z.string().trim().optional(),
+  description: z.string().trim().optional(),
+  transaction_content: z.string().trim().optional(),
+  amount_in: decimalSchema.optional(),
+}).transform((payload) => ({
+  payment_id: payload.payment_id || payload.paymentId,
+  amount: payload.amount || payload.amount_in,
+  transferContent: payload.transferContent || payload.content || payload.description || payload.transaction_content,
+}));
 
 export const index = async (req, res) => {
   try {
@@ -82,11 +98,38 @@ export const createVietQr = async (req, res) => {
   }
 };
 
+export const syncSepay = async (req, res) => {
+  try {
+    const result = await syncSepayTransactions();
+    return sendSuccess(res, {
+      message: result.skipped ? 'Chua cau hinh SePay API token' : 'Dong bo giao dich SePay thanh cong',
+      data: result,
+    });
+  } catch (error) {
+    return handleControllerError(res, error);
+  }
+};
+
 export const confirmLocal = async (req, res) => {
   try {
     const payment = await confirmLocalPayment(idSchema.parse(req.params.id), req.user);
     return sendSuccess(res, {
       message: 'Xac nhan thanh toan local thanh cong',
+      data: { payment },
+    });
+  } catch (error) {
+    return handleControllerError(res, error);
+  }
+};
+
+export const confirmVietQrWebhook = async (req, res) => {
+  try {
+    const payment = await confirmVietQrWebhookPayment(
+      webhookSchema.parse(req.body),
+      req.get('x-webhook-token'),
+    );
+    return sendSuccess(res, {
+      message: 'Xac nhan thanh toan VietQR webhook thanh cong',
       data: { payment },
     });
   } catch (error) {

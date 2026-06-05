@@ -11,6 +11,7 @@ import {
   clearActivePaymentId,
   updateActiveBookingStatus,
 } from '../utils/appStorage'
+import { useLocalizedRoom } from '../utils/roomLocalization'
 
 export function PaymentStatusPage({
   variant,
@@ -22,6 +23,7 @@ export function PaymentStatusPage({
   const isSuccess = variant === 'success'
   const { t } = useLanguage()
   const [room, setRoom] = useState<Room>(defaultRooms[0])
+  const localizedRoom = useLocalizedRoom(room)
   const nights = getStayNights(getSelectedStay())
   const { addOnTotal } = getSelectedAddOns()
 
@@ -54,7 +56,11 @@ export function PaymentStatusPage({
             : t('paymentStatus.failedMessage')}
         </p>
         <div className="receipt-card">
-          <img src={room.image} alt={room.name} />
+          <img src={room.image} alt={localizedRoom.name} />
+          <div className="receipt-room-heading">
+            <h2>{localizedRoom.name}</h2>
+            <p>{localizedRoom.location}</p>
+          </div>
           <PriceDetails room={room} nights={nights} addOnTotal={addOnTotal} />
         </div>
         <div className="status-actions">

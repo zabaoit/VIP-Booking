@@ -1,11 +1,19 @@
 import { useState, type FormEvent } from 'react'
 import { Icon } from '../components/icons/Icon'
 import { AuthShell } from '../components/layout/AuthShell'
+import { useLanguage } from '../context/LanguageContext'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../hooks/useAuth'
 import type { Navigate } from '../types'
 
+const phonePattern = /^(?:0|\+84)(?:[\s.-]?\d){9}$/
+
+function isValidPhoneNumber(phone: string) {
+  return phonePattern.test(phone)
+}
+
 export function RegisterPage({ navigate }: { navigate: Navigate }) {
+  const { t } = useLanguage()
   const { showToast } = useToast()
   const { register } = useAuth()
   const [password, setPassword] = useState('')
@@ -47,6 +55,15 @@ export function RegisterPage({ navigate }: { navigate: Navigate }) {
     const fullName = String(formData.get('fullName') ?? '').trim()
     const phone = String(formData.get('phone') ?? '').trim()
 
+    if (!isValidPhoneNumber(phone)) {
+      showToast({
+        title: t('auth.invalidPhoneTitle'),
+        message: t('auth.invalidPhoneMessage'),
+        variant: 'error',
+      })
+      return
+    }
+
     const result = await register(email, nextPassword, fullName, phone)
 
     if (!result.ok) {
@@ -75,7 +92,14 @@ export function RegisterPage({ navigate }: { navigate: Navigate }) {
         </label>
         <label>
           Phone number
-          <input defaultValue="" name="phone" placeholder="Enter your phone number" />
+          <input
+            autoComplete="tel"
+            defaultValue=""
+            inputMode="tel"
+            name="phone"
+            placeholder="Enter your phone number"
+            type="tel"
+          />
         </label>
         <label>
           Password

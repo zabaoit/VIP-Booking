@@ -12,6 +12,7 @@ import checkInOutRoutes from './routes/checkInOut.route.js';
 import serviceUsageRoutes from './routes/serviceUsage.route.js';
 import invoiceRoutes from './routes/invoice.route.js';
 import paymentRoutes from './routes/payment.route.js';
+import { startSepayPolling } from './services/sepay.service.js';
 
 dotenv.config({ quiet: true });
 
@@ -61,4 +62,5 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Backend is running on port ${PORT}`);
+  startSepayPolling();
 });
