@@ -1,4 +1,4 @@
-import { findBookingById } from '../models/booking.model.js';
+import { findBookingById, updateBookingRecord } from '../models/booking.model.js';
 import { findInvoiceById, findInvoices, updateInvoiceRecord } from '../models/invoice.model.js';
 import {
   createPaymentRecord,
@@ -143,10 +143,19 @@ const refreshInvoicePaymentStatus = async (invoiceId) => {
     return invoice;
   }
 
-  return updateInvoiceRecord(invoice.invoice_id, {
+  const updatedInvoice = await updateInvoiceRecord(invoice.invoice_id, {
     invoice_status: paidAmount >= totalAmount ? 'paid' : 'partial_paid',
     updated_at: new Date(),
   });
+
+  if (paidAmount >= totalAmount && invoice.booking_id && invoice.booking?.status === 'pending') {
+    await updateBookingRecord(invoice.booking_id, {
+      status: 'confirmed',
+      updated_at: new Date(),
+    });
+  }
+
+  return updatedInvoice;
 };
 
 const ensurePaymentBelongsToActor = async (payment, actor) => {
@@ -175,6 +184,40 @@ const markPaymentStatus = async (paymentId, status) => {
   return payment;
 };
 
+const resolvePaymentIdFromTransferContent = (transferContent = '') => {
+  const match = transferContent.match(/\bP(\d+)\b/i);
+  return match?.[1] ?? null;
+};
+
+export const confirmBankTransferTransaction = async (payload) => {
+  const paymentId = payload.payment_id || resolvePaymentIdFromTransferContent(payload.transferContent || '');
+
+  if (!paymentId) {
+    throw createHttpError(400, 'Khong tim thay ma thanh toan trong giao dich');
+  }
+
+  const payment = await getPayment(paymentId);
+
+  if (payment.payment_method !== 'bank_transfer') {
+    throw createHttpError(400, 'Thanh toan nay khong phai VietQR');
+  }
+
+  if (payload.amount !== undefined) {
+    const paidAmount = Number(payload.amount);
+    const expectedAmount = Number(payment.amount);
+
+    if (!Number.isFinite(paidAmount) || paidAmount < expectedAmount) {
+      throw createHttpError(400, 'So tien giao dich khong du de xac nhan thanh toan');
+    }
+  }
+
+  if (payment.status === 'success') {
+    return payment;
+  }
+
+  return markPaymentStatus(paymentId, 'success');
+};
+
 export const confirmLocalPayment = async (paymentId, actor) => {
   if (process.env.PAYMENT_ALLOW_LOCAL_CONFIRM === 'false') {
     throw createHttpError(403, 'Local payment confirm is disabled');
@@ -184,6 +227,20 @@ export const confirmLocalPayment = async (paymentId, actor) => {
   await ensurePaymentBelongsToActor(payment, actor);
 
   return markPaymentStatus(paymentId, 'success');
+};
+
+export const confirmVietQrWebhookPayment = async (payload, token) => {
+  const expectedToken = process.env.VIETQR_WEBHOOK_TOKEN;
+
+  if (!expectedToken) {
+    throw createHttpError(403, 'VietQR webhook token is not configured');
+  }
+
+  if (token !== expectedToken) {
+    throw createHttpError(401, 'Webhook token khong hop le');
+  }
+
+  return confirmBankTransferTransaction(payload);
 };
 
 export const verifyVietQrPayment = async (paymentId, actor) => {

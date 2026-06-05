@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   createVietQrPaymentWithApi,
   fetchRoom,
@@ -22,14 +22,24 @@ const vietQrMethod = {
   icon: 'card' as const,
 }
 
+const paymentCheckIntervalMs = 3000
+const automaticPaymentCheckTimeoutMs = 120000
+const manualPaymentCheckTimeoutMs = 45000
+
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
 export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
   const { t } = useLanguage()
   const { showToast } = useToast()
   const [room, setRoom] = useState<Room>(defaultRooms[0])
   const [isRoomReady, setIsRoomReady] = useState(false)
-  const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isCreatingPayment, setIsCreatingPayment] = useState(false)
+  const isCheckingPaymentRef = useRef(false)
   const [gatewayPayment, setGatewayPayment] = useState<{
     paymentId: string
     qrImageUrl?: string
@@ -41,6 +51,78 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
   const { addOnTotal } = getSelectedAddOns()
   const nights = getStayNights(getSelectedStay())
   const displayTotal = room.price * nights + addOnTotal + getRoomTaxAmount(room, nights)
+
+  const finishSuccessfulPayment = useCallback(async (bookingId: string) => {
+    await updateBookingWithApi(bookingId, { status: 'Confirmed' })
+    updateActiveBookingStatus('Confirmed')
+    clearActivePaymentId()
+    showToast({
+      title: t('payment.receivedTitle'),
+      message: t('payment.receivedMessage'),
+      variant: 'success',
+    })
+    navigate('success')
+  }, [navigate, showToast, t])
+
+  const checkPaymentUntilResolved = useCallback(async (paymentId: string, timeoutMs: number) => {
+    const startedAt = Date.now()
+
+    while (Date.now() - startedAt <= timeoutMs) {
+      const checkedPayment = await verifyVietQrPaymentWithApi(paymentId)
+
+      if (checkedPayment.status === 'success' || checkedPayment.status === 'failed') {
+        return checkedPayment
+      }
+
+      await wait(paymentCheckIntervalMs)
+    }
+
+    return verifyVietQrPaymentWithApi(paymentId)
+  }, [])
+
+  const checkAndFinishPayment = useCallback(async (
+    paymentId: string,
+    timeoutMs: number,
+    shouldNavigateFailed: boolean,
+  ) => {
+    const activeBookingId = getActiveBookingId()
+
+    if (!activeBookingId || isCheckingPaymentRef.current) {
+      return
+    }
+
+    isCheckingPaymentRef.current = true
+    setIsSubmitting(true)
+
+    try {
+      const checkedPayment = await checkPaymentUntilResolved(paymentId, timeoutMs)
+
+      if (checkedPayment.status === 'success') {
+        await finishSuccessfulPayment(activeBookingId)
+        return
+      }
+
+      updateActiveBookingStatus('Pending')
+
+      if (shouldNavigateFailed) {
+        showToast({
+          title: t('payment.notReceivedTitle'),
+          message: t('payment.notReceivedMessage'),
+          variant: 'warning',
+        })
+        navigate('failed')
+      }
+    } catch (error) {
+      if (shouldNavigateFailed) {
+        const message = error instanceof Error ? error.message : t('payment.checkFailedMessage')
+        showToast({ title: t('payment.checkFailedTitle'), message, variant: 'error' })
+        navigate('failed')
+      }
+    } finally {
+      isCheckingPaymentRef.current = false
+      setIsSubmitting(false)
+    }
+  }, [checkPaymentUntilResolved, finishSuccessfulPayment, navigate, showToast, t])
 
   const createGatewayPayment = useCallback(async () => {
     const activeBookingId = getActiveBookingId()
@@ -103,17 +185,16 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
     void createGatewayPayment()
   }, [createGatewayPayment, isRoomReady])
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    if (!isPaymentConfirmed) {
-      showToast({
-        title: t('payment.confirmRequiredTitle'),
-        message: t('payment.confirmRequiredMessage'),
-        variant: 'warning',
-      })
+  useEffect(() => {
+    if (!gatewayPayment) {
       return
     }
+
+    void checkAndFinishPayment(gatewayPayment.paymentId, automaticPaymentCheckTimeoutMs, true)
+  }, [checkAndFinishPayment, gatewayPayment])
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
 
     window.localStorage.setItem('vip-booking:preferred-payment', vietQrMethod.id)
     const activeBookingId = getActiveBookingId()
@@ -129,41 +210,14 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
 
     setIsSubmitting(true)
 
-    try {
-      if (!gatewayPayment) {
-        await createGatewayPayment()
-        return
-      }
+    const paymentToCheck = gatewayPayment ?? await createGatewayPayment()
 
-      const checkedPayment = await verifyVietQrPaymentWithApi(gatewayPayment.paymentId)
-
-      if (checkedPayment.status !== 'success') {
-        updateActiveBookingStatus('Pending')
-        showToast({
-          title: t('payment.notReceivedTitle'),
-          message: t('payment.notReceivedMessage'),
-          variant: 'warning',
-        })
-        navigate('failed')
-        return
-      }
-
-      await updateBookingWithApi(activeBookingId, { status: 'Confirmed' })
-      updateActiveBookingStatus('Confirmed')
-      clearActivePaymentId()
-      showToast({
-        title: t('payment.receivedTitle'),
-        message: t('payment.receivedMessage'),
-        variant: 'success',
-      })
-      navigate('success')
-    } catch (error) {
-      const message = error instanceof Error ? error.message : t('payment.checkFailedMessage')
-      showToast({ title: t('payment.checkFailedTitle'), message, variant: 'error' })
-      navigate('failed')
-    } finally {
+    if (!paymentToCheck) {
       setIsSubmitting(false)
+      return
     }
+
+    await checkAndFinishPayment(paymentToCheck.paymentId, manualPaymentCheckTimeoutMs, true)
   }
 
   return (
@@ -215,17 +269,6 @@ export function SecurePaymentPage({ navigate }: { navigate: Navigate }) {
               )}
             </div>
           </div>
-          <label className="check-row consent-row">
-            <input
-              checked={isPaymentConfirmed}
-              disabled={isSubmitting}
-              type="checkbox"
-              onChange={(event) => {
-                setIsPaymentConfirmed(event.target.checked)
-              }}
-            />
-            <span>{t('payment.completedLabel')}</span>
-          </label>
           <button className="primary-button full-width" disabled={isSubmitting} type="submit">
             <Icon name="lock" />
             {isSubmitting

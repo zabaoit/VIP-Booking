@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { readRoute, setAppRoute } from '../utils/router'
 import type { Navigate, RouteKey } from '../types'
 
 export function useAppRoute(): { currentRoute: RouteKey; navigate: Navigate } {
   const [currentRoute, setCurrentRoute] = useState<RouteKey>(() => readRoute())
+
+  const navigate = useCallback<Navigate>((route, options) => {
+    setAppRoute(route, options)
+    setCurrentRoute(readRoute())
+  }, [])
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -15,5 +20,5 @@ export function useAppRoute(): { currentRoute: RouteKey; navigate: Navigate } {
     return () => window.removeEventListener('popstate', handleRouteChange)
   }, [])
 
-  return { currentRoute, navigate: setAppRoute }
+  return { currentRoute, navigate }
 }

@@ -1530,6 +1530,26 @@ textarea:focus {
   height: 180px;
 }
 
+.receipt-room-heading {
+  display: grid;
+  gap: 4px;
+  padding: 16px 16px 0;
+  text-align: left;
+}
+
+.receipt-room-heading h2 {
+  margin: 0;
+  color: white;
+  font-size: 1.15rem;
+  line-height: 1.25;
+}
+
+.receipt-room-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
 .receipt-card .price-details {
   padding: 16px;
 }
